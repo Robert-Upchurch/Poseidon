@@ -100,6 +100,18 @@
 
         /* Modals backdrop stays the same, inner panel changes */
         html:not(.dark) .bg-zinc-900 { background:#ffffff !important; }
+    
+        /* Light-mode override: nav active state uses pale blue instead of dark */
+        html:not(.dark) .nav-link.bg-zinc-800\/80,
+        html:not(.dark) a.nav-link.bg-zinc-800\/80 {
+            background-color: #bae6fd !important; /* sky-200 pale blue */
+            color: #0c4a6e !important; /* sky-900 dark blue text */
+        }
+        /* J1 tab active state in light mode uses pale blue too */
+        html:not(.dark) .j1-tab.bg-indigo-500 {
+            background-color: #7dd3fc !important; /* sky-300 */
+            color: #0c4a6e !important;
+        }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
