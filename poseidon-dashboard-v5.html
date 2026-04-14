@@ -69,7 +69,11 @@
 
         /* Global light mode overrides for zinc backgrounds */
         html:not(.dark) .bg-zinc-950 { background:#f8fafc !important; }
-        html:not(.dark) .bg-zinc-900\/40, html:not(.dark) .bg-zinc-900\/50 { background:#ffffff !important; }
+        html:not(.dark) .bg-zinc-900\/40, html:not(.dark) .bg-zinc-900\/50, html:not(.dark) .bg-zinc-900\/60 { background:#ffffff !important; }
+        /* KPI cards — high-contrast label in both themes */
+        html:not(.dark) .kpi-card { background:#ffffff !important; border-color:#cbd5e1 !important; box-shadow:0 1px 2px rgba(15,23,42,0.04); }
+        html:not(.dark) .kpi-label { color:#334155 !important; }
+        .dark .kpi-label { color:#d4d4d8 !important; }
         html:not(.dark) .bg-zinc-900 { background:#f1f5f9 !important; }
         html:not(.dark) .bg-zinc-800 { background:#e2e8f0 !important; }
         html:not(.dark) .bg-zinc-800\/50, html:not(.dark) .bg-zinc-800\/30 { background:rgba(226,232,240,0.5) !important; }
@@ -197,20 +201,20 @@
 
     <!-- KPI Row -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 hover:border-indigo-500/40 transition-all cursor-pointer group" onclick="switchPage('tasks')">
-            <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Today's Tasks</div>
+        <div class="kpi-card bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 hover:border-indigo-500/40 transition-all cursor-pointer group" onclick="switchPage('tasks')">
+            <div class="kpi-label text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1">Today's Tasks</div>
             <div class="text-2xl font-bold font-mono text-zinc-100 group-hover:text-indigo-400 transition-colors" id="kpi-today-tasks">0</div>
         </div>
-        <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 border-l-2 border-l-red-500/60 hover:border-red-500/40 transition-all cursor-pointer group" onclick="switchPage('tasks')">
-            <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Overdue</div>
+        <div class="kpi-card bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 border-l-2 border-l-red-500/60 hover:border-red-500/40 transition-all cursor-pointer group" onclick="switchPage('tasks')">
+            <div class="kpi-label text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1">Overdue</div>
             <div class="text-2xl font-bold font-mono text-red-400 group-hover:text-red-300 transition-colors" id="kpi-overdue">0</div>
         </div>
-        <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 hover:border-blue-500/40 transition-all cursor-pointer group" onclick="switchPage('tasks')">
-            <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-1">In Progress</div>
+        <div class="kpi-card bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 hover:border-blue-500/40 transition-all cursor-pointer group" onclick="switchPage('tasks')">
+            <div class="kpi-label text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1">In Progress</div>
             <div class="text-2xl font-bold font-mono text-blue-400 group-hover:text-blue-300 transition-colors" id="kpi-in-progress">0</div>
         </div>
-        <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 hover:border-green-500/40 transition-all cursor-pointer group" onclick="switchPage('calendar')">
-            <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Meetings Today</div>
+        <div class="kpi-card bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 hover:border-green-500/40 transition-all cursor-pointer group" onclick="switchPage('calendar')">
+            <div class="kpi-label text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1">Meetings Today</div>
             <div class="text-2xl font-bold font-mono text-green-400 group-hover:text-green-300 transition-colors" id="kpi-meetings">0</div>
         </div>
     </div>
