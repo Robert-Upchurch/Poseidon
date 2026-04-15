@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
     <meta name="format-detection" content="telephone=no">
-    <title>Poseidon Dashboard</title>
+    <title>Poseidon Dashboard V6</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -345,44 +345,86 @@
 <div id="sidebar-overlay" onclick="closeMobileNav()" aria-hidden="true"></div>
 
 <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
-<nav id="sidebar" class="sidebar-bg fixed left-0 top-0 h-screen w-[220px] border-r border-zinc-800 bg-zinc-950/95 backdrop-blur-xl flex flex-col py-5 px-3 z-50 overflow-y-auto">
-    <div class="flex items-center gap-2 px-3 mb-6">
-        <span class="text-2xl">🔱</span>
-        <span class="font-bold text-lg text-indigo-400 tracking-tight">Poseidon</span>
-        <span class="text-[10px] font-mono text-zinc-600 ml-auto">v5</span>
+<nav id="sidebar" class="sidebar-bg fixed left-0 top-0 h-screen w-[240px] border-r border-zinc-800 bg-zinc-950/95 backdrop-blur-xl flex flex-col py-5 px-3 z-50 overflow-y-auto">
+    <!-- CTI Group brand -->
+    <div class="px-3 mb-6">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">🔱</span>
+            <div class="min-w-0">
+                <div class="font-bold text-base text-teal-400 tracking-tight leading-tight">CTI GROUP</div>
+                <div class="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Unified Dashboard</div>
+            </div>
+            <span class="text-[10px] font-mono text-teal-400 ml-auto">v6</span>
+        </div>
     </div>
+
     <div class="flex flex-col gap-0.5" id="sidebar-nav">
-        <a class="nav-link active flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer" data-page="dashboard">
-            <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+        <!-- PRIMARY — seven CTI Group divisions -->
+        <a class="nav-link active flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer" data-page="masterforecast">
+            <i data-lucide="layout-grid" class="w-4 h-4"></i> Master + Forecast
         </a>
-        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="tasks">
-            <i data-lucide="check-square" class="w-4 h-4"></i> Tasks
+        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="finance">
+            <i data-lucide="dollar-sign" class="w-4 h-4"></i> Finance
         </a>
-        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="calendar">
-            <i data-lucide="calendar" class="w-4 h-4"></i> Calendar
+        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="recruitingdivision">
+            <i data-lucide="users" class="w-4 h-4"></i> Recruiting
+        </a>
+        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="processingcuk">
+            <i data-lucide="file-check" class="w-4 h-4"></i> Processing (CUK)
         </a>
         <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="j1division">
             <i data-lucide="globe" class="w-4 h-4"></i> J1 Division
         </a>
-        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="recruitingdivision">
-            <i data-lucide="users" class="w-4 h-4"></i> Recruiting Division
+        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="ittech">
+            <i data-lucide="cpu" class="w-4 h-4"></i> IT & Technology
         </a>
-        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="videos">
-            <i data-lucide="film" class="w-4 h-4"></i> Videos
+
+        <!-- Divider -->
+        <div class="border-t border-zinc-800 my-2"></div>
+
+        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="j1housing">
+            <i data-lucide="home" class="w-4 h-4"></i> J1 Housing
         </a>
-        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="projects">
-            <i data-lucide="folder-kanban" class="w-4 h-4"></i> Projects
+
+        <!-- Dark-mode toggle row -->
+        <div class="flex items-center justify-between gap-2 px-3 py-2 mt-1 rounded-lg">
+            <div class="flex items-center gap-2.5">
+                <i data-lucide="moon" class="w-4 h-4 text-teal-400"></i>
+                <span class="text-sm font-medium text-zinc-400">Dark Mode</span>
+            </div>
+            <button onclick="toggleTheme()" id="sidebar-theme-toggle" class="w-10 h-5 rounded-full bg-teal-500/30 border border-teal-500/50 relative transition-all" aria-label="Toggle dark mode">
+                <span id="sidebar-theme-knob" class="absolute top-[1px] right-[1px] w-[16px] h-[16px] rounded-full bg-teal-400 transition-all shadow"></span>
+            </button>
+        </div>
+
+        <!-- Workspace group — preserves existing V5 pages -->
+        <div class="mt-4 mb-1 px-3 text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">Workspace</div>
+        <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="dashboard">
+            <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> Home
         </a>
-        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="partners">
-            <i data-lucide="handshake" class="w-4 h-4"></i> Partners
+        <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="tasks">
+            <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Tasks
         </a>
-        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="settings">
-            <i data-lucide="settings" class="w-4 h-4"></i> Settings
+        <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="calendar">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Calendar
+        </a>
+        <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="videos">
+            <i data-lucide="film" class="w-3.5 h-3.5"></i> Videos
+        </a>
+        <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="projects">
+            <i data-lucide="folder-kanban" class="w-3.5 h-3.5"></i> Projects
+        </a>
+        <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="partners">
+            <i data-lucide="handshake" class="w-3.5 h-3.5"></i> Partners
+        </a>
+        <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="settings">
+            <i data-lucide="settings" class="w-3.5 h-3.5"></i> Settings
         </a>
     </div>
+
     <div class="mt-auto pt-4 border-t border-zinc-800 px-3">
         <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-xs font-bold">RU</div>
+            <div class="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-400 text-xs font-bold">RU</div>
             <div class="flex-1 min-w-0">
                 <div class="text-xs font-medium text-zinc-300 truncate">Robert Upchurch</div>
                 <div class="text-[10px] text-zinc-600 truncate">CEO · CTI Group</div>
@@ -391,11 +433,15 @@
         <div id="o365-status" class="mt-2 flex items-center gap-1.5 text-[10px] text-zinc-600">
             <span class="w-1.5 h-1.5 rounded-full bg-zinc-700"></span> Microsoft 365: Not connected
         </div>
+        <div class="text-[10px] text-zinc-700 mt-3 leading-tight">
+            CTI Group World Wide Services Inc<br/>
+            <span class="text-teal-600">Project Poseidon 2026</span>
+        </div>
     </div>
 </nav>
 
 <!-- ═══════════════════ MAIN CONTENT ═══════════════════ -->
-<main class="main-content flex-1 ml-[220px] p-6 max-w-[1500px]">
+<main class="main-content flex-1 ml-[240px] p-6 max-w-[1500px]">
 
 <!-- HEADER -->
 <div id="app-header" class="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800/60 gap-3">
@@ -422,8 +468,181 @@
     </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════
+     CTI GROUP PRIMARY DIVISION PAGES (V6 Phase 3)
+     Each follows the same command-center pattern:
+       • Title + subtitle
+       • Toolbar: Update Dashboard, Simulate Week, What-If, Import, Export, PDF
+       • Stale-data indicator
+       • 4 chart cards (Chart.js canvases)
+       • Data-placeholder panel for tables/summaries
+     Every division renders via rdRenderDivisionPage(divId).
+═══════════════════════════════════════════════════ -->
+
+<!-- ═══════════ PAGE: MASTER + FORECAST ═══════════ -->
+<div id="masterforecast" class="page active">
+    <div class="flex items-start justify-between flex-wrap gap-3 mb-2">
+        <div>
+            <h2 class="text-2xl font-bold text-zinc-100 tracking-tight">Master + Forecast</h2>
+            <p class="text-xs text-zinc-500">Consolidated KPIs across all divisions · Project Poseidon 2026</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap" data-division-toolbar="masterforecast">
+            <button onclick="rdDivToolbar('masterforecast','refresh')" class="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg hover:from-teal-400 hover:to-cyan-400 transition-all flex items-center gap-1.5 shadow-[0_0_16px_rgba(20,184,166,0.35)]"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Update Dashboard</button>
+            <button onclick="rdDivToolbar('masterforecast','simulate')" class="px-3 py-1.5 text-xs font-semibold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 flex items-center gap-1.5"><i data-lucide="fast-forward" class="w-3.5 h-3.5"></i> Simulate Week</button>
+            <button onclick="rdDivToolbar('masterforecast','whatif')" class="px-3 py-1.5 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center gap-1.5"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> What-If</button>
+            <button onclick="rdDivToolbar('masterforecast','import')" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-1.5"><i data-lucide="upload" class="w-3.5 h-3.5"></i> Import</button>
+            <button onclick="rdDivToolbar('masterforecast','export')" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> Export</button>
+            <button onclick="rdDivToolbar('masterforecast','pdf')" class="px-3 py-1.5 text-xs font-semibold bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> PDF</button>
+        </div>
+    </div>
+    <div class="text-[11px] text-zinc-500 mb-4" data-division-staleness="masterforecast">Not yet updated — click Update Dashboard to refresh</div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-zinc-200 mb-3">Total Placements + Forecast</h3>
+            <div class="relative" style="height:260px"><canvas id="mf-chart-placements"></canvas></div>
+        </div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-zinc-200 mb-3">Revenue by Division</h3>
+            <div class="relative" style="height:260px"><canvas id="mf-chart-revenue"></canvas></div>
+        </div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-zinc-200 mb-3">Regional Hub Pipeline</h3>
+            <div class="relative" style="height:280px"><canvas id="mf-chart-hubs"></canvas></div>
+        </div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-zinc-200 mb-3">Quarterly Milestone Tracker</h3>
+            <div class="relative" style="height:280px"><canvas id="mf-chart-milestones"></canvas></div>
+        </div>
+    </div>
+    <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4 mt-4">
+        <h3 class="text-sm font-semibold text-zinc-200">Division Summary</h3>
+        <p class="text-xs text-zinc-500 mt-1">Placeholder — division roll-up table populates when Zoho / Zoho Books feeds are connected.</p>
+    </div>
+</div>
+
+<!-- ═══════════ PAGE: FINANCE ═══════════ -->
+<div id="finance" class="page hidden">
+    <div class="flex items-start justify-between flex-wrap gap-3 mb-2">
+        <div>
+            <h2 class="text-2xl font-bold text-zinc-100 tracking-tight">Finance Dashboard</h2>
+            <p class="text-xs text-zinc-500">Revenue · Costs · P&amp;L · Forecasting</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="rdDivToolbar('finance','refresh')" class="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg hover:from-teal-400 hover:to-cyan-400 transition-all flex items-center gap-1.5 shadow-[0_0_16px_rgba(20,184,166,0.35)]"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Update Dashboard</button>
+            <button onclick="rdDivToolbar('finance','simulate')" class="px-3 py-1.5 text-xs font-semibold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 flex items-center gap-1.5"><i data-lucide="fast-forward" class="w-3.5 h-3.5"></i> Simulate Week</button>
+            <button onclick="rdDivToolbar('finance','whatif')" class="px-3 py-1.5 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center gap-1.5"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> What-If</button>
+            <button onclick="rdDivToolbar('finance','import')" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-1.5"><i data-lucide="upload" class="w-3.5 h-3.5"></i> Import</button>
+            <button onclick="rdDivToolbar('finance','export')" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> Export</button>
+            <button onclick="rdDivToolbar('finance','pdf')" class="px-3 py-1.5 text-xs font-semibold bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> PDF</button>
+        </div>
+    </div>
+    <div class="text-[11px] text-zinc-500 mb-4" data-division-staleness="finance">Not yet updated — click Update Dashboard to refresh</div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Revenue vs Costs (Weekly)</h3><div class="relative" style="height:260px"><canvas id="fin-chart-rev-cost"></canvas></div></div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Revenue by Division (Monthly)</h3><div class="relative" style="height:260px"><canvas id="fin-chart-rev-div"></canvas></div></div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">P&amp;L Margin Trend</h3><div class="relative" style="height:280px"><canvas id="fin-chart-pl"></canvas></div></div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Cost Breakdown</h3><div class="relative" style="height:280px"><canvas id="fin-chart-costs"></canvas></div></div>
+    </div>
+    <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4 mt-4">
+        <h3 class="text-sm font-semibold text-zinc-200">P&amp;L Summary</h3>
+        <p class="text-xs text-zinc-500 mt-1">Placeholder — P&amp;L roll-up populates when Zoho Books is connected.</p>
+    </div>
+</div>
+
+<!-- ═══════════ PAGE: PROCESSING (CUK) ═══════════ -->
+<div id="processingcuk" class="page hidden">
+    <div class="flex items-start justify-between flex-wrap gap-3 mb-2">
+        <div>
+            <h2 class="text-2xl font-bold text-zinc-100 tracking-tight">Processing Dashboard (CUK)</h2>
+            <p class="text-xs text-zinc-500">Visa Processing · Document Tracking · Compliance</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="rdDivToolbar('processingcuk','refresh')" class="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg hover:from-teal-400 hover:to-cyan-400 transition-all flex items-center gap-1.5 shadow-[0_0_16px_rgba(20,184,166,0.35)]"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Update Dashboard</button>
+            <button onclick="rdDivToolbar('processingcuk','simulate')" class="px-3 py-1.5 text-xs font-semibold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 flex items-center gap-1.5"><i data-lucide="fast-forward" class="w-3.5 h-3.5"></i> Simulate Week</button>
+            <button onclick="rdDivToolbar('processingcuk','whatif')" class="px-3 py-1.5 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center gap-1.5"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> What-If</button>
+            <button onclick="rdDivToolbar('processingcuk','import')" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-1.5"><i data-lucide="upload" class="w-3.5 h-3.5"></i> Import</button>
+            <button onclick="rdDivToolbar('processingcuk','export')" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> Export</button>
+            <button onclick="rdDivToolbar('processingcuk','pdf')" class="px-3 py-1.5 text-xs font-semibold bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> PDF</button>
+        </div>
+    </div>
+    <div class="text-[11px] text-zinc-500 mb-4" data-division-staleness="processingcuk">Not yet updated — click Update Dashboard to refresh</div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Processing Volume + Forecast</h3><div class="relative" style="height:260px"><canvas id="cuk-chart-volume"></canvas></div></div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Visa Type Distribution</h3><div class="relative" style="height:260px"><canvas id="cuk-chart-types"></canvas></div></div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Processing Time Trend</h3><div class="relative" style="height:280px"><canvas id="cuk-chart-time"></canvas></div></div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Approval vs Rejection Rate</h3><div class="relative" style="height:280px"><canvas id="cuk-chart-approval"></canvas></div></div>
+    </div>
+    <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4 mt-4">
+        <h3 class="text-sm font-semibold text-zinc-200">Processing Queue</h3>
+        <p class="text-xs text-zinc-500 mt-1">Placeholder — active cases populate when CUK feed is connected.</p>
+    </div>
+</div>
+
+<!-- ═══════════ PAGE: IT & TECHNOLOGY ═══════════ -->
+<div id="ittech" class="page hidden">
+    <div class="flex items-start justify-between flex-wrap gap-3 mb-2">
+        <div>
+            <h2 class="text-2xl font-bold text-zinc-100 tracking-tight">IT &amp; Technology Dashboard</h2>
+            <p class="text-xs text-zinc-500">Platform Development · System Health · Project Poseidon Tech</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="rdDivToolbar('ittech','refresh')" class="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg hover:from-teal-400 hover:to-cyan-400 transition-all flex items-center gap-1.5 shadow-[0_0_16px_rgba(20,184,166,0.35)]"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Update Dashboard</button>
+            <button onclick="rdDivToolbar('ittech','import')" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-1.5"><i data-lucide="upload" class="w-3.5 h-3.5"></i> Import</button>
+            <button onclick="rdDivToolbar('ittech','export')" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> Export</button>
+            <button onclick="rdDivToolbar('ittech','pdf')" class="px-3 py-1.5 text-xs font-semibold bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> PDF</button>
+        </div>
+    </div>
+    <div class="text-[11px] text-zinc-500 mb-4" data-division-staleness="ittech">Not yet updated — click Update Dashboard to refresh</div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">System Uptime (Weekly)</h3><div class="relative" style="height:260px"><canvas id="it-chart-uptime"></canvas></div></div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Sprint Burndown</h3><div class="relative" style="height:260px"><canvas id="it-chart-burndown"></canvas></div></div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Ticket Distribution</h3><div class="relative" style="height:340px"><canvas id="it-chart-tickets"></canvas></div></div>
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Portal Build Progress</h3><div class="relative" style="height:340px"><canvas id="it-chart-portals"></canvas></div></div>
+    </div>
+    <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4 mt-4">
+        <h3 class="text-sm font-semibold text-zinc-200">Project Poseidon Milestones</h3>
+        <p class="text-xs text-zinc-500 mt-1">Placeholder — milestones populate when Linear / project tracker feed is connected.</p>
+    </div>
+</div>
+
+<!-- ═══════════ PAGE: J1 HOUSING (promoted to top-level) ═══════════ -->
+<div id="j1housing" class="page hidden">
+    <div class="flex items-start justify-between flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="text-2xl font-bold text-zinc-100 tracking-tight">J1 Housing</h2>
+            <p class="text-xs text-zinc-500">Sponsor · Property · Financial · Occupancy · Candidate assignments</p>
+        </div>
+        <button onclick="switchPage('j1division'); setTimeout(()=>document.querySelector('.j1-tab[data-tab=j1-housing]')?.click(),50)" class="px-3 py-1.5 text-xs font-semibold bg-teal-500 text-white rounded-lg hover:bg-teal-600 flex items-center gap-1.5">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Open full J1 Housing workspace
+        </button>
+    </div>
+    <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5">
+        <p class="text-sm text-zinc-300">
+            J1 Housing lives under the <strong>J1 Division</strong> tab system where it's tightly coupled with <em>J1 Accommodations</em>, <em>J1 Housing Finder</em>, and the <em>PDF Housing Import</em> parser. Click "Open full J1 Housing workspace" to go there directly.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+            <div class="bg-zinc-950/60 border border-zinc-800 rounded-lg p-3">
+                <div class="text-[10px] text-zinc-500 uppercase tracking-wider">Active Housing Records</div>
+                <div class="text-2xl font-bold font-mono text-teal-400" id="jh-kpi-active">—</div>
+            </div>
+            <div class="bg-zinc-950/60 border border-zinc-800 rounded-lg p-3">
+                <div class="text-[10px] text-zinc-500 uppercase tracking-wider">Candidates Placed</div>
+                <div class="text-2xl font-bold font-mono text-emerald-400" id="jh-kpi-placed">—</div>
+            </div>
+            <div class="bg-zinc-950/60 border border-zinc-800 rounded-lg p-3">
+                <div class="text-[10px] text-zinc-500 uppercase tracking-wider">Upcoming Check-Ins (30d)</div>
+                <div class="text-2xl font-bold font-mono text-amber-400" id="jh-kpi-upcoming">—</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════════ PAGE: DASHBOARD ═══════════ -->
-<div id="dashboard" class="page active">
+<div id="dashboard" class="page hidden">
     <!-- Greeting + Date -->
     <div class="mb-5">
         <h2 id="greeting" class="text-2xl font-bold tracking-tight text-zinc-100"></h2>
@@ -609,20 +828,50 @@
         <button class="j1-tab px-4 py-1.5 text-sm font-medium rounded-lg transition-all bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700" data-tab="j1-onboarding">Partner Onboarding</button>
         <button class="j1-tab px-4 py-1.5 text-sm font-medium rounded-lg transition-all bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700" data-tab="j1-contracts">J1 Contract Analysis</button>
     </div>
+    <!-- J1 Housing Finder — embeds the local file in this repo (j1-housing-finder-index.html) -->
     <div class="j1-content" id="j1-housing-finder" style="display:none">
-        <div class="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900/40">
-            <iframe src="https://robert-upchurch.github.io/j1-housing-finder/" class="w-full border-none rounded-xl" style="height:calc(100vh - 220px);min-height:600px;" loading="lazy" title="J1 Housing Finder" allow="clipboard-read; clipboard-write"></iframe>
+        <div class="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900/40 relative">
+            <div id="hf-loader" class="absolute inset-0 flex items-center justify-center text-xs text-zinc-500 bg-zinc-900/60 pointer-events-none"><div><i data-lucide="loader" class="w-4 h-4 inline mr-1 animate-spin"></i> Loading J1 Housing Finder…</div></div>
+            <iframe src="j1-housing-finder-index.html" class="w-full border-none rounded-xl relative z-10" style="height:calc(100vh - 220px);min-height:600px;" loading="lazy" title="J1 Housing Finder" allow="clipboard-read; clipboard-write" onload="document.getElementById('hf-loader')?.remove()"></iframe>
+        </div>
+        <div class="mt-3 flex items-center justify-between text-[11px] text-zinc-500 flex-wrap gap-2">
+            <span>Source: <code class="text-zinc-400">j1-housing-finder-index.html</code> (local)</span>
+            <a href="j1-housing-finder-index.html" target="_blank" class="text-teal-400 hover:text-teal-300 flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> Open in new tab</a>
         </div>
     </div>
+
+    <!-- Partner Onboarding — launcher (external site may be gated) -->
     <div class="j1-content" id="j1-onboarding" style="display:none">
-        <div class="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900/40">
-            <iframe src="https://robert-upchurch.github.io/ciee-partner-onboarding/" class="w-full border-none rounded-xl" style="height:calc(100vh - 220px);min-height:600px;" loading="lazy" title="CIEE Partner Onboarding"></iframe>
+        <div id="onb-launcher" class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-8 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="handshake" class="w-7 h-7 text-teal-400"></i>
+            </div>
+            <h3 class="text-lg font-bold text-zinc-100 mb-1">CIEE Partner Onboarding</h3>
+            <p class="text-sm text-zinc-400 max-w-xl mx-auto mb-5">Sponsor intake, host-entity verification, and J-1 partner onboarding workflow. Hosted at <code class="text-zinc-300">robert-upchurch.github.io/ciee-partner-onboarding</code>.</p>
+            <div class="flex items-center justify-center gap-2 flex-wrap">
+                <button onclick="rdLaunchEmbed('onb','https://robert-upchurch.github.io/ciee-partner-onboarding/','CIEE Partner Onboarding')" class="px-4 py-2 text-sm font-semibold bg-teal-500 text-white rounded-lg hover:bg-teal-600 flex items-center gap-1.5"><i data-lucide="play" class="w-4 h-4"></i> Load in Dashboard</button>
+                <a href="https://robert-upchurch.github.io/ciee-partner-onboarding/" target="_blank" rel="noopener" class="px-4 py-2 text-sm font-semibold bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg hover:bg-zinc-700 flex items-center gap-1.5"><i data-lucide="external-link" class="w-4 h-4"></i> Open in New Tab</a>
+            </div>
+            <p class="text-[10px] text-zinc-600 mt-4">If the dashboard embed is empty, the external site may be offline or blocking iframe embedding. Use "Open in New Tab" as a fallback.</p>
         </div>
+        <div id="onb-frame-wrap" class="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900/40 hidden"></div>
     </div>
+
+    <!-- J1 Contract Analysis — launcher -->
     <div class="j1-content" id="j1-contracts" style="display:none">
-        <div class="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900/40">
-            <iframe src="https://robert-upchurch.github.io/cti-command-center/" class="w-full border-none rounded-xl" style="height:calc(100vh - 220px);min-height:600px;" loading="lazy" title="J1 Contract Analysis"></iframe>
+        <div id="con-launcher" class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-8 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="file-search" class="w-7 h-7 text-amber-400"></i>
+            </div>
+            <h3 class="text-lg font-bold text-zinc-100 mb-1">J1 Contract Analysis</h3>
+            <p class="text-sm text-zinc-400 max-w-xl mx-auto mb-5">CTI Command Center — competitive intelligence and J-1 contract analysis workspace. Hosted at <code class="text-zinc-300">robert-upchurch.github.io/cti-command-center</code>.</p>
+            <div class="flex items-center justify-center gap-2 flex-wrap">
+                <button onclick="rdLaunchEmbed('con','https://robert-upchurch.github.io/cti-command-center/','J1 Contract Analysis')" class="px-4 py-2 text-sm font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center gap-1.5"><i data-lucide="play" class="w-4 h-4"></i> Load in Dashboard</button>
+                <a href="https://robert-upchurch.github.io/cti-command-center/" target="_blank" rel="noopener" class="px-4 py-2 text-sm font-semibold bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg hover:bg-zinc-700 flex items-center gap-1.5"><i data-lucide="external-link" class="w-4 h-4"></i> Open in New Tab</a>
+            </div>
+            <p class="text-[10px] text-zinc-600 mt-4">If the dashboard embed is empty, the external site may be offline or blocking iframe embedding. Use "Open in New Tab" as a fallback.</p>
         </div>
+        <div id="con-frame-wrap" class="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900/40 hidden"></div>
     </div>
 
     <!-- ═══════════ J1 HOUSING (intake + pricing) ═══════════ -->
@@ -966,25 +1215,53 @@
     <!-- ═════ RECRUITING OVERVIEW PANEL (Analytics Command Center) ═════ -->
     <div class="rd-content active" id="recruiting-overview">
 
-        <!-- Header + Stagnant threshold control -->
-        <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <!-- Command-center header + toolbar -->
+        <div class="flex items-start justify-between flex-wrap gap-3 mb-2">
             <div>
-                <h2 class="text-lg font-bold text-zinc-100 flex items-center gap-2"><i data-lucide="activity" class="w-5 h-5 text-indigo-400"></i> Recruiting Overview</h2>
-                <p class="text-xs text-zinc-500">Executive analytics — combined J-1 and Cruise Ship recruiting activity.</p>
+                <h2 class="text-2xl font-bold text-zinc-100 tracking-tight">Recruiting Overview</h2>
+                <p class="text-xs text-zinc-500">Executive analytics · J-1 + Cruise Ship · Forecasting & Insights</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="rdRefreshAll()" class="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg hover:from-teal-400 hover:to-cyan-400 transition-all flex items-center gap-1.5 shadow-[0_0_16px_rgba(20,184,166,0.35)]">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Update Dashboard
+                </button>
+                <button onclick="rdSimulateWeek()" class="px-3 py-1.5 text-xs font-semibold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all flex items-center gap-1.5">
+                    <i data-lucide="fast-forward" class="w-3.5 h-3.5"></i> Simulate Week
+                </button>
+                <button onclick="rdOpenWhatIf()" class="px-3 py-1.5 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all flex items-center gap-1.5">
+                    <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> What-If
+                </button>
+                <button onclick="rdOpenImport()" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all flex items-center gap-1.5">
+                    <i data-lucide="upload" class="w-3.5 h-3.5"></i> Import
+                </button>
+                <button onclick="rdOpenExport()" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all flex items-center gap-1.5">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
+                </button>
+                <button onclick="rdExportPDF()" class="px-3 py-1.5 text-xs font-semibold bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all flex items-center gap-1.5">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i> PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Stale-data indicator + stagnant threshold selector -->
+        <div class="flex items-center justify-between flex-wrap gap-3 mb-4 text-[11px]">
+            <div id="rd-ov-staleness" class="text-zinc-500">
+                <span class="w-1.5 h-1.5 rounded-full bg-zinc-600 inline-block mr-1.5 align-middle"></span>
+                <span id="rd-ov-staleness-text">Not yet updated — click Update Dashboard to refresh</span>
             </div>
             <div class="flex items-center gap-2">
-                <label class="text-[11px] text-zinc-500">Stagnant threshold</label>
+                <label class="text-zinc-500">Stagnant threshold</label>
                 <select id="rd-ov-stagnant-days" class="px-2 py-1 text-xs bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200 focus:outline-none focus:border-indigo-500/50">
                     <option value="7" selected>7 days</option>
                     <option value="10">10 days</option>
                     <option value="14">14 days</option>
                     <option value="21">21 days</option>
                 </select>
-                <button onclick="rdRefreshAll()" class="px-3 py-1.5 text-xs font-medium bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-all flex items-center gap-1">
-                    <i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh All
-                </button>
             </div>
         </div>
+
+        <!-- AI Insights Strip -->
+        <div id="rd-ov-insights" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"></div>
 
         <!-- Summary KPI Grid (9 cards) — solid bg + colored left accent, readable in light & dark -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
@@ -2311,6 +2588,13 @@ function switchPage(page) {
     if (page === 'partners') renderPartners();
     if (page === 'settings') renderSettings();
     if (page === 'recruitingdivision') renderRecruiting();
+    if (page === 'masterforecast')     renderMasterForecast();
+    if (page === 'finance')            renderFinance();
+    if (page === 'processingcuk')      renderProcessingCUK();
+    if (page === 'ittech')             renderITTech();
+    if (page === 'j1housing')          renderJ1HousingPage();
+    // Update the sidebar theme-toggle knob position
+    rdSyncThemeKnob();
 }
 
 function $(id) { return document.getElementById(id); }
@@ -3813,11 +4097,13 @@ function rdDrawLineChart(canvasEl, labels, series) {
         data: s.values,
         borderColor: s.color,
         backgroundColor: s.color + '22',
-        borderWidth: 2,
+        borderWidth: s.dashed ? 1.8 : 2,
+        borderDash: s.dashed ? [5,4] : undefined,
         tension: 0.35,
-        pointRadius: 2.5,
+        pointRadius: s.dashed ? 1.5 : 2.5,
         pointHoverRadius: 4,
-        fill: false
+        fill: false,
+        spanGaps: true
     }));
     window._rdCharts[id] = new Chart(canvasEl.getContext('2d'), {
         type: 'line',
@@ -4022,10 +4308,21 @@ function rdRenderOverview() {
             return lu && rdDaysBetween(lu, d) >= stagDays && (o.status||'Active')==='Active';
         }).length);
     }
-    rdDrawLineChart($('rd-ov-weekly-chart'), weekLabels, [
-        {name:'Added',   color:'#10b981', values:addedW},
-        {name:'Filled',  color:'#3b82f6', values:filledW},
-        {name:'Stagnant',color:'#f43f5e', values:stagW}
+    // Extend weekly series with forecast — dashed projection, padded historical with nulls
+    const wkForecast = 4;
+    const fAdded   = rdForecastSeries(addedW,  wkForecast, 7);
+    const fFilled  = rdForecastSeries(filledW, wkForecast, 7);
+    const fStag    = rdForecastSeries(stagW,   wkForecast, 7);
+    const wkFwdLabels = Array.from({length:wkForecast}, (_,i) => {
+        const d = new Date(A.today); d.setDate(d.getDate()+i+1); return d.toISOString().slice(5,10)+'f';
+    });
+    rdDrawLineChart($('rd-ov-weekly-chart'), [...weekLabels, ...wkFwdLabels], [
+        {name:'Added',   color:'#10b981', values:[...addedW, ...Array(wkForecast).fill(null)]},
+        {name:'Filled',  color:'#3b82f6', values:[...filledW,...Array(wkForecast).fill(null)]},
+        {name:'Stagnant',color:'#f43f5e', values:[...stagW,  ...Array(wkForecast).fill(null)]},
+        {name:'Added (f)',   color:'#10b981', values:[...Array(addedW.length-1).fill(null), addedW[addedW.length-1], ...fAdded],  dashed:true},
+        {name:'Filled (f)',  color:'#3b82f6', values:[...Array(filledW.length-1).fill(null), filledW[filledW.length-1], ...fFilled], dashed:true},
+        {name:'Stagnant (f)',color:'#f43f5e', values:[...Array(stagW.length-1).fill(null), stagW[stagW.length-1], ...fStag],     dashed:true}
     ]);
 
     // Monthly chart (last 30 days)
@@ -4041,10 +4338,20 @@ function rdRenderOverview() {
         filledM.push(filledToDate);
         netM.push(net);
     }
-    rdDrawLineChart($('rd-ov-monthly-chart'), mLabels, [
-        {name:'Total Open',  color:'#14b8a6', values:totalOpenM},
-        {name:'Filled',      color:'#3b82f6', values:filledM},
-        {name:'Net Growth',  color:'#10b981', values:netM}
+    const mFwd = 14;
+    const fOpen   = rdForecastSeries(totalOpenM, mFwd, 14);
+    const fFilled2= rdForecastSeries(filledM,    mFwd, 14);
+    const fNet    = rdForecastSeries(netM,       mFwd, 14);
+    const mFwdLabels = Array.from({length:mFwd}, (_,i) => {
+        const d = new Date(A.today); d.setDate(d.getDate()+i+1); return d.toISOString().slice(5,10)+'f';
+    });
+    rdDrawLineChart($('rd-ov-monthly-chart'), [...mLabels, ...mFwdLabels], [
+        {name:'Total Open',  color:'#14b8a6', values:[...totalOpenM, ...Array(mFwd).fill(null)]},
+        {name:'Filled',      color:'#3b82f6', values:[...filledM,    ...Array(mFwd).fill(null)]},
+        {name:'Net Growth',  color:'#10b981', values:[...netM,       ...Array(mFwd).fill(null)]},
+        {name:'Open (f)',    color:'#14b8a6', values:[...Array(totalOpenM.length-1).fill(null), totalOpenM.at(-1), ...fOpen],  dashed:true},
+        {name:'Filled (f)',  color:'#3b82f6', values:[...Array(filledM.length-1).fill(null),    filledM.at(-1),    ...fFilled2], dashed:true},
+        {name:'Net (f)',     color:'#10b981', values:[...Array(netM.length-1).fill(null),       netM.at(-1),       ...fNet],    dashed:true}
     ]);
 
     // Pipeline donut
@@ -4115,6 +4422,11 @@ function rdRenderOverview() {
             </tr>`;
         }).join('') : `<tr><td colspan="6" class="py-4 text-center text-zinc-600 text-xs">No stagnant positions at current threshold.</td></tr>`;
     }
+
+    // Phase 2 — insights + staleness
+    rdRenderInsights();
+    rdUpdateStaleness();
+
     if (window.lucide?.createIcons) lucide.createIcons();
 }
 
@@ -4122,6 +4434,614 @@ function rdRenderOverview() {
 async function rdRefreshAll() {
     await Promise.all([refreshRecruitingDivision('j1'), refreshRecruitingDivision('cruise')]);
     rdRenderOverview();
+    rdUpdateStaleness(new Date());
+}
+
+// ════════════════════════════════════════════════════
+// PHASE 3 — CTI Group division pages (stubs with live charts)
+// ════════════════════════════════════════════════════
+
+// Generic toolbar action dispatcher — routes refresh/simulate/whatif/import/export/pdf
+// for every division page. Each division re-renders its own charts after refresh.
+const RD_DIV_RENDERERS = {
+    masterforecast: renderMasterForecast,
+    finance:        renderFinance,
+    processingcuk:  renderProcessingCUK,
+    ittech:         renderITTech
+};
+function rdDivToolbar(divId, action) {
+    switch(action) {
+        case 'refresh':  rdDivMarkUpdated(divId); (RD_DIV_RENDERERS[divId]||(()=>{}))(); rdToast(divId + ' dashboard refreshed.'); break;
+        case 'simulate': rdSimulationOffsetDays += 7; (RD_DIV_RENDERERS[divId]||(()=>{}))(); rdToast('Simulated +7 days on ' + divId + '.'); break;
+        case 'whatif':   rdOpenWhatIf(); break;
+        case 'import':   rdOpenImport(); break;
+        case 'export':   rdOpenExport(); break;
+        case 'pdf':      rdExportDivisionPDF(divId); break;
+    }
+}
+function rdDivMarkUpdated(divId) {
+    const el = document.querySelector(`[data-division-staleness="${divId}"]`);
+    if (el) el.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 align-middle"></span><span class="text-emerald-400">Last updated ${new Date().toLocaleString()}</span>`;
+}
+function rdExportDivisionPDF(divId) {
+    const panel = document.getElementById(divId);
+    if (!panel) return;
+    const w = window.open('', '_blank');
+    if (!w) { rdToast('Popup blocked — allow popups to export PDF.'); return; }
+    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).map(n => n.outerHTML).join('\n');
+    w.document.write(`<!DOCTYPE html><html class="dark"><head><title>${panel.querySelector('h2')?.textContent || 'Poseidon'} — ${new Date().toLocaleDateString()}</title>${styles}<style>@media print { body { background:white !important; color:black !important; } canvas { max-width:100% !important; } }</style></head><body class="bg-[#0a1628] text-zinc-100 p-6">`);
+    w.document.write(`<p class="text-xs text-zinc-500 mb-4">${new Date().toLocaleString()} · CTI Group Worldwide Services</p>`);
+    w.document.write(panel.innerHTML);
+    w.document.write(`</body></html>`);
+    w.document.close();
+    setTimeout(()=>{ try { w.print(); } catch(e){} }, 600);
+}
+
+// ───── Placeholder demo data (for stub pages until live feeds are wired) ─────
+function rdWeekLabels(n) {
+    return Array.from({length:n}, (_,i) => 'W'+(i+1) + (i>=Math.ceil(n*0.6) ? 'f' : ''));
+}
+function rdInstantiateChart(canvasId, type, data, options, plugins) {
+    const el = document.getElementById(canvasId);
+    if (!el || !rdChartAvailable()) return;
+    rdDestroyChart(canvasId);
+    window._rdCharts[canvasId] = new Chart(el.getContext('2d'), { type, data, options, plugins });
+}
+
+function rdChartScales() {
+    const d = rdChartDefaults();
+    return {
+        x:{ ticks:{color:d.muted,font:{size:10}}, grid:{color:d.grid,drawBorder:false} },
+        y:{ ticks:{color:d.muted,font:{size:10}}, grid:{color:d.grid,drawBorder:false}, beginAtZero:true }
+    };
+}
+
+// ───── MASTER + FORECAST ─────
+function renderMasterForecast() {
+    const d = rdChartDefaults();
+    const labels = rdWeekLabels(11);
+    const split = 7;
+    const placements = [120,140,155,170,190,200,210];
+    const forecast   = [...Array(split-1).fill(null), 210, 215, 225, 232, 240];
+    const divs = ['J1 Placements','J1 Beds Added','Airline Tickets','UNO Units','Baron Units'];
+    const divData = [
+        [30,35,40,45,50,55,60, ...Array(4).fill(null)],
+        [25,30,35,40,45,48,52, ...Array(4).fill(null)],
+        [20,25,28,32,38,42,46, ...Array(4).fill(null)],
+        [15,18,22,26,30,34,36, ...Array(4).fill(null)],
+        [10,12,16,20,24,28,30, ...Array(4).fill(null)]
+    ];
+    const divColors = ['#ef4444','#ec4899','#a855f7','#f97316','#eab308'];
+
+    rdInstantiateChart('mf-chart-placements', 'line', {
+        labels,
+        datasets: [
+            {label:'Total Placements', data:placements.concat(Array(4).fill(null)), borderColor:'#14b8a6', backgroundColor:'#14b8a633', borderWidth:2, tension:0.35, pointRadius:2.5, spanGaps:true},
+            {label:'Total Forecast',   data:forecast,                                 borderColor:'#f59e0b', borderDash:[5,4], borderWidth:2, tension:0.35, pointRadius:1.5, spanGaps:true},
+            ...divs.map((n,i)=>({label:n, data:divData[i], borderColor:divColors[i], backgroundColor:divColors[i]+'22', borderWidth:1.2, borderDash:[3,3], tension:0.35, pointRadius:1.5, spanGaps:true}))
+        ]
+    }, { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:9},boxWidth:10}}}, scales: rdChartScales() });
+
+    rdInstantiateChart('mf-chart-revenue', 'bar', {
+        labels: ['CTI Cruise','GHR','Marine Travel','UNO','Baron','J1 Placements','J1 Housing'],
+        datasets:[{label:'Revenue ($M)', data:[1.8,1.2,0.55,0.32,0.22,0.85,0.38], backgroundColor:['#14b8a6','#3b82f6','#10b981','#f59e0b','#a855f7','#ef4444','#ec4899'], borderRadius:4}]
+    }, { responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}, scales: rdChartScales() });
+
+    rdInstantiateChart('mf-chart-hubs', 'doughnut', {
+        labels: ['Indonesia','Greece','Thailand','Myanmar','Vietnam'],
+        datasets:[{data:[120,90,75,50,45], backgroundColor:['#14b8a6','#3b82f6','#10b981','#f59e0b','#a855f7'], borderColor:d.panel, borderWidth:2}]
+    }, { responsive:true, maintainAspectRatio:false, cutout:'58%', plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:10},boxWidth:10}}}});
+
+    rdInstantiateChart('mf-chart-milestones', 'bar', {
+        labels:['Q1','Q2','Q3','Q4'],
+        datasets:[{label:'Completion %', data:[75,20,0,0], backgroundColor:['#10b981','#f59e0b','#64748b','#64748b'], borderRadius:4}]
+    }, { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: rdChartScales() });
+}
+
+// ───── FINANCE ─────
+function renderFinance() {
+    const d = rdChartDefaults();
+    const labels = rdWeekLabels(11);
+    rdInstantiateChart('fin-chart-rev-cost', 'line', {
+        labels,
+        datasets:[
+            {label:'Revenue ($K)',     data:[900,950,1000,1050,1100,1150,1180, ...Array(4).fill(null)],  borderColor:'#10b981', borderWidth:2, tension:0.35, pointRadius:2.5, fill:false, spanGaps:true},
+            {label:'Rev Forecast',     data:[...Array(6).fill(null),1180,1200,1240,1270,1300],           borderColor:'#10b981', borderDash:[5,4], borderWidth:2, tension:0.35, pointRadius:1.5, fill:false, spanGaps:true},
+            {label:'Costs ($K)',       data:[600,625,650,675,700,715,730, ...Array(4).fill(null)],       borderColor:'#ef4444', borderWidth:2, tension:0.35, pointRadius:2.5, fill:false, spanGaps:true},
+            {label:'Cost Forecast',    data:[...Array(6).fill(null),730,745,760,770,780],                borderColor:'#ef4444', borderDash:[5,4], borderWidth:2, tension:0.35, pointRadius:1.5, fill:false, spanGaps:true}
+        ]
+    }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:10},boxWidth:10}}},scales:rdChartScales()});
+
+    rdInstantiateChart('fin-chart-rev-div', 'bar', {
+        labels:['Jan','Feb'],
+        datasets:[
+            {label:'CTI',      data:[280,300], backgroundColor:'#14b8a6', borderRadius:3},
+            {label:'GHR',      data:[320,340], backgroundColor:'#3b82f6', borderRadius:3},
+            {label:'Travel',   data:[180,200], backgroundColor:'#10b981', borderRadius:3},
+            {label:'UNO',      data:[160,175], backgroundColor:'#f59e0b', borderRadius:3},
+            {label:'Baron',    data:[140,150], backgroundColor:'#a855f7', borderRadius:3},
+            {label:'J1 Place', data:[120,140], backgroundColor:'#ef4444', borderRadius:3},
+            {label:'J1 Housing',data:[40,50],  backgroundColor:'#ec4899', borderRadius:3}
+        ]
+    }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:9},boxWidth:10}}},scales:rdChartScales()});
+
+    rdInstantiateChart('fin-chart-pl', 'line', {
+        labels:rdWeekLabels(7),
+        datasets:[{label:'Margin %', data:[25,27,28,29,30,31,33], borderColor:'#10b981', backgroundColor:'#10b98122', borderWidth:2, tension:0.4, pointRadius:3, fill:true}]
+    }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:rdChartScales()});
+
+    rdInstantiateChart('fin-chart-costs', 'doughnut', {
+        labels:['Salaries','Operations','Marketing','Travel','Technology'],
+        datasets:[{data:[45,18,12,10,15], backgroundColor:['#14b8a6','#3b82f6','#10b981','#f59e0b','#a855f7'], borderColor:d.panel, borderWidth:2}]
+    }, {responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:10},boxWidth:10}}}});
+}
+
+// ───── PROCESSING (CUK) ─────
+function renderProcessingCUK() {
+    const d = rdChartDefaults();
+    const labels = rdWeekLabels(11);
+    rdInstantiateChart('cuk-chart-volume', 'line', {
+        labels,
+        datasets:[
+            {label:'Volume',   data:[45,52,48,56,61,58,65, ...Array(4).fill(null)],       borderColor:'#14b8a6', borderWidth:2, tension:0.4, pointRadius:2.5, fill:false, spanGaps:true},
+            {label:'Forecast', data:[...Array(6).fill(null),65,65,67,68,70],              borderColor:'#14b8a6', borderDash:[5,4], borderWidth:2, tension:0.35, pointRadius:1.5, fill:false, spanGaps:true}
+        ]
+    }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:10},boxWidth:10}}},scales:rdChartScales()});
+
+    rdInstantiateChart('cuk-chart-types', 'doughnut', {
+        labels:['Maritime','J1 Cultural Exchange','H-2B','Other'],
+        datasets:[{data:[45,30,15,10], backgroundColor:['#14b8a6','#3b82f6','#10b981','#f59e0b'], borderColor:d.panel, borderWidth:2}]
+    }, {responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:10},boxWidth:10}}}});
+
+    rdInstantiateChart('cuk-chart-time', 'line', {
+        labels:rdWeekLabels(7),
+        datasets:[{label:'Avg Days', data:[18,16,15,14,13,12.5,12.4], borderColor:'#f59e0b', backgroundColor:'#f59e0b22', borderWidth:2, tension:0.4, pointRadius:3, fill:false}]
+    }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:rdChartScales()});
+
+    rdInstantiateChart('cuk-chart-approval', 'bar', {
+        labels:rdWeekLabels(6),
+        datasets:[
+            {label:'Approved %', data:[88,87,89,91,90,89], backgroundColor:'#10b981', borderRadius:3, stack:'a'},
+            {label:'Rejected %', data:[6, 6, 5, 4, 5, 5],  backgroundColor:'#ef4444', borderRadius:3, stack:'a'}
+        ]
+    }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:10},boxWidth:10}}},scales:{x:{...rdChartScales().x, stacked:true}, y:{...rdChartScales().y, stacked:true, max:100}}});
+}
+
+// ───── IT & TECHNOLOGY ─────
+function renderITTech() {
+    const d = rdChartDefaults();
+    rdInstantiateChart('it-chart-uptime', 'line', {
+        labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets:[{label:'Uptime %', data:[99.2,99.6,99.8,99.4,99.7,99.9,99.7], borderColor:'#10b981', backgroundColor:'#10b98122', borderWidth:2, tension:0.4, pointRadius:3, fill:false}]
+    }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:10},boxWidth:10}}},scales:{...rdChartScales(), y:{...rdChartScales().y, beginAtZero:false, min:98, max:100}}});
+
+    const burnLabels = ['D1','D2','D3','D4','D5','D6','D7','D8'];
+    rdInstantiateChart('it-chart-burndown', 'line', {
+        labels:burnLabels,
+        datasets:[
+            {label:'Ideal',  data:[830,710,600,480,370,250,130,10],   borderColor:'#ef4444', borderDash:[4,4], borderWidth:2, tension:0, pointRadius:2, fill:false},
+            {label:'Actual', data:[830,720,620,475,380,255,120,60],   borderColor:'#14b8a6', borderWidth:2, tension:0.3, pointRadius:3, fill:false}
+        ]
+    }, {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:10},boxWidth:10}}},scales:rdChartScales()});
+
+    rdInstantiateChart('it-chart-tickets', 'doughnut', {
+        labels:['Bug','Feature','Infrastructure','Support'],
+        datasets:[{data:[35,28,22,15], backgroundColor:['#14b8a6','#3b82f6','#10b981','#f59e0b'], borderColor:d.panel, borderWidth:2}]
+    }, {responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:10},boxWidth:10}}}});
+
+    rdInstantiateChart('it-chart-portals', 'bar', {
+        labels:['CTI Portal','GHR Portal','CRM Integration','Candidate DB','Mobile App'],
+        datasets:[{label:'Completion %', data:[72,64,80,85,25], backgroundColor:['#14b8a6','#3b82f6','#10b981','#f59e0b','#a855f7'], borderRadius:4}]
+    }, {responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{position:'top',labels:{color:d.fg,font:{size:10},boxWidth:10}}},scales:{x:{...rdChartScales().x, max:100}, y:rdChartScales().y}});
+}
+
+// ───── J1 Housing (promoted page) — summary tiles only, deep link to full workspace ─────
+function renderJ1HousingPage() {
+    try {
+        const raw = localStorage.getItem('j1Housing') || localStorage.getItem('j1-housing') || '[]';
+        const rows = JSON.parse(raw);
+        if ($('jh-kpi-active'))   $('jh-kpi-active').textContent   = Array.isArray(rows) ? rows.length : '—';
+        if ($('jh-kpi-placed'))   $('jh-kpi-placed').textContent   = (Array.isArray(rows) ? rows.reduce((s,r)=>s+(Number(r.occupancy)||0),0) : '—');
+        if ($('jh-kpi-upcoming')) $('jh-kpi-upcoming').textContent = '—';
+    } catch(e){}
+}
+
+// ───── Iframe launcher with load-failure detection (Partner Onboarding, Contract Analysis) ─────
+function rdLaunchEmbed(prefix, url, title) {
+    const launcher = document.getElementById(prefix + '-launcher');
+    const wrap     = document.getElementById(prefix + '-frame-wrap');
+    if (!launcher || !wrap) return;
+    launcher.classList.add('hidden');
+    wrap.classList.remove('hidden');
+    wrap.innerHTML = `
+        <div class="relative">
+            <div id="${prefix}-loading" class="absolute inset-0 flex items-center justify-center text-xs text-zinc-500 bg-zinc-900/60 pointer-events-none z-0"><div><i data-lucide="loader" class="w-4 h-4 inline mr-1 animate-spin"></i> Loading ${h(title)}…</div></div>
+            <iframe id="${prefix}-frame" src="${url}" class="w-full border-none rounded-xl relative z-10" style="height:calc(100vh - 260px);min-height:600px;" title="${h(title)}" loading="eager"></iframe>
+        </div>
+        <div class="mt-3 flex items-center justify-between text-[11px] text-zinc-500 flex-wrap gap-2">
+            <span>Source: <code class="text-zinc-400">${h(url)}</code></span>
+            <div class="flex items-center gap-3">
+                <a href="${url}" target="_blank" rel="noopener" class="text-teal-400 hover:text-teal-300 flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> Open in new tab</a>
+                <button onclick="rdCollapseEmbed('${prefix}')" class="text-zinc-400 hover:text-zinc-200 flex items-center gap-1"><i data-lucide="x" class="w-3 h-3"></i> Close embed</button>
+            </div>
+        </div>`;
+    // Failure / empty-content detection
+    const frame = document.getElementById(prefix + '-frame');
+    const loading = document.getElementById(prefix + '-loading');
+    let settled = false;
+    const markLoaded = () => { if (settled) return; settled = true; loading?.remove(); };
+    const markFailed = () => {
+        if (settled) return; settled = true;
+        if (loading) loading.innerHTML = `
+            <div class="text-center px-4">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400 inline"></i>
+                <div class="text-zinc-200 font-medium mt-1">${h(title)} did not load in the dashboard.</div>
+                <div class="text-zinc-500 text-[11px] mt-1">The external site may be offline or blocking iframe embedding (X-Frame-Options / CSP).</div>
+                <a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 mt-3 px-3 py-1.5 text-xs bg-teal-500 text-white rounded-lg hover:bg-teal-600"><i data-lucide="external-link" class="w-3.5 h-3.5"></i> Open in New Tab</a>
+            </div>`;
+        loading.classList.remove('pointer-events-none'); loading.classList.add('pointer-events-auto','bg-zinc-950/80');
+        if (window.lucide?.createIcons) lucide.createIcons();
+    };
+    frame.addEventListener('load', () => {
+        // Cross-origin iframes don't let us read .contentDocument, so treat any load event as success.
+        setTimeout(markLoaded, 200);
+    });
+    frame.addEventListener('error', markFailed);
+    // 8-second watchdog — if neither load nor error fires, declare failure
+    setTimeout(() => { if (!settled) markFailed(); }, 8000);
+    if (window.lucide?.createIcons) lucide.createIcons();
+}
+function rdCollapseEmbed(prefix) {
+    const launcher = document.getElementById(prefix + '-launcher');
+    const wrap     = document.getElementById(prefix + '-frame-wrap');
+    if (!launcher || !wrap) return;
+    wrap.classList.add('hidden'); wrap.innerHTML = '';
+    launcher.classList.remove('hidden');
+    if (window.lucide?.createIcons) lucide.createIcons();
+}
+
+// ───── Sidebar dark-mode toggle knob ─────
+function rdSyncThemeKnob() {
+    const knob = document.getElementById('sidebar-theme-knob');
+    const track = document.getElementById('sidebar-theme-toggle');
+    if (!knob || !track) return;
+    const dark = document.documentElement.classList.contains('dark');
+    // dark mode = knob right (current position default); light mode = slide left
+    if (dark) { knob.style.right = '1px'; knob.style.left = 'auto'; track.classList.add('bg-teal-500/30'); }
+    else      { knob.style.right = 'auto'; knob.style.left = '1px'; track.classList.remove('bg-teal-500/30'); track.classList.add('bg-zinc-700'); }
+}
+
+// ════════════════════════════════════════════════════
+// PHASE 2 — forecasting, simulation, insights, import/export, PDF
+// ════════════════════════════════════════════════════
+
+// ───── Staleness indicator ─────
+function rdUpdateStaleness(refreshDate) {
+    const el = $('rd-ov-staleness');
+    const txt = $('rd-ov-staleness-text');
+    if (!el || !txt) return;
+    const lastJ1 = recruitingState.j1?.meta?.lastRefresh;
+    const lastCr = recruitingState.cruise?.meta?.lastRefresh;
+    const latest = refreshDate || (lastJ1 && lastCr ? new Date(Math.max(new Date(lastJ1).getTime(), new Date(lastCr).getTime())) : null);
+    el.innerHTML = '';
+    const dot = document.createElement('span');
+    dot.className = 'w-1.5 h-1.5 rounded-full inline-block mr-1.5 align-middle';
+    const span = document.createElement('span');
+    span.id = 'rd-ov-staleness-text';
+    if (!latest) {
+        dot.style.background = '#71717a';
+        span.textContent = 'Not yet updated — click Update Dashboard to refresh';
+        span.className = 'text-zinc-500';
+    } else {
+        const mins = Math.round((Date.now() - latest.getTime()) / 60000);
+        const fresh = mins < 15;
+        dot.style.background = fresh ? '#10b981' : mins < 120 ? '#f59e0b' : '#f43f5e';
+        const when = latest.toLocaleString();
+        span.textContent = `Last updated ${when} (${mins < 1 ? 'just now' : mins + ' min ago'}) by ${recruitingState.j1?.meta?.lastUser || 'you'}`;
+        span.className = fresh ? 'text-emerald-400' : mins < 120 ? 'text-amber-400' : 'text-rose-400';
+    }
+    el.appendChild(dot); el.appendChild(span);
+}
+
+// ───── Linear-regression forecast ─────
+// Returns an array of projected values for the next `steps` points, fit on the
+// last `window` points of `values` using least-squares linear regression.
+function rdForecastSeries(values, steps = 4, window = 7) {
+    const n = Math.min(window, values.length);
+    if (n < 2) return Array(steps).fill(values[values.length-1] || 0);
+    const start = values.length - n;
+    const xs = Array.from({length:n}, (_,i)=>i);
+    const ys = values.slice(start);
+    const sx = xs.reduce((a,b)=>a+b,0), sy = ys.reduce((a,b)=>a+b,0);
+    const sxy = xs.reduce((a,x,i)=>a+x*ys[i],0), sxx = xs.reduce((a,x)=>a+x*x,0);
+    const slope = (n*sxy - sx*sy) / Math.max(1, (n*sxx - sx*sx));
+    const intercept = (sy - slope*sx) / n;
+    const out = [];
+    for (let s=1; s<=steps; s++) out.push(Math.max(0, Math.round(intercept + slope*(n-1+s))));
+    return out;
+}
+
+// ───── AI Insights — plain English findings from aggregates ─────
+function rdGenerateInsights() {
+    const A = rdAggregateAnalytics(Number($('rd-ov-stagnant-days')?.value || 7));
+    const insights = [];
+    const sumPos = list => list.reduce((s,o)=>s+(Number(o.positions)||0),0);
+    const openPos = sumPos(A.open);
+
+    // 1) Supply-vs-demand forecast
+    const avgInt = A.totalInterviews / Math.max(1, 30);  // rough daily interview rate
+    const projInterviews21 = Math.round(avgInt * 21);
+    if (openPos > projInterviews21) {
+        const gap = openPos - projInterviews21;
+        insights.push({tone:'critical', icon:'alert-triangle', title:`${gap.toLocaleString()}-candidate shortfall projected`, body:`At current interview velocity (~${Math.round(avgInt)}/day), supply trails demand by ${gap} candidates in 3 weeks. Add sourcing channels or increase interview throughput.`});
+    } else {
+        const cushion = projInterviews21 - openPos;
+        insights.push({tone:'positive', icon:'check-circle', title:`On pace: +${cushion.toLocaleString()} cushion in 3 weeks`, body:`Interview velocity is tracking ahead of open demand. Capacity headroom to pursue strategic accounts.`});
+    }
+
+    // 2) Client with highest open demand
+    const byClient = {};
+    A.open.forEach(o => { byClient[o.client] = (byClient[o.client]||0) + (Number(o.positions)||0); });
+    const topClient = Object.entries(byClient).sort((a,b)=>b[1]-a[1])[0];
+    if (topClient) {
+        insights.push({tone:'neutral', icon:'building-2', title:`${topClient[0]} is top by demand`, body:`${topClient[1]} open positions — ${Math.round(topClient[1]/Math.max(1,openPos)*100)}% of total pipeline. Prioritize this client's SLA in the weekly huddle.`});
+    }
+
+    // 3) Stagnation or country standout
+    if (A.stagnant.length > 0) {
+        const days = Number($('rd-ov-stagnant-days')?.value || 7);
+        insights.push({tone:'warning', icon:'clock-alert', title:`${A.stagnant.length} stagnant position${A.stagnant.length>1?'s':''} (${days}d+)`, body:`Oldest is ${Math.max(...A.stagnant.map(o => rdDaysBetween(o.lastUpdated||o.datePosted, A.today)))} days without update. Reassign or close to keep pipeline honest.`});
+    } else {
+        const byCountry = {};
+        A.open.forEach(o => { if (o.country) byCountry[o.country] = (byCountry[o.country]||0) + (Number(o.positions)||0); });
+        const topCountry = Object.entries(byCountry).sort((a,b)=>b[1]-a[1])[0];
+        if (topCountry) insights.push({tone:'positive', icon:'globe', title:`${topCountry[0]} leading by demand`, body:`${topCountry[1]} open positions from ${topCountry[0]} — outperforming other markets.`});
+    }
+
+    return insights;
+}
+
+function rdRenderInsights() {
+    const host = $('rd-ov-insights');
+    if (!host) return;
+    const items = rdGenerateInsights();
+    const toneStyle = {
+        critical:'border-rose-500/40 bg-rose-500/5',
+        warning: 'border-amber-500/40 bg-amber-500/5',
+        positive:'border-emerald-500/40 bg-emerald-500/5',
+        neutral: 'border-teal-500/40 bg-teal-500/5'
+    };
+    const toneIcon = {
+        critical:'text-rose-400', warning:'text-amber-400', positive:'text-emerald-400', neutral:'text-teal-400'
+    };
+    host.innerHTML = items.map(it => `
+        <div class="rounded-xl border ${toneStyle[it.tone]||toneStyle.neutral} p-3">
+            <div class="flex items-center gap-2 mb-1">
+                <i data-lucide="${it.icon}" class="w-4 h-4 ${toneIcon[it.tone]||toneIcon.neutral}"></i>
+                <span class="text-xs font-semibold text-zinc-200">${h(it.title)}</span>
+            </div>
+            <p class="text-[11px] text-zinc-400 leading-relaxed">${h(it.body)}</p>
+        </div>`).join('');
+    if (window.lucide?.createIcons) lucide.createIcons();
+}
+
+// ───── Simulate Week — advances virtual clock by 7 days for forecasting previews ─────
+let rdSimulationOffsetDays = 0;
+function rdSimulateWeek() {
+    rdSimulationOffsetDays += 7;
+    rdToast(`Simulated +7 days (total +${rdSimulationOffsetDays}d). Dashboard forecast redrawn. "Reset Simulation" to undo.`);
+    rdRenderOverview();
+}
+function rdResetSimulation() { rdSimulationOffsetDays = 0; rdRenderOverview(); rdToast('Simulation reset.'); }
+
+// ───── What-If modal ─────
+function rdOpenWhatIf() {
+    rdOpenModal('What-If Scenario', `
+        <p class="text-xs text-zinc-400 mb-4">Adjust these levers to project downstream impact on the pipeline. Values preserved for this session only.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-[11px] text-zinc-500 mb-1">Interview throughput (per day)</label>
+                <input id="wi-int-rate" type="number" step="0.5" value="${(window.__wi?.intRate ?? (rdAggregateAnalytics().totalInterviews/30).toFixed(1))}" class="w-full px-3 py-1.5 text-sm bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200">
+            </div>
+            <div>
+                <label class="block text-[11px] text-zinc-500 mb-1">New openings added (per week)</label>
+                <input id="wi-new-week" type="number" value="${window.__wi?.newWeek ?? 5}" class="w-full px-3 py-1.5 text-sm bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200">
+            </div>
+            <div>
+                <label class="block text-[11px] text-zinc-500 mb-1">Fill rate (%)</label>
+                <input id="wi-fill" type="number" value="${window.__wi?.fill ?? 65}" class="w-full px-3 py-1.5 text-sm bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200">
+            </div>
+            <div>
+                <label class="block text-[11px] text-zinc-500 mb-1">Forecast horizon (weeks)</label>
+                <input id="wi-horizon" type="number" value="${window.__wi?.horizon ?? 4}" class="w-full px-3 py-1.5 text-sm bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200">
+            </div>
+        </div>
+        <div class="mt-5 flex justify-end gap-2">
+            <button onclick="rdCloseModal()" class="px-3 py-1.5 text-xs font-medium bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg hover:bg-zinc-700">Cancel</button>
+            <button onclick="rdApplyWhatIf()" class="px-4 py-1.5 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600">Apply & Simulate</button>
+        </div>
+    `);
+}
+function rdApplyWhatIf() {
+    window.__wi = {
+        intRate: Number($('wi-int-rate')?.value || 0),
+        newWeek: Number($('wi-new-week')?.value || 0),
+        fill:    Number($('wi-fill')?.value || 0),
+        horizon: Number($('wi-horizon')?.value || 4)
+    };
+    rdCloseModal();
+    rdRenderOverview();
+    rdToast(`What-If applied: ${window.__wi.intRate}/day interviews, ${window.__wi.newWeek}/week new, ${window.__wi.fill}% fill, ${window.__wi.horizon}-week horizon.`);
+}
+
+// ───── Import modal ─────
+function rdOpenImport() {
+    rdOpenModal('Import Recruiting Data', `
+        <p class="text-xs text-zinc-400 mb-3">Paste CSV or JSON below, or upload a file. Supported: openings, clients, interviews. The system auto-detects schema by header row.</p>
+        <input type="file" id="rd-import-file" accept=".csv,.json" class="block w-full text-xs text-zinc-400 mb-3 file:mr-2 file:py-1.5 file:px-3 file:text-xs file:font-medium file:bg-purple-500 file:text-white file:border-0 file:rounded-lg hover:file:bg-purple-600">
+        <textarea id="rd-import-text" rows="10" class="w-full px-3 py-2 text-xs font-mono bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200 focus:outline-none focus:border-purple-500/50" placeholder="Paste CSV with header row OR JSON array of records..."></textarea>
+        <div class="mt-3 flex items-center justify-between gap-2">
+            <label class="text-[11px] text-zinc-500 flex items-center gap-2">
+                Target category:
+                <select id="rd-import-category" class="px-2 py-1 text-xs bg-zinc-950 border border-zinc-800 rounded-lg">
+                    <option value="j1">J-1</option>
+                    <option value="cruise">Cruise</option>
+                </select>
+            </label>
+            <div class="flex gap-2">
+                <button onclick="rdCloseModal()" class="px-3 py-1.5 text-xs font-medium bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg hover:bg-zinc-700">Cancel</button>
+                <button onclick="rdDoImport()" class="px-4 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600">Import</button>
+            </div>
+        </div>
+    `);
+    const f = $('rd-import-file');
+    if (f) f.addEventListener('change', async (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        $('rd-import-text').value = await file.text();
+    });
+}
+function rdParseCSV(text) {
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(ln => {
+        const vals = ln.split(',').map(v => v.trim());
+        const obj = {}; headers.forEach((k,i) => obj[k] = vals[i]); return obj;
+    });
+}
+function rdDoImport() {
+    const raw = $('rd-import-text')?.value?.trim();
+    const cat = $('rd-import-category')?.value || 'j1';
+    if (!raw) { rdToast('Nothing to import.'); return; }
+    let records;
+    try { records = raw.startsWith('[') || raw.startsWith('{') ? JSON.parse(raw) : rdParseCSV(raw); }
+    catch(e) { rdToast('Parse failed: ' + e.message); return; }
+    if (!Array.isArray(records)) records = [records];
+    // Route by detected schema — openings have `position`, clients have `clientName`
+    let addedOpen = 0, addedClient = 0;
+    records.forEach(r => {
+        if (r.clientName || r.Client_Name) {
+            const c = normalizeClientRecord(r); c.category = cat;
+            if (!c.id) c.id = (cat==='j1'?'J1-CL-':'CR-CL-') + Math.random().toString(36).slice(2,6).toUpperCase();
+            recruitingState[cat].clients.push(c); addedClient++;
+        } else if (r.position || r.Posting_Title) {
+            const o = normalizeJobOpeningRecord(r); o.category = cat;
+            recruitingState[cat].openings.push(o); addedOpen++;
+        }
+    });
+    rdSaveState(cat); rdCloseModal(); rdRenderOverview(); renderRecruitingDivision();
+    rdToast(`Imported ${addedOpen} openings, ${addedClient} clients into ${cat.toUpperCase()}.`);
+}
+
+// ───── Export ─────
+function rdOpenExport() {
+    rdOpenModal('Export Recruiting Data', `
+        <p class="text-xs text-zinc-400 mb-3">Choose what to export. Downloads start immediately.</p>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+            <button onclick="rdExport('j1','openings','csv')"      class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-200 border border-zinc-700">J-1 Openings · CSV</button>
+            <button onclick="rdExport('j1','openings','json')"     class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-200 border border-zinc-700">J-1 Openings · JSON</button>
+            <button onclick="rdExport('cruise','openings','csv')"  class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-200 border border-zinc-700">Cruise Openings · CSV</button>
+            <button onclick="rdExport('cruise','openings','json')" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-200 border border-zinc-700">Cruise Openings · JSON</button>
+            <button onclick="rdExport('j1','clients','csv')"       class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-200 border border-zinc-700">J-1 Clients · CSV</button>
+            <button onclick="rdExport('cruise','clients','csv')"   class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-200 border border-zinc-700">Cruise Clients · CSV</button>
+            <button onclick="rdExportAll('csv')"  class="px-3 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg text-white border border-purple-400 col-span-2">Everything · CSV bundle</button>
+            <button onclick="rdExportAll('json')" class="px-3 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg text-white border border-purple-400 col-span-2">Everything · JSON</button>
+        </div>
+        <div class="mt-3 text-right">
+            <button onclick="rdCloseModal()" class="px-3 py-1.5 text-xs font-medium bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg hover:bg-zinc-700">Close</button>
+        </div>
+    `);
+}
+function rdToCSV(rows) {
+    if (!rows.length) return '';
+    const headers = Array.from(rows.reduce((s,r)=>{ Object.keys(r).forEach(k=>s.add(k)); return s; }, new Set()));
+    const esc = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; };
+    return headers.join(',') + '\n' + rows.map(r => headers.map(k => esc(r[k])).join(',')).join('\n');
+}
+function rdDownload(filename, content, mime='text/plain') {
+    const blob = new Blob([content], {type: mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function rdExport(cat, kind, fmt) {
+    const rows = recruitingState[cat]?.[kind] || [];
+    const base = `poseidon-${cat}-${kind}-${new Date().toISOString().slice(0,10)}`;
+    if (fmt === 'csv')  rdDownload(base+'.csv',  rdToCSV(rows), 'text/csv');
+    else                 rdDownload(base+'.json', JSON.stringify(rows, null, 2), 'application/json');
+    rdToast(`Exported ${rows.length} ${kind} from ${cat.toUpperCase()}.`);
+}
+function rdExportAll(fmt) {
+    const payload = {
+        generatedAt: new Date().toISOString(),
+        j1:     recruitingState.j1,
+        cruise: recruitingState.cruise
+    };
+    const base = `poseidon-recruiting-${new Date().toISOString().slice(0,10)}`;
+    if (fmt === 'json') rdDownload(base+'.json', JSON.stringify(payload, null, 2), 'application/json');
+    else {
+        // CSV bundle: concat each section with a separator row
+        const parts = [];
+        ['j1','cruise'].forEach(cat => {
+            ['openings','clients'].forEach(kind => {
+                parts.push(`# ${cat} / ${kind}`);
+                parts.push(rdToCSV(recruitingState[cat][kind]||[]));
+                parts.push('');
+            });
+        });
+        rdDownload(base+'.csv', parts.join('\n'), 'text/csv');
+    }
+    rdCloseModal();
+}
+
+// ───── PDF export of Overview (via browser print) ─────
+function rdExportPDF() {
+    const panel = document.getElementById('recruiting-overview');
+    if (!panel) return;
+    const w = window.open('', '_blank');
+    if (!w) { rdToast('Popup blocked — allow popups to export PDF.'); return; }
+    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).map(n => n.outerHTML).join('\n');
+    w.document.write(`<!DOCTYPE html><html class="dark"><head><title>Poseidon Recruiting Overview — ${new Date().toLocaleDateString()}</title>${styles}<style>@media print { body { background:white !important; color:black !important; } canvas { max-width:100% !important; } .no-print { display:none !important; } }</style></head><body class="bg-[#0a1628] text-zinc-100 p-6">`);
+    w.document.write(`<h1 class="text-2xl font-bold mb-1">Poseidon Recruiting Overview</h1><p class="text-xs text-zinc-500 mb-6">${new Date().toLocaleString()} · CTI Group Worldwide Services</p>`);
+    w.document.write(panel.innerHTML);
+    w.document.write(`</body></html>`);
+    w.document.close();
+    setTimeout(()=>{ try { w.print(); } catch(e){} }, 600);
+}
+
+// ───── Modal + toast plumbing ─────
+function rdOpenModal(title, bodyHtml) {
+    let m = $('rd-modal');
+    if (!m) {
+        m = document.createElement('div');
+        m.id = 'rd-modal';
+        m.className = 'fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm';
+        m.innerHTML = `<div class="bg-[#0f1e2e] border border-zinc-700 rounded-2xl w-full max-w-2xl p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4"><h3 id="rd-modal-title" class="text-base font-bold text-zinc-100"></h3>
+            <button onclick="rdCloseModal()" class="text-zinc-500 hover:text-zinc-200"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+            <div id="rd-modal-body"></div></div>`;
+        document.body.appendChild(m);
+        m.addEventListener('click', e => { if (e.target === m) rdCloseModal(); });
+    }
+    $('rd-modal-title').textContent = title;
+    $('rd-modal-body').innerHTML = bodyHtml;
+    m.style.display = 'flex';
+    if (window.lucide?.createIcons) lucide.createIcons();
+}
+function rdCloseModal() { const m = $('rd-modal'); if (m) m.style.display = 'none'; }
+
+function rdToast(msg) {
+    let t = $('rd-toast');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = 'rd-toast';
+        t.className = 'fixed bottom-4 right-4 z-[90] bg-[#0f1e2e] border border-teal-500/40 text-zinc-100 rounded-lg px-4 py-2 text-xs shadow-[0_0_24px_rgba(20,184,166,0.25)] transition-opacity';
+        document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(window.__rdToastT);
+    window.__rdToastT = setTimeout(()=>{ t.style.opacity = '0'; }, 4200);
 }
 
 function rdBindEvents() {

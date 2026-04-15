@@ -1,12 +1,57 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=poseidon-dashboard-v5.html">
-<title>Poseidon Dashboard V5</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poseidon Dashboard — Select Version</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family:'Inter',sans-serif; background:#0a1628; color:#fafafa; min-height:100vh; }
+        .glow { box-shadow: 0 0 40px rgba(20,184,166,0.15); }
+    </style>
 </head>
-<body>
-<script>window.location.replace("poseidon-dashboard-v5.html");</script>
-<a href="poseidon-dashboard-v5.html">Poseidon Dashboard V5</a>
+<body class="flex items-center justify-center p-6">
+    <div class="max-w-3xl w-full">
+        <div class="text-center mb-10">
+            <div class="text-5xl mb-3">🔱</div>
+            <h1 class="text-3xl font-bold tracking-tight text-zinc-100">Poseidon Dashboard</h1>
+            <p class="text-sm text-zinc-500 mt-1">CTI Group Worldwide Services · choose a version</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- V5 (stable) -->
+            <a href="poseidon-dashboard-v5.html" class="block bg-[#0f1e2e] border border-zinc-700 hover:border-zinc-500 rounded-2xl p-6 transition-all group">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-mono uppercase tracking-wider text-zinc-500">Stable</span>
+                    <span class="text-xs font-mono text-zinc-400">v5</span>
+                </div>
+                <h2 class="text-xl font-bold text-zinc-100 mb-1 group-hover:text-zinc-50">Poseidon V5</h2>
+                <p class="text-sm text-zinc-400 mb-4 leading-relaxed">The current production build. Indigo + zinc theme, full Recruiting Division, all existing modules working.</p>
+                <div class="flex items-center gap-2 text-xs text-zinc-500 group-hover:text-zinc-300">
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i> Open V5 dashboard
+                </div>
+            </a>
+
+            <!-- V6 (new) -->
+            <a href="poseidon-dashboard-v6.html" class="block bg-[#0f1e2e] border border-teal-500/40 hover:border-teal-400 rounded-2xl p-6 transition-all group glow">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-mono uppercase tracking-wider text-teal-400">New · Command Center</span>
+                    <span class="text-xs font-mono text-teal-400">v6</span>
+                </div>
+                <h2 class="text-xl font-bold text-zinc-100 mb-1 group-hover:text-white">Poseidon V6</h2>
+                <p class="text-sm text-zinc-400 mb-4 leading-relaxed">Teal + navy command-center palette. Chart.js visualizations, forecasting, scenario simulation, import/export, and PDF tools.</p>
+                <div class="flex items-center gap-2 text-xs text-teal-400 group-hover:text-teal-300">
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i> Open V6 dashboard
+                </div>
+            </a>
+        </div>
+
+        <p class="text-center text-[11px] text-zinc-600 mt-8">
+            V5 is frozen as the safety fallback. If V6 ever breaks, V5 is one click away and always matches today's behavior.
+        </p>
+    </div>
+    <script>lucide.createIcons();</script>
 </body>
 </html>
