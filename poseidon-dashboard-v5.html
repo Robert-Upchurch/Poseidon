@@ -432,21 +432,21 @@
 
     <!-- KPI Row -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 hover:border-indigo-500/40 transition-all cursor-pointer group" onclick="switchPage('tasks')">
-            <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Today's Tasks</div>
-            <div class="text-2xl font-bold font-mono text-zinc-100 group-hover:text-indigo-400 transition-colors" id="kpi-today-tasks">0</div>
+        <div class="kpi-card rounded-xl p-4 cursor-pointer transition-all" style="background:#1e3a8a;border:1px solid #1e40af;color:#ffffff;" onclick="switchPage('tasks')">
+            <div class="kpi-label text-[11px] font-semibold uppercase tracking-wider mb-1" style="color:#ffffff;">Today's Tasks</div>
+            <div class="text-2xl font-bold font-mono" style="color:#ffffff;" id="kpi-today-tasks">0</div>
         </div>
-        <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 border-l-2 border-l-red-500/60 hover:border-red-500/40 transition-all cursor-pointer group" onclick="switchPage('tasks')">
-            <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Overdue</div>
-            <div class="text-2xl font-bold font-mono text-red-400 group-hover:text-red-300 transition-colors" id="kpi-overdue">0</div>
+        <div class="kpi-card rounded-xl p-4 cursor-pointer transition-all" style="background:#1e3a8a;border:1px solid #1e40af;border-left:4px solid #ef4444;color:#ffffff;" onclick="switchPage('tasks')">
+            <div class="kpi-label text-[11px] font-semibold uppercase tracking-wider mb-1" style="color:#ffffff;">Overdue</div>
+            <div class="text-2xl font-bold font-mono" style="color:#ffffff;" id="kpi-overdue">0</div>
         </div>
-        <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 hover:border-blue-500/40 transition-all cursor-pointer group" onclick="switchPage('tasks')">
-            <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-1">In Progress</div>
-            <div class="text-2xl font-bold font-mono text-blue-400 group-hover:text-blue-300 transition-colors" id="kpi-in-progress">0</div>
+        <div class="kpi-card rounded-xl p-4 cursor-pointer transition-all" style="background:#1e3a8a;border:1px solid #1e40af;color:#ffffff;" onclick="switchPage('tasks')">
+            <div class="kpi-label text-[11px] font-semibold uppercase tracking-wider mb-1" style="color:#ffffff;">In Progress</div>
+            <div class="text-2xl font-bold font-mono" style="color:#ffffff;" id="kpi-in-progress">0</div>
         </div>
-        <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 hover:border-green-500/40 transition-all cursor-pointer group" onclick="switchPage('calendar')">
-            <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Meetings Today</div>
-            <div class="text-2xl font-bold font-mono text-green-400 group-hover:text-green-300 transition-colors" id="kpi-meetings">0</div>
+        <div class="kpi-card rounded-xl p-4 cursor-pointer transition-all" style="background:#1e3a8a;border:1px solid #1e40af;color:#ffffff;" onclick="switchPage('calendar')">
+            <div class="kpi-label text-[11px] font-semibold uppercase tracking-wider mb-1" style="color:#ffffff;">Meetings Today</div>
+            <div class="text-2xl font-bold font-mono" style="color:#ffffff;" id="kpi-meetings">0</div>
         </div>
     </div>
 
@@ -611,17 +611,17 @@
     </div>
     <div class="j1-content" id="j1-housing-finder" style="display:none">
         <div class="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900/40">
-            <iframe src="https://robert-upchurch.github.io/j1-housing-finder/" class="w-full border-none rounded-xl" style="height:calc(100vh - 220px);min-height:600px;" loading="lazy" title="J1 Housing Finder" allow="clipboard-read; clipboard-write"></iframe>
+            <iframe src="https://robert-upchurch.github.io/j1-housing-finder/" class="w-full border-none rounded-xl" style="height:calc(100vh - 120px);min-height:700px;" loading="lazy" title="J1 Housing Finder" allow="clipboard-read; clipboard-write"></iframe>
         </div>
     </div>
     <div class="j1-content" id="j1-onboarding" style="display:none">
         <div class="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900/40">
-            <iframe src="https://robert-upchurch.github.io/ciee-partner-onboarding/" class="w-full border-none rounded-xl" style="height:calc(100vh - 220px);min-height:600px;" loading="lazy" title="CIEE Partner Onboarding"></iframe>
+            <iframe src="https://robert-upchurch.github.io/ciee-partner-onboarding/" class="w-full border-none rounded-xl" style="height:calc(100vh - 120px);min-height:700px;" loading="lazy" title="CIEE Partner Onboarding"></iframe>
         </div>
     </div>
     <div class="j1-content" id="j1-contracts" style="display:none">
         <div class="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900/40">
-            <iframe src="https://robert-upchurch.github.io/cti-command-center/" class="w-full border-none rounded-xl" style="height:calc(100vh - 220px);min-height:600px;" loading="lazy" title="J1 Contract Analysis"></iframe>
+            <iframe src="https://robert-upchurch.github.io/cti-command-center/" class="w-full border-none rounded-xl" style="height:calc(100vh - 120px);min-height:700px;" loading="lazy" title="J1 Contract Analysis"></iframe>
         </div>
     </div>
 
@@ -1788,7 +1788,7 @@
     </div>
     <div class="partner-content active" id="pt-unobaron">
         <div class="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900/40">
-            <iframe src="https://robert-upchurch.github.io/uno-baron-competitive-analysis/" class="w-full border-none rounded-xl" style="height:calc(100vh - 220px);min-height:600px;" loading="lazy" title="UNO-Baron Finance"></iframe>
+            <iframe src="https://robert-upchurch.github.io/uno-baron-competitive-analysis/" class="w-full border-none rounded-xl" style="height:calc(100vh - 120px);min-height:700px;" loading="lazy" title="UNO-Baron Finance"></iframe>
         </div>
     </div>
     <div class="partner-content" id="pt-cruiselines" style="display:none">
@@ -2412,13 +2412,10 @@ function renderDashboardHome() {
         `).join('');
     }
 
-    // Daily Briefing placeholder
+    // Daily Briefing — auto-load from ./briefings/latest.json (generated daily by Cowork)
     const dbc = $('daily-briefing-content');
     if (dbc && !dbc.dataset.loaded) {
-        dbc.innerHTML = `
-            <p class="text-zinc-400 text-sm">Daily briefing combines data from Zoho CRM, Outlook email, and Fireflies meetings.</p>
-            <p class="text-zinc-500 text-xs mt-2">Connect Microsoft 365 in Settings to enable live briefings, or refresh via Cowork session.</p>
-        `;
+        refreshBriefing();
     }
 
     // AI Co-Worker Suggestions
@@ -5565,6 +5562,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (td) td.textContent = formatDate(new Date());
         }
     }, 60000);
+
+    // J1 Division tab switching
+    document.querySelectorAll('.j1-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.getAttribute('data-tab');
+        document.querySelectorAll('.j1-tab').forEach(t => {
+          t.classList.remove('bg-indigo-500', 'text-white');
+          t.classList.add('bg-zinc-900', 'text-zinc-400', 'border', 'border-zinc-800', 'hover:border-zinc-700');
+        });
+        tab.classList.remove('bg-zinc-900', 'text-zinc-400', 'border', 'border-zinc-800', 'hover:border-zinc-700');
+        tab.classList.add('bg-indigo-500', 'text-white');
+        document.querySelectorAll('.j1-content').forEach(c => {
+          c.style.display = c.id === target ? 'block' : 'none';
+        });
+      });
+    });
 
     console.log('🔱 Poseidon Dashboard v5 initialized');
 });
