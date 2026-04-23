@@ -1,0 +1,81 @@
+{
+  "currentVersion": "6.1.0",
+  "currentCodename": "Poseidon — Jarvis Release",
+  "releases": [
+    {
+      "version": "6.1.0",
+      "codename": "Jarvis Release",
+      "date": "2026-04-23",
+      "summary": "Interactive training, link directory, changelog component, LLM enhancements, and Grok-powered voice assistant.",
+      "highlights": [
+        "NEW: Grok Voice Jarvis with WebSocket streaming + tool calling",
+        "NEW: Interactive onboarding training module (JSON-configurable)",
+        "NEW: Searchable Directory of every link, program, and integration",
+        "NEW: Version & Changelog widget in header",
+        "NEW: LLM enhancement layer (PDF parser, forecasting, video brief, client briefings)",
+        "NEW: Morning briefing (Microsoft 365 calendar integration)"
+      ],
+      "changes": [
+        { "category": "feature",     "text": "Interactive training module — mobile-friendly, modular, driven by config/training-steps.json" },
+        { "category": "feature",     "text": "Directory UI — searchable, filterable manifest of 40+ internal and external links" },
+        { "category": "feature",     "text": "Version & Changelog modal — chronological, categorized release history" },
+        { "category": "feature",     "text": "LLM layer for PDF housing parser — handles fuzzy dates, currency, pet policy, utility inclusions" },
+        { "category": "feature",     "text": "LLM forecasting helper — linear regression + Holt-Winters style seasonality projection" },
+        { "category": "feature",     "text": "LLM video brief generator — produces 8-scene scripts from intake form" },
+        { "category": "feature",     "text": "LLM client briefing generator — auto-summarizes division state for executive briefings" },
+        { "category": "feature",     "text": "Jarvis Voice Assistant — replaces ElevenLabs ConvAI with xAI Grok Voice via WebSocket" },
+        { "category": "feature",     "text": "Jarvis tool calling — go_to_page, save_task, save_event, read_dashboard_state, morning_briefing, simulate_division, read_kpi" },
+        { "category": "feature",     "text": "Morning Briefing — reads Microsoft 365 calendar + task priorities + division KPIs aloud" },
+        { "category": "integration", "text": "Floating Jarvis FAB — always-available voice button across every workspace" },
+        { "category": "ui",          "text": "Header buttons: Directory · Version · Restart Training" },
+        { "category": "ui",          "text": "Training cards optimized for iPhone/Android with swipe navigation" }
+      ]
+    },
+    {
+      "version": "6.0.0",
+      "codename": "Command Center",
+      "date": "2026-04-18",
+      "summary": "Major redesign: teal + navy command-center palette, Chart.js visualizations across every division.",
+      "highlights": [
+        "Teal/navy theme replaces V5 indigo/zinc",
+        "Chart.js 4.4.0 on every division page",
+        "Forecasting, Simulations, What-If, Import, Export, PDF toolbar standardized",
+        "J1 Housing PDF parser with multi-option selector"
+      ],
+      "changes": [
+        { "category": "feature",     "text": "Master + Forecast division: consolidated KPIs, forecasted placements, regional hub pipeline" },
+        { "category": "feature",     "text": "Finance division: Revenue, costs, P&L, forecasting" },
+        { "category": "feature",     "text": "Recruiting division: J-1 and Cruise pipelines with markdown generation" },
+        { "category": "feature",     "text": "Processing (CUK) division: visa tracking + document workflow" },
+        { "category": "feature",     "text": "J1 Division: sponsor, participant, host-employer, consulate tracking" },
+        { "category": "feature",     "text": "IT & Technology division: systems inventory + roadmap" },
+        { "category": "feature",     "text": "J1 Housing page: paste PDF → parsed options (move-in, rent, utilities, amenities, pets)" },
+        { "category": "feature",     "text": "Video Studio: intake form → auto brief → rendering pipeline" },
+        { "category": "ui",          "text": "Dark mode default; light mode fully styled" },
+        { "category": "ui",          "text": "Mobile drawer navigation with touch-optimized controls" },
+        { "category": "integration", "text": "MSAL for Microsoft 365 calendar + mail" },
+        { "category": "integration", "text": "Chart.js 4.4.0 for all visualizations" }
+      ]
+    },
+    {
+      "version": "5.0.0",
+      "codename": "Foundation",
+      "date": "2026-03-25",
+      "summary": "First production dashboard build. Indigo/zinc theme. All core modules functional.",
+      "highlights": [
+        "Unified workspace with Tasks, Calendar, Videos, Projects, Partners",
+        "localStorage persistence for tasks, events, settings",
+        "Recruiting Division modules for J-1 and Cruise"
+      ],
+      "changes": [
+        { "category": "feature",     "text": "Sidebar navigation with 7 workspace pages" },
+        { "category": "feature",     "text": "Task manager with modal create/edit flow" },
+        { "category": "feature",     "text": "Calendar with month/week/day views" },
+        { "category": "feature",     "text": "Video studio with production checklist" },
+        { "category": "feature",     "text": "Projects and Partners views (read-only cards)" },
+        { "category": "feature",     "text": "Settings page with theme, MSAL, and API config" },
+        { "category": "ui",          "text": "Dark/light theme toggle persisted to localStorage" }
+      ]
+    }
+  ]
+}
