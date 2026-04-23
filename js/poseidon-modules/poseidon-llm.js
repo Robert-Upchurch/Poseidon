@@ -440,9 +440,199 @@
   //    Reads the live dashboard state and drafts a briefing.
   // ══════════════════════════════════════════════════════════════════
   const ClientBriefing = (function () {
-    function snapshotDashboard() {
+    const SKIP_SELECTOR = [
+      'script', 'style', 'noscript', 'template',
+      '#sidebar', '#sidebar-overlay', '#mobile-menu-btn', '#app-header',
+      '#jarvis-fab', '#jarvis-panel', '#jarvis-modal',
+      '#poseidon-training-overlay', '#poseidon-directory-modal', '#poseidon-version-modal',
+      '#poseidon-back-to-v6',
+      '[data-skip-snapshot]', '.page.hidden'
+    ].join(',');
+
+    function _getActivePage() {
+      return document.querySelector('.page.active:not(.hidden), .page:not(.hidden)');
+    }
+
+    function _closestLabel(el) {
+      // Look for an associated <label> or a nearby text hint
+      try {
+        if (el.id) {
+          const lab = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+          if (lab) return lab.textContent.trim();
+        }
+        const parent = el.closest('label');
+        if (parent) return parent.textContent.trim();
+        // Look for a preceding heading/label-ish sibling
+        let prev = el.previousElementSibling;
+        while (prev) {
+          if (/^(LABEL|H1|H2|H3|H4|H5|H6|DT)$/.test(prev.tagName)) return (prev.textContent || '').trim();
+          prev = prev.previousElementSibling;
+        }
+        // Fall back to placeholder or aria-label
+        return el.getAttribute('aria-label') || el.getAttribute('placeholder') || null;
+      } catch (_) { return null; }
+    }
+
+    function _clean(str, maxLen) {
+      if (!str) return '';
+      const s = String(str).replace(/\s+/g, ' ').trim();
+      return (maxLen && s.length > maxLen) ? s.slice(0, maxLen) + '…' : s;
+    }
+
+    // Extract rich content from a page element. Walks the DOM and harvests
+    // headings, paragraphs, list items, textareas, form inputs, and any
+    // elements explicitly tagged data-document / data-note.
+    function extractPageContent(pageEl, opts) {
+      opts = opts || {};
+      const maxLenPerField = opts.maxLenPerField ?? 4000;
+      const maxItems = opts.maxItems ?? 120;
+      if (!pageEl) return { empty: true };
+
+      // Clone the page so we can safely strip UI chrome
+      const clone = pageEl.cloneNode(true);
+      clone.querySelectorAll(SKIP_SELECTOR).forEach(n => n.remove());
+      // Remove toolbar buttons — pure chrome with no informational value
+      clone.querySelectorAll('[data-division-toolbar] button, .jv-close, .pd-close, .pv-close').forEach(n => n.remove());
+
+      const out = {
+        title: (pageEl.querySelector('h2,h1')?.textContent || '').trim() || null,
+        subtitle: null,
+        headings: [],
+        paragraphs: [],
+        listItems: [],
+        documents: [],
+        notes: [],
+        textareas: [],
+        inputs: [],
+        links: [],
+        tables: [],
+        canvases: []
+      };
+
+      // Subtitle: first non-empty text adjacent to the H2
+      try {
+        const h2 = pageEl.querySelector('h2');
+        const hint = h2 && h2.nextElementSibling && /^P$/i.test(h2.nextElementSibling.tagName) ? h2.nextElementSibling.textContent : null;
+        out.subtitle = _clean(hint, 240) || null;
+      } catch (_) {}
+
+      // Headings
+      [...clone.querySelectorAll('h1,h2,h3,h4,h5,h6')].slice(0, maxItems).forEach(h => {
+        const t = _clean(h.textContent, 240);
+        if (t && t.length > 1) out.headings.push({ level: parseInt(h.tagName.slice(1), 10), text: t });
+      });
+
+      // Paragraphs — long enough to be meaningful
+      [...clone.querySelectorAll('p')].slice(0, maxItems).forEach(p => {
+        const t = _clean(p.textContent, 1200);
+        if (t && t.length >= 20) out.paragraphs.push(t);
+      });
+
+      // List items
+      [...clone.querySelectorAll('li')].slice(0, maxItems).forEach(li => {
+        const t = _clean(li.textContent, 600);
+        if (t && t.length >= 2) out.listItems.push(t);
+      });
+
+      // Tables (summary)
+      [...clone.querySelectorAll('table')].slice(0, 20).forEach(tbl => {
+        const rows = [...tbl.querySelectorAll('tr')].map(tr =>
+          [...tr.querySelectorAll('th,td')].map(td => _clean(td.textContent, 120))
+        ).filter(r => r.some(c => c));
+        if (rows.length) out.tables.push(rows.slice(0, 50));
+      });
+
+      // Textareas — capture full text (these are where docs/plans/notes live)
+      [...clone.querySelectorAll('textarea')].forEach(ta => {
+        const val = ta.value !== undefined ? ta.value : ta.textContent;
+        if (val && val.trim().length) {
+          out.textareas.push({
+            id: ta.id || null,
+            label: _closestLabel(ta) || null,
+            placeholder: ta.getAttribute('placeholder') || null,
+            text: _clean(val, maxLenPerField)
+          });
+        }
+      });
+      // The cloned textareas don't carry their .value from the DOM props (cloneNode
+      // only clones the "value" attribute, not the live property). Backfill from
+      // the live page:
+      [...pageEl.querySelectorAll('textarea')].forEach(ta => {
+        if (!ta.value || !ta.value.trim()) return;
+        const already = out.textareas.find(t => t.id && ta.id && t.id === ta.id);
+        if (already) { already.text = _clean(ta.value, maxLenPerField); return; }
+        out.textareas.push({
+          id: ta.id || null,
+          label: _closestLabel(ta) || null,
+          placeholder: ta.getAttribute('placeholder') || null,
+          text: _clean(ta.value, maxLenPerField)
+        });
+      });
+
+      // Inputs — only meaningful, filled, non-sensitive
+      const INPUT_SKIP = new Set(['password','hidden','file','submit','button','reset']);
+      [...pageEl.querySelectorAll('input')].forEach(inp => {
+        const type = (inp.type || 'text').toLowerCase();
+        if (INPUT_SKIP.has(type)) return;
+        const val = inp.value;
+        if (!val || !val.trim()) return;
+        // Skip inputs that are clearly search boxes / global chrome
+        if (inp.id === 'global-search') return;
+        out.inputs.push({
+          id: inp.id || null,
+          type,
+          label: _closestLabel(inp) || null,
+          value: _clean(val, 600)
+        });
+      });
+
+      // Explicit document/note regions (authors can tag content with data-document / data-note)
+      [...clone.querySelectorAll('[data-document],[data-doc],.poseidon-document')].forEach(el => {
+        out.documents.push({
+          title: el.getAttribute('data-document') || el.getAttribute('data-doc') || el.querySelector('h3,h4')?.textContent?.trim() || null,
+          text: _clean(el.innerText, maxLenPerField * 2)
+        });
+      });
+      [...clone.querySelectorAll('[data-note],.poseidon-note')].forEach(el => {
+        out.notes.push({
+          title: el.getAttribute('data-note') || el.querySelector('h3,h4')?.textContent?.trim() || null,
+          text: _clean(el.innerText, maxLenPerField)
+        });
+      });
+
+      // Heuristic: certain card patterns we know carry briefings/notes
+      [...clone.querySelectorAll('[id*="briefing" i], [id*="notes" i], [class*="briefing" i]')].slice(0, 20).forEach(el => {
+        const t = _clean(el.innerText, maxLenPerField);
+        if (!t || t.length < 30) return;
+        out.documents.push({ title: el.querySelector('h3,h4')?.textContent?.trim() || null, text: t });
+      });
+
+      // Canvas IDs for context (cannot read pixel data cheaply)
+      out.canvases = [...pageEl.querySelectorAll('canvas')].map(c => c.id).filter(Boolean);
+
+      // Links — useful for "what can I click from here"
+      [...clone.querySelectorAll('a[href]')].slice(0, 40).forEach(a => {
+        const t = _clean(a.textContent, 100);
+        const href = a.getAttribute('href');
+        if (t && href && !href.startsWith('#') && t.length > 1) {
+          out.links.push({ text: t, href });
+        }
+      });
+
+      // De-dup paragraphs / list items / headings
+      out.paragraphs = [...new Set(out.paragraphs)];
+      out.listItems  = [...new Set(out.listItems)];
+      out.headings   = out.headings.filter((h, i, arr) => arr.findIndex(x => x.text === h.text) === i);
+
+      return out;
+    }
+
+    function snapshotDashboard(opts) {
+      opts = opts || {};
+      const includeFullContent = opts.includeFullContent !== false; // default true
       const snap = {
         date: new Date().toISOString().slice(0,10),
+        timestamp: new Date().toISOString(),
         divisions: {},
         tasks: _readTasks(),
         events: _readEvents()
@@ -458,8 +648,22 @@
         })).filter(k => k.label);
         snap.divisions[id] = { title, charts, kpiCards };
       });
+
+      // Active-page deep content — this is the big unlock:
+      if (includeFullContent) {
+        const active = _getActivePage();
+        if (active) {
+          snap.activePageId = active.id || null;
+          snap.activePageContent = extractPageContent(active, {
+            maxLenPerField: opts.maxLenPerField ?? 4000,
+            maxItems: opts.maxItems ?? 120
+          });
+        }
+      }
+
       return snap;
     }
+
     function _readTasks() { try { return JSON.parse(localStorage.getItem('poseidon-tasks') || '[]'); } catch (_) { return []; } }
     function _readEvents() { try { return JSON.parse(localStorage.getItem('poseidon-events') || '[]'); } catch (_) { return []; } }
 
@@ -514,7 +718,7 @@
       }
     }
 
-    return { generate, generateLocal, snapshotDashboard };
+    return { generate, generateLocal, snapshotDashboard, extractPageContent };
   })();
 
   // ─── Public API ─────────────────────────────────────────────────

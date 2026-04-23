@@ -258,8 +258,40 @@
     {
       type: 'function',
       name: 'read_dashboard_state',
-      description: 'Returns a JSON snapshot of the currently-visible dashboard — active page, KPI tiles, open tasks, upcoming events.',
-      parameters: { type: 'object', properties: {} }
+      description: 'Returns a JSON snapshot of the currently-visible dashboard. Includes KPI tiles, open tasks, upcoming events, AND the full text content of the active page: headings, paragraphs, list items, documents, notes, textarea contents (e.g. pasted PDFs), and filled form fields. Use this to read documents, plans, or notes directly off the dashboard.',
+      parameters: {
+        type: 'object',
+        properties: {
+          include_full_content: {
+            type: 'boolean',
+            description: 'Default true. When true, the active page is deep-scanned for all readable text content.'
+          },
+          max_len_per_field: {
+            type: 'number',
+            description: 'Max characters per textarea / document / note (default 4000).'
+          }
+        }
+      }
+    },
+    {
+      type: 'function',
+      name: 'read_page_content',
+      description: 'Deep-reads the full text content of a SPECIFIC page (not just the active one). Returns headings, paragraphs, list items, documents, notes, textareas, and filled form fields for that page. Useful for "what does the Finance briefing say" or "read the J1 housing notes".',
+      parameters: {
+        type: 'object',
+        properties: {
+          page_id: {
+            type: 'string',
+            enum: ['masterforecast','finance','recruitingdivision','processingcuk','j1division','ittech','j1housing','dashboard','tasks','calendar','videos','projects','partners','settings'],
+            description: 'The page whose content to read.'
+          },
+          max_len_per_field: {
+            type: 'number',
+            description: 'Max characters per textarea / document / note (default 4000).'
+          }
+        },
+        required: ['page_id']
+      }
     },
     {
       type: 'function',
@@ -379,13 +411,31 @@
       return { ok: true, event: { title, date, time } };
     },
 
-    read_dashboard_state() {
+    read_dashboard_state(args) {
+      args = args || {};
+      const opts = {
+        includeFullContent: args.include_full_content !== false,
+        maxLenPerField: args.max_len_per_field || 4000
+      };
       const snap = window.PoseidonLLM && window.PoseidonLLM.ClientBriefing.snapshotDashboard
-        ? window.PoseidonLLM.ClientBriefing.snapshotDashboard()
+        ? window.PoseidonLLM.ClientBriefing.snapshotDashboard(opts)
         : { error: 'LLM module unavailable' };
-      snap.activePage = document.querySelector('.page:not(.hidden), .page.active')?.id || null;
+      snap.activePage = document.querySelector('.page.active:not(.hidden), .page:not(.hidden)')?.id || snap.activePageId || null;
       snap.pageTitle = document.getElementById('page-title')?.textContent || null;
       return snap;
+    },
+
+    read_page_content(args) {
+      args = args || {};
+      const page = document.getElementById(args.page_id);
+      if (!page) return { ok: false, error: `Page '${args.page_id}' not found` };
+      if (!window.PoseidonLLM || !window.PoseidonLLM.ClientBriefing.extractPageContent) {
+        return { ok: false, error: 'LLM module unavailable' };
+      }
+      const content = window.PoseidonLLM.ClientBriefing.extractPageContent(page, {
+        maxLenPerField: args.max_len_per_field || 4000
+      });
+      return { ok: true, page_id: args.page_id, content };
     },
 
     read_kpi({ division }) {
