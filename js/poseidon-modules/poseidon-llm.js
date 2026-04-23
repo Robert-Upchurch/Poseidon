@@ -15,8 +15,10 @@
   'use strict';
 
   const LS_KEY_API = 'poseidon_grok_api_key';
-  const GROK_ENDPOINT = 'https://api.x.ai/v1/chat/completions';
-  const GROK_MODEL = 'grok-4';
+  const GROK_ENDPOINT_RESPONSES = 'https://api.x.ai/v1/responses';
+  const GROK_ENDPOINT_CHAT      = 'https://api.x.ai/v1/chat/completions';
+  const GROK_MODEL              = 'grok-4.20-reasoning';
+  const LS_KEY_ENDPOINT         = 'poseidon_grok_endpoint_mode'; // 'responses' | 'chat'
 
   function getApiKey() {
     try { return localStorage.getItem(LS_KEY_API) || window.GROK_API_KEY || ''; } catch (_) { return window.GROK_API_KEY || ''; }
@@ -24,27 +26,101 @@
   function setApiKey(k) { try { localStorage.setItem(LS_KEY_API, k || ''); } catch (_) {} }
   function hasApiKey() { return !!getApiKey(); }
 
+  function getEndpointMode() {
+    try { return localStorage.getItem(LS_KEY_ENDPOINT) || 'responses'; } catch (_) { return 'responses'; }
+  }
+  function setEndpointMode(mode) {
+    if (mode !== 'responses' && mode !== 'chat') return;
+    try { localStorage.setItem(LS_KEY_ENDPOINT, mode); } catch (_) {}
+  }
+
+  // Extract model output text from either API shape.
+  function extractOutputText(data) {
+    // /v1/responses shapes
+    if (typeof data.output_text === 'string') return data.output_text;
+    if (Array.isArray(data.output)) {
+      const parts = [];
+      for (const item of data.output) {
+        if (item.type === 'message' && Array.isArray(item.content)) {
+          for (const c of item.content) {
+            if (typeof c === 'string') parts.push(c);
+            else if (c.type === 'output_text' && typeof c.text === 'string') parts.push(c.text);
+            else if (c.type === 'text' && typeof c.text === 'string') parts.push(c.text);
+          }
+        } else if (typeof item.text === 'string') {
+          parts.push(item.text);
+        }
+      }
+      if (parts.length) return parts.join('');
+    }
+    // /v1/chat/completions shape
+    const choice = data.choices && data.choices[0];
+    if (choice) {
+      const msg = choice.message || {};
+      if (typeof msg.content === 'string') return msg.content;
+      if (Array.isArray(msg.content)) {
+        return msg.content.map(c => (typeof c === 'string' ? c : (c.text || ''))).join('');
+      }
+    }
+    return '';
+  }
+
   // ─── Shared Grok helper (non-blocking; local fallbacks elsewhere) ──
+  // Uses /v1/responses by default with grok-4.20-reasoning. Falls back
+  // to /v1/chat/completions if the responses endpoint returns a 4xx
+  // that indicates it's unsupported for the chosen model/team.
   async function callGrok(systemPrompt, userPrompt, opts) {
     opts = opts || {};
     const key = getApiKey();
     if (!key) throw new Error('No Grok API key configured');
-    const res = await fetch(GROK_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body: JSON.stringify({
-        model: opts.model || GROK_MODEL,
-        temperature: opts.temperature ?? 0.3,
-        response_format: opts.json ? { type: 'json_object' } : undefined,
-        messages: [
+    const model = opts.model || GROK_MODEL;
+    const mode = opts.endpoint || getEndpointMode();
+
+    // Primary: /v1/responses
+    if (mode === 'responses') {
+      const body = {
+        model,
+        input: [
           { role: 'system', content: systemPrompt },
           { role: 'user',   content: userPrompt }
-        ]
-      })
+        ],
+        temperature: opts.temperature ?? 0.3
+      };
+      if (opts.json) body.response_format = { type: 'json_object' };
+      const res = await fetch(GROK_ENDPOINT_RESPONSES, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+        body: JSON.stringify(body)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return extractOutputText(data);
+      }
+      const errText = await res.text();
+      // If /v1/responses isn't available for this model/team, fall back to chat completions.
+      const shouldFallback = res.status === 404 || /not\s+found|unsupported|unknown\s+model|endpoint/i.test(errText);
+      if (!shouldFallback) throw new Error(`Grok /v1/responses ${res.status}: ${errText}`);
+      console.warn('[PoseidonLLM] /v1/responses unavailable — falling back to /v1/chat/completions');
+    }
+
+    // Fallback: /v1/chat/completions
+    const body = {
+      model,
+      temperature: opts.temperature ?? 0.3,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: userPrompt }
+      ]
+    };
+    if (opts.json) body.response_format = { type: 'json_object' };
+    const res = await fetch(GROK_ENDPOINT_CHAT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+      body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error(`Grok API ${res.status}: ${await res.text()}`);
+    if (!res.ok) throw new Error(`Grok /v1/chat/completions ${res.status}: ${await res.text()}`);
     const data = await res.json();
-    return data.choices?.[0]?.message?.content || '';
+    return extractOutputText(data);
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -444,6 +520,8 @@
   // ─── Public API ─────────────────────────────────────────────────
   window.PoseidonLLM = {
     setApiKey, getApiKey, hasApiKey,
+    getEndpointMode, setEndpointMode,
+    defaultModel: GROK_MODEL,
     HousingParser, Forecast, VideoBrief, ClientBriefing,
     _callGrok: callGrok
   };
