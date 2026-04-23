@@ -1,0 +1,300 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-04-23",
+  "categories": [
+    {
+      "id": "dashboards",
+      "label": "Dashboards & Command Centers",
+      "icon": "layout-grid",
+      "entries": [
+        {
+          "name": "Poseidon Dashboard V6",
+          "description": "The primary command center. Teal/navy theme with Chart.js visualizations, forecasting, simulations.",
+          "url": "poseidon-dashboard-v6.html",
+          "type": "internal",
+          "division": "All"
+        },
+        {
+          "name": "Poseidon Dashboard V5 (Fallback)",
+          "description": "Stable fallback build. Indigo/zinc theme. Kept frozen as safety net.",
+          "url": "poseidon-dashboard-v5.html",
+          "type": "internal",
+          "division": "All"
+        },
+        {
+          "name": "CTI Operations Dashboard",
+          "description": "Original website admin dashboard with Zoho Analytics embed placeholders.",
+          "url": "../POSEIDON/poseidon-website/admin/dashboard.html",
+          "type": "internal",
+          "division": "CTI Group"
+        },
+        {
+          "name": "CTI Contract Comparison Dashboard",
+          "description": "Comparison view of current vs proposed contracts for CTI Rebirth 2026.",
+          "url": "../POSEIDON/CTI Rebirth 2026/CTI Rebirth 2026/CTI_Contract_Dashboard.html",
+          "type": "internal",
+          "division": "CTI Group"
+        }
+      ]
+    },
+    {
+      "id": "j1-tools",
+      "label": "J-1 Program Tools",
+      "icon": "globe",
+      "entries": [
+        {
+          "name": "J1 Housing Finder",
+          "description": "Participant housing search & match tool with parsed PDF imports.",
+          "url": "j1-housing-finder-index.html",
+          "type": "internal",
+          "division": "J1"
+        },
+        {
+          "name": "J1 Housing Rent Alerts",
+          "description": "Automated rent-deadline alerts for participants.",
+          "url": "../POSEIDON/J1 Folders/J1 Housing/J1-Housing-Rent-Alerts.html",
+          "type": "internal",
+          "division": "J1"
+        },
+        {
+          "name": "CIEE Partner Onboarding",
+          "description": "CIEE sponsor onboarding flow. See CLAUDE_CODE_BUILD_BRIEF for configuration.",
+          "url": "https://partners.ciee.org/",
+          "type": "external",
+          "division": "J1"
+        },
+        {
+          "name": "Consulate Surabaya 2026 Briefing",
+          "description": "Full consular briefing package v5_FINAL_v4 with charts.",
+          "url": "../POSEIDON/J1 Folders/Consulate_Surabaya_2026/02_Deliverables/Combined_Briefing/",
+          "type": "folder",
+          "division": "J1"
+        }
+      ]
+    },
+    {
+      "id": "recruiting",
+      "label": "Recruiting & Careers",
+      "icon": "users",
+      "entries": [
+        {
+          "name": "CTI Careers Form",
+          "description": "Public candidate application (cruise division).",
+          "url": "../POSEIDON/poseidon-website/cti/careers.html",
+          "type": "internal",
+          "division": "CTI"
+        },
+        {
+          "name": "GHR Apply Form",
+          "description": "J-1 Cultural Exchange participant application.",
+          "url": "../POSEIDON/poseidon-website/ghr/apply.html",
+          "type": "internal",
+          "division": "GHR"
+        },
+        {
+          "name": "GHR Host Employers",
+          "description": "Host-employer signup and information page.",
+          "url": "../POSEIDON/poseidon-website/ghr/host-employers.html",
+          "type": "internal",
+          "division": "GHR"
+        },
+        {
+          "name": "GHR Partner Program",
+          "description": "Revenue-share partner program signup.",
+          "url": "../POSEIDON/poseidon-website/ghr/partner-program.html",
+          "type": "internal",
+          "division": "GHR"
+        },
+        {
+          "name": "Zoho Recruit",
+          "description": "Primary ATS. Candidates flow in from all CTI/GHR forms.",
+          "url": "https://recruit.zoho.com/",
+          "type": "external",
+          "division": "All"
+        }
+      ]
+    },
+    {
+      "id": "integrations",
+      "label": "External Integrations",
+      "icon": "plug",
+      "entries": [
+        {
+          "name": "Microsoft 365",
+          "description": "Mail, Calendar, OneDrive via MSAL. Configure in Settings.",
+          "url": "https://admin.microsoft.com/",
+          "type": "external",
+          "division": "All"
+        },
+        {
+          "name": "Zoho One (CRM · Books · Analytics · Campaigns · Recruit)",
+          "description": "Primary business platform. All dashboards ultimately read from Zoho.",
+          "url": "https://one.zoho.com/",
+          "type": "external",
+          "division": "All"
+        },
+        {
+          "name": "xAI Grok — Voice API",
+          "description": "Powers Jarvis voice assistant. wss://api.x.ai/v1/realtime",
+          "url": "https://x.ai/api",
+          "type": "external",
+          "division": "All"
+        },
+        {
+          "name": "ElevenLabs",
+          "description": "TTS voiceovers for recruiting videos (vo-01..vo-08). Eleven v3 model.",
+          "url": "https://elevenlabs.io/app",
+          "type": "external",
+          "division": "Video Studio"
+        },
+        {
+          "name": "Storyblocks",
+          "description": "Licensed B-roll footage for recruiting videos.",
+          "url": "https://www.storyblocks.com/",
+          "type": "external",
+          "division": "Video Studio"
+        },
+        {
+          "name": "CIEE Partner Portal",
+          "description": "J-1 sponsor operations portal.",
+          "url": "https://partners.ciee.org/",
+          "type": "external",
+          "division": "J1"
+        },
+        {
+          "name": "Intrax / Alliance / Cultural Vistas",
+          "description": "Alternative J-1 sponsors. Multi-sponsor architecture per CIEE-CTI Partnership memo.",
+          "url": "https://www.intraxinc.com/",
+          "type": "external",
+          "division": "J1"
+        }
+      ]
+    },
+    {
+      "id": "drive",
+      "label": "Google Drive Folders",
+      "icon": "folder",
+      "entries": [
+        {
+          "name": "Poseidon Project Drive Map",
+          "description": "Visual map of all Drive folders used for Project Poseidon.",
+          "url": "../POSEIDON/Google_Drive_Poseidon_Map.html",
+          "type": "internal",
+          "division": "All"
+        },
+        {
+          "name": "CTI Main Files",
+          "description": "01 - Poseidon - GHR - CTI Main Files. Top-level operational folder.",
+          "url": "../POSEIDON/01 - Podidon - GHR - CTI Main Files/",
+          "type": "folder",
+          "division": "CTI Group"
+        },
+        {
+          "name": "CTI Rebirth 2026",
+          "description": "Business plan, industry research, transformation plans.",
+          "url": "../POSEIDON/CTI Rebirth 2026/",
+          "type": "folder",
+          "division": "CTI Group"
+        },
+        {
+          "name": "Video Production Assets",
+          "description": "B-roll, voiceovers, music, photos for J-1 & recruiting videos.",
+          "url": "../POSEIDON/",
+          "type": "folder",
+          "division": "Video Studio"
+        },
+        {
+          "name": "Partner Assets (Beemok, La Quinta, Grand Hyatt Vail, Riviera)",
+          "description": "Per-partner web & video asset libraries.",
+          "url": "../POSEIDON/beemok-assets/",
+          "type": "folder",
+          "division": "Partners"
+        }
+      ]
+    },
+    {
+      "id": "docs",
+      "label": "Executive Documents",
+      "icon": "file-text",
+      "entries": [
+        {
+          "name": "CTI Group Business DNA",
+          "description": "Foundational positioning & brand voice document.",
+          "url": "../POSEIDON/CTI_Group_Business_DNA.pdf",
+          "type": "document",
+          "division": "All"
+        },
+        {
+          "name": "Project Poseidon Implementation Plan v1",
+          "description": "Master plan for global expansion across all divisions.",
+          "url": "../POSEIDON/Project_Poseidon_Implementation_Plan_v1.docx",
+          "type": "document",
+          "division": "All"
+        },
+        {
+          "name": "CTI Rebirth 2026 Transformation Plan v3",
+          "description": "Latest transformation plan (PDF).",
+          "url": "../POSEIDON/CTI Rebirth 2026/Executive Summery/CTI_Rebirth_2026_Transformation_Plan_v3.pdf",
+          "type": "document",
+          "division": "CTI Group"
+        },
+        {
+          "name": "Claude Code Build Brief",
+          "description": "80k line technical build brief for Poseidon.",
+          "url": "../POSEIDON/CLAUDE_CODE_BUILD_BRIEF.md",
+          "type": "document",
+          "division": "All"
+        },
+        {
+          "name": "Cowork Quick Reference Guide",
+          "description": "Internal reference for Claude + team coworking.",
+          "url": "../POSEIDON/Cowork_Quick_Reference_Guide.html",
+          "type": "internal",
+          "division": "All"
+        }
+      ]
+    },
+    {
+      "id": "public-sites",
+      "label": "Public Websites",
+      "icon": "globe-2",
+      "entries": [
+        {
+          "name": "CTI Group Public Portal",
+          "description": "Main CTI Group marketing site (Cruise + Land-Base).",
+          "url": "../POSEIDON/poseidon-website/cti/index.html",
+          "type": "internal",
+          "division": "CTI"
+        },
+        {
+          "name": "GHR Public Portal",
+          "description": "Global Hospitality Recruiting portal (J-1 programs).",
+          "url": "../POSEIDON/poseidon-website/ghr/index.html",
+          "type": "internal",
+          "division": "GHR"
+        },
+        {
+          "name": "CTI About",
+          "description": "About CTI Group.",
+          "url": "../POSEIDON/poseidon-website/cti/about.html",
+          "type": "internal",
+          "division": "CTI"
+        },
+        {
+          "name": "CTI Cruise Division",
+          "description": "Cruise staffing division page.",
+          "url": "../POSEIDON/poseidon-website/cti/cruise-division.html",
+          "type": "internal",
+          "division": "CTI"
+        },
+        {
+          "name": "CTI Land-Base",
+          "description": "Hospitality & land-based staffing.",
+          "url": "../POSEIDON/poseidon-website/cti/land-base.html",
+          "type": "internal",
+          "division": "CTI"
+        }
+      ]
+    }
+  ]
+}

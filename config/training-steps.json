@@ -1,0 +1,174 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-04-23",
+  "meta": {
+    "title": "Poseidon Dashboard — Interactive Onboarding",
+    "subtitle": "Learn every workspace in ~6 minutes.",
+    "completionKey": "poseidon_training_completed_v1"
+  },
+  "tracks": [
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "icon": "rocket",
+      "estMinutes": 1,
+      "steps": [
+        {
+          "id": "welcome",
+          "title": "Welcome to Poseidon",
+          "body": "Poseidon is CTI Group's unified command center. It houses every division: Master + Forecast, Finance, Recruiting, Processing (CUK), J1 Division, IT & Tech, J1 Housing, plus supporting workspaces (Tasks, Calendar, Videos, Projects, Partners, Settings).",
+          "target": null,
+          "placement": "center",
+          "cta": "Begin tour"
+        },
+        {
+          "id": "sidebar",
+          "title": "The Sidebar",
+          "body": "All navigation lives here. Seven primary divisions at the top, seven workspace tools below. On mobile, tap the menu icon (top-left) to open this drawer.",
+          "target": "#sidebar",
+          "placement": "right"
+        },
+        {
+          "id": "header",
+          "title": "Header Controls",
+          "body": "Global search, Microsoft 365 connect button, and the dark/light toggle live here. The page title changes as you navigate.",
+          "target": "#app-header",
+          "placement": "bottom"
+        }
+      ]
+    },
+    {
+      "id": "divisions",
+      "title": "Primary Divisions",
+      "icon": "layout-grid",
+      "estMinutes": 2,
+      "steps": [
+        {
+          "id": "masterforecast",
+          "title": "Master + Forecast",
+          "body": "Your executive view. Consolidated KPIs across every division, forecasted placements, revenue by division, regional hub pipeline, and quarterly milestone tracking. Click Update Dashboard to pull fresh data; Simulate Week to project forward; What-If to run scenarios.",
+          "target": "[data-page=\"masterforecast\"]",
+          "placement": "right",
+          "navigateTo": "masterforecast"
+        },
+        {
+          "id": "finance",
+          "title": "Finance",
+          "body": "Revenue, costs, P&L, and forecasting. The toolbar (Update · Simulate · What-If · Import · Export · PDF) is consistent across every division — learn it once, use it everywhere.",
+          "target": "[data-page=\"finance\"]",
+          "placement": "right",
+          "navigateTo": "finance"
+        },
+        {
+          "id": "recruiting",
+          "title": "Recruiting",
+          "body": "Candidate pipelines for J1 and Cruise divisions. Generate recruiting markdowns, manage stages, and track conversion rates. Connects to Zoho Recruit when configured.",
+          "target": "[data-page=\"recruitingdivision\"]",
+          "placement": "right",
+          "navigateTo": "recruitingdivision"
+        },
+        {
+          "id": "processing",
+          "title": "Processing (CUK)",
+          "body": "Document processing, visa tracking, and case management. This is your back-office operations hub.",
+          "target": "[data-page=\"processingcuk\"]",
+          "placement": "right",
+          "navigateTo": "processingcuk"
+        },
+        {
+          "id": "j1division",
+          "title": "J1 Division",
+          "body": "Full J-1 Cultural Exchange program management: sponsors (CIEE, Intrax, Alliance), participants, host employers, consulates. The Surabaya consulate briefing lives here.",
+          "target": "[data-page=\"j1division\"]",
+          "placement": "right",
+          "navigateTo": "j1division"
+        }
+      ]
+    },
+    {
+      "id": "specialized",
+      "title": "Specialized Workspaces",
+      "icon": "tool",
+      "estMinutes": 2,
+      "steps": [
+        {
+          "id": "j1housing",
+          "title": "J1 Housing",
+          "body": "Manage participant housing end-to-end. Paste PDF housing documents and Poseidon's parser extracts options automatically (move-in dates, rent, utilities, deposits, amenities). Save accommodations per employer/region.",
+          "target": "[data-page=\"j1housing\"]",
+          "placement": "right",
+          "navigateTo": "j1housing"
+        },
+        {
+          "id": "videos",
+          "title": "Video Studio",
+          "body": "Generate recruiting videos from intake forms. ElevenLabs voiceovers, Storyblocks B-roll, Remotion/ffmpeg rendering. Click Generate Brief to auto-produce a scene-by-scene script.",
+          "target": "[data-page=\"videos\"]",
+          "placement": "right",
+          "navigateTo": "videos"
+        },
+        {
+          "id": "tasks",
+          "title": "Tasks",
+          "body": "Personal + team task list, persisted to localStorage. Create with the + button. Jarvis can add tasks by voice command.",
+          "target": "[data-page=\"tasks\"]",
+          "placement": "right",
+          "navigateTo": "tasks"
+        },
+        {
+          "id": "calendar",
+          "title": "Calendar",
+          "body": "Month / week / day views. Syncs with Microsoft 365 once connected. Jarvis will read your morning schedule aloud.",
+          "target": "[data-page=\"calendar\"]",
+          "placement": "right",
+          "navigateTo": "calendar"
+        }
+      ]
+    },
+    {
+      "id": "power-tools",
+      "title": "Power Tools",
+      "icon": "zap",
+      "estMinutes": 1,
+      "steps": [
+        {
+          "id": "jarvis",
+          "title": "Jarvis — Voice Assistant",
+          "body": "Click the floating Jarvis button (bottom-right) anywhere to talk. Powered by Grok Voice. Jarvis reads the live dashboard, knows your tasks & calendar, and can execute commands: 'Add a task', 'What's my day look like?', 'Go to Finance', 'Brief me.'",
+          "target": "#jarvis-fab",
+          "placement": "left"
+        },
+        {
+          "id": "directory",
+          "title": "Directory",
+          "body": "Every link, sub-program, and integration in one place. Click the Directory icon in the header to search/filter by category.",
+          "target": "#poseidon-directory-btn",
+          "placement": "bottom"
+        },
+        {
+          "id": "version",
+          "title": "Version & Changelog",
+          "body": "See current version, release dates, and categorized changelog. New features, patches, and upgrades always visible.",
+          "target": "#poseidon-version-btn",
+          "placement": "bottom"
+        },
+        {
+          "id": "settings",
+          "title": "Settings",
+          "body": "Dark/light theme, API keys (Grok, ElevenLabs, MSAL), and advanced configuration. Restart this training anytime from here.",
+          "target": "[data-page=\"settings\"]",
+          "placement": "right",
+          "navigateTo": "settings"
+        },
+        {
+          "id": "finish",
+          "title": "You're ready.",
+          "body": "That's the tour. This training will re-run when new features ship. You can always restart it from Settings → Replay Onboarding. Welcome aboard.",
+          "target": null,
+          "placement": "center",
+          "cta": "Enter Dashboard"
+        }
+      ]
+    }
+  ]
+}
