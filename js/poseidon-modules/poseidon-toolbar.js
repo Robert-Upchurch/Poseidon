@@ -649,9 +649,17 @@
   }
 
   // ─── Embed mode (popout / exit door) ────────────────────────────
+  // Track every popout we open so Jarvis can read content out of them
+  // even after the user has switched windows.
+  const popouts = [];
   function popoutDivision(divId) {
     const url = location.pathname.replace(/\/$/, '') + '?embed=' + encodeURIComponent(divId);
-    window.open(url, '_blank');
+    const win = window.open(url, '_blank');
+    if (win) popouts.push({ divId, win, openedAt: new Date().toISOString() });
+    return win;
+  }
+  function activePopouts() {
+    return popouts.filter(p => p.win && !p.win.closed);
   }
   function handleEmbedMode() {
     const params = new URLSearchParams(location.search);
@@ -750,6 +758,7 @@
       };
     },
     isEmbedded: () => document.body.classList.contains('pt-embed'),
+    activePopouts,
     BTN, BTN_BASE
   };
 })();
