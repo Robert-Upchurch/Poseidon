@@ -446,6 +446,35 @@
         },
         required: ['div_id', 'report_id']
       }
+    },
+    {
+      type: 'function',
+      name: 'read_full_dashboard',
+      description: 'Read every page in the dashboard top-to-bottom in a single call. Returns the title, full text content, and any same-origin iframe content for every division (Master+Forecast, Finance, Recruiting, Processing CUK, J1 Division, IT&Tech, Contracts, J1 Housing) AND every workspace page (Home, Tasks, Calendar, Videos, Projects, Partners, Settings). Use this whenever the user asks to "scan everything", "read the whole dashboard", "summarize the dashboard", "give me a full status", or asks an open-ended question that could span multiple divisions. Reads hidden pages too (textContent, no page-switching required).',
+      parameters: {
+        type: 'object',
+        properties: {
+          max_chars_per_page: { type: 'number', description: 'Cap per-page text content (default 4000).' },
+          include_iframes:    { type: 'boolean', description: 'Default true. Set false to skip iframe content.' }
+        }
+      }
+    },
+    {
+      type: 'function',
+      name: 'list_popped_windows',
+      description: 'List every popped-out browser window the user has opened from the dashboard via "Open in New Tab". Returns each one\'s division id and whether it is still open.',
+      parameters: { type: 'object', properties: {} }
+    },
+    {
+      type: 'function',
+      name: 'read_popped_window',
+      description: 'Read the content of a popped-out tab window. Use after list_popped_windows. Defaults to the most recently opened popout if div_id is omitted.',
+      parameters: {
+        type: 'object',
+        properties: {
+          div_id: { type: 'string', description: 'Optional division id of the popped-out window to read.' }
+        }
+      }
     }
   ];
 
@@ -703,6 +732,99 @@
         await new Promise(r => setTimeout(r, 1500));
       }
       return window.PoseidonToolbar.readReport(div_id, report_id);
+    },
+
+    // ─── Read every page in one call (hidden + iframes) ─────────────
+    async read_full_dashboard({ max_chars_per_page = 4000, include_iframes = true } = {}) {
+      // Make sure the Contracts iframe is mounted so we get its content too.
+      const contractsLink = document.querySelector('.nav-link[data-page="contracts"]');
+      const wasContractsMounted = !!document.getElementById('contracts-frame');
+      if (!wasContractsMounted && contractsLink) {
+        const original = document.querySelector('.page:not(.hidden)')?.id;
+        contractsLink.click();
+        await new Promise(r => setTimeout(r, 1500));
+        if (original) document.querySelector(`.nav-link[data-page="${original}"]`)?.click();
+      }
+
+      const ALL_PAGES = [
+        'masterforecast','finance','recruitingdivision','processingcuk',
+        'j1division','ittech','contracts','j1housing',
+        'dashboard','tasks','calendar','videos','projects','partners','settings'
+      ];
+      const pages = {};
+      let totalChars = 0;
+      for (const id of ALL_PAGES) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const raw = (el.textContent || '').replace(/\s+/g, ' ').trim();
+        let iframeText = '';
+        if (include_iframes) {
+          el.querySelectorAll('iframe').forEach(f => {
+            try {
+              const inner = f.contentDocument?.body?.innerText || '';
+              if (inner) iframeText += `\n[iframe ${f.id || 'anon'}]:\n${inner.slice(0, max_chars_per_page)}`;
+            } catch (_) {
+              iframeText += `\n[iframe ${f.id || 'anon'}]: cross-origin, cannot read`;
+            }
+          });
+        }
+        pages[id] = {
+          title:    el.querySelector('h2')?.textContent?.trim() || el.querySelector('h1')?.textContent?.trim() || id,
+          text:     raw.slice(0, max_chars_per_page),
+          char_count_total: raw.length,
+          iframe:   iframeText.slice(0, max_chars_per_page),
+          hidden:   el.classList.contains('hidden')
+        };
+        totalChars += raw.length;
+      }
+      return {
+        ok: true,
+        pages,
+        total_pages: Object.keys(pages).length,
+        total_chars: totalChars,
+        active_page: document.querySelector('.page:not(.hidden)')?.id || null,
+        captured_at: new Date().toISOString()
+      };
+    },
+
+    list_popped_windows() {
+      const popouts = window.PoseidonToolbar?.activePopouts?.() || [];
+      return {
+        ok: true,
+        count: popouts.length,
+        windows: popouts.map(p => ({ div_id: p.divId, opened_at: p.openedAt, still_open: p.win && !p.win.closed }))
+      };
+    },
+
+    read_popped_window({ div_id } = {}) {
+      const popouts = window.PoseidonToolbar?.activePopouts?.() || [];
+      if (!popouts.length) return { ok: false, error: 'No popped-out windows are currently open. Use popout_division first or open one via the "Open in New Tab" button.' };
+      const target = div_id ? popouts.find(p => p.divId === div_id) : popouts[popouts.length - 1];
+      if (!target) return { ok: false, error: 'No popped-out window matches div_id="' + div_id + '"' };
+      try {
+        const doc = target.win.document;
+        const page = doc.getElementById(target.divId);
+        const text = (page?.textContent || doc.body.textContent || '').replace(/\s+/g, ' ').trim();
+        // Read iframes in the popped window too
+        let iframeText = '';
+        (page || doc).querySelectorAll('iframe').forEach(f => {
+          try {
+            const inner = f.contentDocument?.body?.innerText || '';
+            if (inner) iframeText += `\n[iframe ${f.id || 'anon'}]:\n${inner.slice(0, 4000)}`;
+          } catch (_) {}
+        });
+        return {
+          ok: true,
+          div_id: target.divId,
+          opened_at: target.openedAt,
+          text:   text.slice(0, 6000),
+          iframe: iframeText.slice(0, 4000),
+          char_count_total: text.length,
+          embed_mode: doc.body.classList.contains('pt-embed')
+        };
+      } catch (e) {
+        return { ok: false, error: 'Could not read popped window: ' + e.message };
+      }
     }
   };
 
@@ -1292,6 +1414,8 @@
       'When the user asks to add a task or event, call save_task / save_event.',
       'When the user asks anything about cruise line contracts, fees, terms, obligations, legal, insurance, positions, compliance, or pros/cons — first call read_contracts (or read_contracts_lines for a quick line list), then summarize the results. The Contracts dashboard is fully readable end-to-end via these tools.',
       'When the user asks to "open in new tab", "pop out", or "expand" a division, call popout_division. For analytics or chart questions on a division, call list_analytics_reports first to discover available reports, then read_analytics to pull the actual numbers behind the chart.',
+      'When the user asks for an overall scan of the dashboard ("what is on the dashboard", "scan everything", "summarize the whole thing", "give me a full status", or any question that could span multiple divisions), call read_full_dashboard — it returns every page\'s title + text + iframe content in one call, even for hidden pages.',
+      'If the user has popped a division out into a separate tab and you need to read what is in that tab, call list_popped_windows then read_popped_window. You can read the popped tab\'s text, iframes, and embed-mode state without the user having to switch back.',
       'Always respond with audio. Keep responses under 25 seconds unless reading a briefing.',
       `Today is ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}.`
     ].join(' ');
