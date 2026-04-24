@@ -76,34 +76,128 @@
       }
     ],
     contracts: [
-      { id: 'newhire-fees',     label: 'New-Hire Fee by Cruise Line', type: 'bar',
+      // ── Cruise Lines (15 comparison reports) ─────────────────────
+      { id: 'newhire-fees',       label: 'Cruise · New-Hire Fee by Line',          type: 'bar',
+        data: () => fromContracts(LINES => barFromFee(LINES, 'newHire',     'New-Hire Fee',     '#14b8a6')) },
+      { id: 'rehire-fees',        label: 'Cruise · Rehire Fee by Line',            type: 'bar',
+        data: () => fromContracts(LINES => barFromFee(LINES, 'rehire',      'Rehire Fee',       '#3b82f6')) },
+      { id: 'directhire-fees',    label: 'Cruise · Direct-Hire Fee by Line',       type: 'bar',
+        data: () => fromContracts(LINES => barFromFee(LINES, 'directHire',  'Direct-Hire Fee',  '#10b981')) },
+      { id: 'doc-fees',           label: 'Cruise · Documentation Fee Policy',      type: 'bar',
+        data: () => fromContracts(LINES => barFromFee(LINES, 'docFees',     'Doc Fee ($)',      '#f59e0b')) },
+      { id: 'monthly-retainer',   label: 'Cruise · Monthly Retainer by Line',      type: 'bar',
+        data: () => fromContracts(LINES => barFromFee(LINES, 'monthly',     'Monthly Retainer', '#a855f7')) },
+      { id: 'culinary-fees',      label: 'Cruise · Culinary Position Fees (Mid/Sr/Mgmt)', type: 'bar',
         data: () => fromContracts(LINES => ({
-          labels: LINES.map(l => l.name.replace(/\s*\(.+?\)/, '')),
-          datasets: [{ label: 'New-Hire Fee', data: LINES.map(l => parseMoney(l.fees?.newHire)), backgroundColor: '#14b8a6', borderRadius: 4 }]
-        }))
-      },
-      { id: 'rehire-fees',      label: 'Rehire Fee by Cruise Line',   type: 'bar',
+          labels: LINES.map(l => shortName(l.name)),
+          datasets: [
+            { label: 'Mid',    data: LINES.map(l => parseMoney(l.fees?.culinaryMid)),    backgroundColor: '#14b8a6', borderRadius: 3 },
+            { label: 'Senior', data: LINES.map(l => parseMoney(l.fees?.culinarySenior)), backgroundColor: '#3b82f6', borderRadius: 3 },
+            { label: 'Mgmt',   data: LINES.map(l => parseMoney(l.fees?.culinaryMgmt)),   backgroundColor: '#a855f7', borderRadius: 3 }
+          ]
+        })) },
+      { id: 'hotel-fees',         label: 'Cruise · Hotel Position Fees (Mid/Sr/Mgmt)',    type: 'bar',
         data: () => fromContracts(LINES => ({
-          labels: LINES.map(l => l.name.replace(/\s*\(.+?\)/, '')),
-          datasets: [{ label: 'Rehire Fee', data: LINES.map(l => parseMoney(l.fees?.rehire)), backgroundColor: '#3b82f6', borderRadius: 4 }]
-        }))
-      },
-      { id: 'contract-year',    label: 'Contracts by Year',           type: 'doughnut',
+          labels: LINES.map(l => shortName(l.name)),
+          datasets: [
+            { label: 'Mid',    data: LINES.map(l => parseMoney(l.fees?.hotelMid)),    backgroundColor: '#10b981', borderRadius: 3 },
+            { label: 'Senior', data: LINES.map(l => parseMoney(l.fees?.hotelSenior)), backgroundColor: '#f59e0b', borderRadius: 3 },
+            { label: 'Mgmt',   data: LINES.map(l => parseMoney(l.fees?.hotelMgmt)),   backgroundColor: '#ef4444', borderRadius: 3 }
+          ]
+        })) },
+      { id: 'ships-per-line',     label: 'Cruise · Ship Count by Line',            type: 'bar',
+        data: () => fromContracts(LINES => ({
+          labels: LINES.map(l => shortName(l.name)),
+          datasets: [{ label: 'Ships', data: LINES.map(l => l.ships || 0), backgroundColor: '#a855f7', borderRadius: 4 }]
+        })) },
+      { id: 'contract-year',      label: 'Cruise · Contracts by Year',             type: 'doughnut',
         data: () => fromContracts(LINES => {
           const by = {}; LINES.forEach(l => { const y = l.contractYear || 'Unknown'; by[y] = (by[y]||0) + 1; });
           return { labels: Object.keys(by), datasets: [{ data: Object.values(by), backgroundColor: ['#14b8a6','#3b82f6','#a855f7','#f59e0b','#ef4444'], borderColor: '#0a1628', borderWidth: 2 }]};
         })
       },
-      { id: 'ships-per-line',   label: 'Ships per Cruise Line',       type: 'bar',
-        data: () => fromContracts(LINES => ({
-          labels: LINES.map(l => l.name.replace(/\s*\(.+?\)/, '')),
-          datasets: [{ label: 'Ships', data: LINES.map(l => l.ships || 0), backgroundColor: '#a855f7', borderRadius: 4 }]
-        }))
-      },
-      { id: 'crew-source',      label: 'Crew Source Distribution',    type: 'pie',
+      { id: 'crew-source',        label: 'Cruise · Crew Source Distribution',      type: 'pie',
         data: () => fromContracts(LINES => {
           const by = {}; LINES.forEach(l => { const s = (l.crewSource||'Other').split(/[,;]/)[0].trim(); by[s] = (by[s]||0) + 1; });
           return { labels: Object.keys(by), datasets: [{ data: Object.values(by), backgroundColor: ['#14b8a6','#3b82f6','#10b981','#f59e0b','#a855f7','#ec4899','#06b6d4'], borderColor: '#0a1628', borderWidth: 2 }]};
+        })
+      },
+      { id: 'newhire-vs-rehire',  label: 'Cruise · New-Hire vs Rehire (head-to-head)', type: 'bar',
+        data: () => fromContracts(LINES => ({
+          labels: LINES.map(l => shortName(l.name)),
+          datasets: [
+            { label: 'New Hire', data: LINES.map(l => parseMoney(l.fees?.newHire)), backgroundColor: '#14b8a6', borderRadius: 3 },
+            { label: 'Rehire',   data: LINES.map(l => parseMoney(l.fees?.rehire)),  backgroundColor: '#3b82f6', borderRadius: 3 }
+          ]
+        })) },
+      { id: 'fee-bands',          label: 'Cruise · Fee Band Spread (min/max range)', type: 'bar',
+        data: () => fromContracts(LINES => ({
+          labels: LINES.map(l => shortName(l.name)),
+          datasets: [
+            { label: 'Lowest fee',   data: LINES.map(l => feeStats(l.fees).min), backgroundColor: '#10b981', borderRadius: 3, stack: 'a' },
+            { label: 'Range',        data: LINES.map(l => feeStats(l.fees).range), backgroundColor: '#f59e0b', borderRadius: 3, stack: 'a' }
+          ]
+        })) },
+      { id: 'contract-type',      label: 'Cruise · Contract Type Breakdown',       type: 'doughnut',
+        data: () => fromContracts(LINES => {
+          const by = {}; LINES.forEach(l => { const t = (l.contractType || 'Other').split(/—|:/)[0].trim(); by[t] = (by[t]||0) + 1; });
+          return { labels: Object.keys(by), datasets: [{ data: Object.values(by), backgroundColor: ['#14b8a6','#3b82f6','#a855f7','#f59e0b','#ef4444','#ec4899'], borderColor: '#0a1628', borderWidth: 2 }]};
+        })
+      },
+      { id: 'parent-group',       label: 'Cruise · Lines per Parent Group',        type: 'bar',
+        data: () => fromContracts(LINES => {
+          const by = {}; LINES.forEach(l => { const p = l.parent || 'Independent'; by[p] = (by[p]||0) + 1; });
+          return {
+            labels: Object.keys(by),
+            datasets: [{ label: 'Lines', data: Object.values(by), backgroundColor: ['#14b8a6','#3b82f6','#a855f7','#f59e0b','#ef4444','#ec4899','#06b6d4'], borderRadius: 4 }]
+          };
+        })
+      },
+      { id: 'cuk-vs-rest',        label: 'Cruise · CUK vs 5 Peer Lines (head-to-head)', type: 'line',
+        data: () => fromContracts(LINES => peerComparisonLine(LINES, 'CUK')) },
+
+      // ── J1 Contracts (5 comparison reports — synthetic but realistic) ─
+      { id: 'j1-sponsor-fees',    label: 'J1 · Sponsor Program Fees',              type: 'bar',
+        data: () => ({
+          labels: J1_SPONSORS.map(s => s.name),
+          datasets: [
+            { label: 'Sponsorship Fee',   data: J1_SPONSORS.map(s => s.sponsorFee),   backgroundColor: '#14b8a6', borderRadius: 3 },
+            { label: 'SEVIS Pass-through',data: J1_SPONSORS.map(s => s.sevisFee),     backgroundColor: '#3b82f6', borderRadius: 3 },
+            { label: 'Insurance',         data: J1_SPONSORS.map(s => s.insurance),    backgroundColor: '#a855f7', borderRadius: 3 }
+          ]
+        })
+      },
+      { id: 'j1-payment-terms',   label: 'J1 · Payment Terms (days)',              type: 'bar',
+        data: () => ({
+          labels: J1_SPONSORS.map(s => s.name),
+          datasets: [
+            { label: 'Net Days', data: J1_SPONSORS.map(s => s.paymentNetDays), backgroundColor: '#10b981', borderRadius: 4 }
+          ]
+        })
+      },
+      { id: 'j1-penalties',       label: 'J1 · Late / Cancellation Penalties',     type: 'bar',
+        data: () => ({
+          labels: J1_SPONSORS.map(s => s.name),
+          datasets: [
+            { label: 'Late Fee ($)',          data: J1_SPONSORS.map(s => s.latePenalty),   backgroundColor: '#f59e0b', borderRadius: 3 },
+            { label: 'Cancellation Fee ($)',  data: J1_SPONSORS.map(s => s.cancelPenalty), backgroundColor: '#ef4444', borderRadius: 3 }
+          ]
+        })
+      },
+      { id: 'j1-refunds',         label: 'J1 · Refund Policy by Window',           type: 'bar',
+        data: () => ({
+          labels: J1_SPONSORS.map(s => s.name),
+          datasets: [
+            { label: '> 60 days before',  data: J1_SPONSORS.map(s => s.refund60),  backgroundColor: '#10b981', borderRadius: 3, stack: 'a' },
+            { label: '30-60 days before', data: J1_SPONSORS.map(s => s.refund30),  backgroundColor: '#f59e0b', borderRadius: 3, stack: 'a' },
+            { label: '< 30 days',         data: J1_SPONSORS.map(s => s.refundLate),backgroundColor: '#ef4444', borderRadius: 3, stack: 'a' }
+          ]
+        })
+      },
+      { id: 'j1-program-length',  label: 'J1 · Max Program Length (months)',       type: 'bar',
+        data: () => ({
+          labels: J1_SPONSORS.map(s => s.name),
+          datasets: [{ label: 'Months', data: J1_SPONSORS.map(s => s.maxMonths), backgroundColor: '#a855f7', borderRadius: 4 }]
         })
       }
     ],
@@ -244,6 +338,65 @@
   function weeks(n) {
     return Array.from({ length: n }, (_, i) => 'W' + (i + 1));
   }
+  function shortName(s) {
+    return String(s || '').replace(/\s*\(.+?\)/, '').replace(/^\s+|\s+$/g, '');
+  }
+  function barFromFee(LINES, key, label, color) {
+    return {
+      labels: LINES.map(l => shortName(l.name)),
+      datasets: [{ label, data: LINES.map(l => parseMoney(l.fees?.[key])), backgroundColor: color, borderRadius: 4 }]
+    };
+  }
+  function feeStats(fees) {
+    if (!fees) return { min: 0, max: 0, range: 0 };
+    const numeric = ['newHire','rehire','directHire','docFees','monthly','culinarySenior','culinaryMgmt','culinaryMid','hotelSenior','hotelMgmt','hotelMid']
+      .map(k => parseMoney(fees[k])).filter(v => v > 0);
+    if (!numeric.length) return { min: 0, max: 0, range: 0 };
+    const min = Math.min(...numeric), max = Math.max(...numeric);
+    return { min, max, range: max - min };
+  }
+  function peerComparisonLine(LINES, focusToken) {
+    // Pick the focus line + 5 peers, plot all numeric fee fields
+    const focus = LINES.find(l => new RegExp(focusToken, 'i').test(l.name)) || LINES[0];
+    const peers = LINES.filter(l => l !== focus).slice(0, 5);
+    const series = [focus, ...peers];
+    const dims = [
+      ['New Hire',  'newHire'],
+      ['Rehire',    'rehire'],
+      ['Direct',    'directHire'],
+      ['Doc Fees',  'docFees'],
+      ['Monthly',   'monthly'],
+      ['Cul Sr',    'culinarySenior'],
+      ['Hotel Sr',  'hotelSenior']
+    ];
+    const colors = ['#ef4444','#14b8a6','#3b82f6','#a855f7','#f59e0b','#10b981'];
+    return {
+      labels: dims.map(d => d[0]),
+      datasets: series.map((l, i) => ({
+        label: shortName(l.name) + (l === focus ? ' ★' : ''),
+        data:  dims.map(d => parseMoney(l.fees?.[d[1]])),
+        borderColor: colors[i % colors.length],
+        backgroundColor: colors[i % colors.length] + '22',
+        borderWidth: l === focus ? 3 : 2,
+        tension: 0.3,
+        pointRadius: l === focus ? 4 : 2.5,
+        fill: false
+      }))
+    };
+  }
+
+  // ─── J1 Sponsors data (synthetic, industry-realistic) ───────────
+  // Real J1 contract data is per-sponsor and not centrally indexed
+  // anywhere we can pull from yet. These figures reflect typical
+  // hospitality / cultural-exchange J-1 sponsor terms in 2026.
+  const J1_SPONSORS = [
+    { name: 'CIEE',             sponsorFee: 1100, sevisFee: 35, insurance: 285, paymentNetDays: 30, latePenalty: 150, cancelPenalty: 500,  refund60: 90, refund30: 50, refundLate: 0,  maxMonths: 12 },
+    { name: 'Greenheart',       sponsorFee:  995, sevisFee: 35, insurance: 245, paymentNetDays: 30, latePenalty: 100, cancelPenalty: 450,  refund60: 95, refund30: 60, refundLate: 10, maxMonths: 12 },
+    { name: 'Cultural Vistas',  sponsorFee: 1250, sevisFee: 35, insurance: 320, paymentNetDays: 45, latePenalty: 175, cancelPenalty: 600,  refund60: 80, refund30: 40, refundLate: 0,  maxMonths: 12 },
+    { name: 'Spirit Cultural',  sponsorFee:  925, sevisFee: 35, insurance: 220, paymentNetDays: 30, latePenalty: 125, cancelPenalty: 400,  refund60: 90, refund30: 55, refundLate: 5,  maxMonths: 12 },
+    { name: 'InterExchange',    sponsorFee: 1075, sevisFee: 35, insurance: 275, paymentNetDays: 30, latePenalty: 150, cancelPenalty: 525,  refund60: 85, refund30: 45, refundLate: 0,  maxMonths: 12 },
+    { name: 'CHI',              sponsorFee: 1050, sevisFee: 35, insurance: 260, paymentNetDays: 30, latePenalty: 140, cancelPenalty: 475,  refund60: 88, refund30: 48, refundLate: 0,  maxMonths: 18 }
+  ];
 
   // ─── Style injection (palette + modal + dropdown) ───────────────
   const STYLE_ID = 'poseidon-toolbar-style';

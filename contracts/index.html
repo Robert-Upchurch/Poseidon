@@ -2064,6 +2064,10 @@ document.addEventListener('focusin', e => {
   if (t.matches && t.matches('input[type=number]')) t.setAttribute('inputmode', 'numeric');
   if (t.matches && t.matches('input.fee-input')) t.setAttribute('inputmode', 'decimal');
 });
+
+/* Expose LINES dataset on window so the parent V6 dashboard's analytics
+   module (poseidon-toolbar.js) can read it via iframe.contentWindow.LINES */
+try { window.LINES = LINES; } catch (_) {}
 </script>
 </body>
 </html>
