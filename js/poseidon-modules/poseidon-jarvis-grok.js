@@ -475,6 +475,78 @@
           div_id: { type: 'string', description: 'Optional division id of the popped-out window to read.' }
         }
       }
+    },
+
+    // ─── Web access ─────────────────────────────────────────────────
+    {
+      type: 'function',
+      name: 'web_search',
+      description: 'Search the web for fresh information using DuckDuckGo Instant Answer (CORS-friendly, no API key needed). Best for definitions, simple facts, official site lookups, and disambiguation. For complex queries, fall back to your training data.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Search query.' }
+        },
+        required: ['query']
+      }
+    },
+    {
+      type: 'function',
+      name: 'fetch_url',
+      description: 'Fetch a URL and return its text content. Works for CORS-enabled endpoints (most APIs, raw GitHub files, plain text). Browser-side fetch — most arbitrary websites will fail with CORS errors; use this for known-friendly URLs only.',
+      parameters: {
+        type: 'object',
+        properties: {
+          url:        { type: 'string', description: 'URL to fetch (https only).' },
+          max_chars:  { type: 'number', description: 'Cap response body to N characters (default 4000).' }
+        },
+        required: ['url']
+      }
+    },
+
+    // ─── Media discovery + control ──────────────────────────────────
+    {
+      type: 'function',
+      name: 'list_media',
+      description: 'List every playable media element on the dashboard right now: native <video> and <audio> elements plus YouTube/Vimeo iframes. Returns id, title, type, src, current state (playing/paused), duration, current time. Use this first when the user asks to play/pause/stop something.',
+      parameters: { type: 'object', properties: {} }
+    },
+    {
+      type: 'function',
+      name: 'play_media',
+      description: 'Play a media element by id or by fuzzy-matching title. If neither is given, plays the first paused media on the page. Works on native video/audio AND YouTube/Vimeo iframes (via postMessage).',
+      parameters: {
+        type: 'object',
+        properties: {
+          id:    { type: 'string', description: 'Optional element id.' },
+          title: { type: 'string', description: 'Optional title substring (case-insensitive).' },
+          seek:  { type: 'number', description: 'Optional seek position in seconds before playing.' }
+        }
+      }
+    },
+    {
+      type: 'function',
+      name: 'pause_media',
+      description: 'Pause a media element. If no id/title given, pauses everything currently playing.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id:    { type: 'string' },
+          title: { type: 'string' }
+        }
+      }
+    },
+    {
+      type: 'function',
+      name: 'stop_media',
+      description: 'Stop media playback (pauses + seeks back to 0). If no id/title given, stops everything.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id:    { type: 'string' },
+          title: { type: 'string' }
+        }
+      }
     }
   ];
 
@@ -825,8 +897,191 @@
       } catch (e) {
         return { ok: false, error: 'Could not read popped window: ' + e.message };
       }
+    },
+
+    // ─── Web search (DuckDuckGo Instant Answer — CORS-friendly) ─────
+    async web_search({ query }) {
+      try {
+        const url = 'https://api.duckduckgo.com/?format=json&no_html=1&skip_disambig=0&q=' + encodeURIComponent(query);
+        const r = await fetch(url);
+        if (!r.ok) return { ok: false, error: 'DuckDuckGo HTTP ' + r.status };
+        const d = await r.json();
+        const related = (d.RelatedTopics || []).slice(0, 8).map(t => ({
+          text: t.Text || (t.Topics && t.Topics[0]?.Text) || '',
+          url:  t.FirstURL || (t.Topics && t.Topics[0]?.FirstURL) || ''
+        })).filter(x => x.text);
+        return {
+          ok: true,
+          query,
+          abstract:        d.Abstract || d.AbstractText || '',
+          abstract_source: d.AbstractSource || '',
+          abstract_url:    d.AbstractURL || '',
+          definition:      d.Definition || '',
+          definition_url:  d.DefinitionURL || '',
+          answer:          d.Answer || '',
+          answer_type:     d.AnswerType || '',
+          heading:         d.Heading || '',
+          related,
+          fallback_url:    'https://duckduckgo.com/?q=' + encodeURIComponent(query)
+        };
+      } catch (e) {
+        return { ok: false, error: 'web_search failed: ' + e.message };
+      }
+    },
+
+    async fetch_url({ url, max_chars = 4000 }) {
+      try {
+        if (!/^https?:\/\//i.test(url)) return { ok: false, error: 'URL must start with http:// or https://' };
+        const r = await fetch(url);
+        if (!r.ok) return { ok: false, error: 'HTTP ' + r.status, status: r.status };
+        const ct = r.headers.get('content-type') || '';
+        let body;
+        if (/json/i.test(ct)) {
+          body = JSON.stringify(await r.json(), null, 2);
+        } else {
+          body = await r.text();
+          // Strip script/style blocks + tags so HTML reads as text
+          body = body.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+        return { ok: true, url, content_type: ct, status: r.status, body: body.slice(0, max_chars), truncated: body.length > max_chars };
+      } catch (e) {
+        return { ok: false, error: 'fetch_url failed (often CORS): ' + e.message };
+      }
+    },
+
+    // ─── Media discovery + control ──────────────────────────────────
+    list_media() {
+      const out = [];
+      // Walk the parent doc + every popped-out tab so Jarvis sees media
+      // even when the user has expanded a division to a new window.
+      const docs = [document];
+      try { (window.PoseidonToolbar?.activePopouts?.() || []).forEach(p => { try { docs.push(p.win.document); } catch (_) {} }); } catch (_) {}
+      docs.forEach((doc, scope) => {
+        // Native video / audio
+        doc.querySelectorAll('video, audio').forEach((el, i) => {
+          out.push(_describeMedia(el, scope === 0 ? 'main' : 'popout', i));
+        });
+        // YouTube / Vimeo iframes
+        doc.querySelectorAll('iframe').forEach((f, i) => {
+          const src = f.src || '';
+          if (/youtube\.com\/embed|youtu\.be|youtube-nocookie/.test(src)) {
+            out.push({ id: f.id || ('yt-' + i), title: f.title || _ytTitleFromSrc(src), type: 'youtube', src, scope: scope === 0 ? 'main' : 'popout', state: 'unknown' });
+          } else if (/player\.vimeo\.com/.test(src)) {
+            out.push({ id: f.id || ('vimeo-' + i), title: f.title || 'Vimeo', type: 'vimeo', src, scope: scope === 0 ? 'main' : 'popout', state: 'unknown' });
+          }
+        });
+      });
+      return { ok: true, count: out.length, media: out };
+    },
+
+    play_media({ id, title, seek } = {}) {
+      const target = _findMedia(id, title, /* prefer */ 'paused');
+      if (!target) return { ok: false, error: 'No matching media found. Call list_media first.' };
+      return _command(target, 'play', { seek });
+    },
+
+    pause_media({ id, title } = {}) {
+      // If no id/title, pause everything currently playing
+      if (!id && !title) {
+        const all = _allMedia().filter(m => m.state === 'playing');
+        if (!all.length) return { ok: true, paused: 0, note: 'Nothing was playing.' };
+        all.forEach(m => _command(m, 'pause'));
+        return { ok: true, paused: all.length };
+      }
+      const target = _findMedia(id, title);
+      if (!target) return { ok: false, error: 'No matching media found.' };
+      return _command(target, 'pause');
+    },
+
+    stop_media({ id, title } = {}) {
+      if (!id && !title) {
+        const all = _allMedia();
+        all.forEach(m => _command(m, 'stop'));
+        return { ok: true, stopped: all.length };
+      }
+      const target = _findMedia(id, title);
+      if (!target) return { ok: false, error: 'No matching media found.' };
+      return _command(target, 'stop');
     }
   };
+
+  // ─── Media helpers ────────────────────────────────────────────────
+  function _describeMedia(el, scope, i) {
+    return {
+      id:       el.id || (el.tagName.toLowerCase() + '-' + i),
+      title:    el.getAttribute('title') || el.dataset?.title || el.getAttribute('aria-label') || el.currentSrc || el.src || ('Media ' + i),
+      type:     el.tagName.toLowerCase(),
+      src:      el.currentSrc || el.src || '',
+      scope,
+      state:    el.paused ? 'paused' : 'playing',
+      duration: isFinite(el.duration) ? el.duration : null,
+      currentTime: el.currentTime,
+      muted:    el.muted,
+      volume:   el.volume
+    };
+  }
+  function _ytTitleFromSrc(src) {
+    const m = src.match(/embed\/([^?&]+)/) || src.match(/v=([^&]+)/);
+    return m ? 'YouTube ' + m[1] : 'YouTube';
+  }
+  function _allMedia() {
+    return TOOL_IMPL.list_media().media;
+  }
+  function _findMedia(id, title, prefer) {
+    const all = _allMedia();
+    if (id) {
+      const exact = all.find(m => m.id === id);
+      if (exact) return exact;
+    }
+    if (title) {
+      const re = new RegExp(title, 'i');
+      const matches = all.filter(m => re.test(m.title || '') || re.test(m.src || '') || re.test(m.type || '') || re.test(m.id || ''));
+      if (matches.length) {
+        const preferred = prefer && matches.find(m => m.state === prefer);
+        return preferred || matches[0];
+      }
+    }
+    if (!id && !title) {
+      const preferred = prefer && all.find(m => m.state === prefer);
+      return preferred || all[0];
+    }
+    return null;
+  }
+  function _resolveElement(media) {
+    // Look in main doc first, then popouts
+    const docs = [document];
+    try { (window.PoseidonToolbar?.activePopouts?.() || []).forEach(p => { try { docs.push(p.win.document); } catch (_) {} }); } catch (_) {}
+    for (const doc of docs) {
+      const el = doc.getElementById(media.id);
+      if (el) return el;
+    }
+    return null;
+  }
+  function _command(media, cmd, opts = {}) {
+    const el = _resolveElement(media);
+    if (!el) return { ok: false, error: 'Could not resolve element for ' + media.id };
+    if (media.type === 'video' || media.type === 'audio') {
+      if (cmd === 'play') {
+        if (typeof opts.seek === 'number') try { el.currentTime = opts.seek; } catch (_) {}
+        const p = el.play();
+        if (p && p.catch) p.catch(() => {});
+        return { ok: true, action: 'play', id: media.id, title: media.title };
+      }
+      if (cmd === 'pause') { el.pause(); return { ok: true, action: 'pause', id: media.id, title: media.title }; }
+      if (cmd === 'stop')  { el.pause(); try { el.currentTime = 0; } catch (_) {} return { ok: true, action: 'stop', id: media.id, title: media.title }; }
+    }
+    if (media.type === 'youtube') {
+      const fn = cmd === 'play' ? 'playVideo' : cmd === 'pause' ? 'pauseVideo' : 'stopVideo';
+      try { el.contentWindow.postMessage(JSON.stringify({ event: 'command', func: fn, args: [] }), '*'); } catch (_) {}
+      return { ok: true, action: cmd, id: media.id, title: media.title, note: 'YouTube iframe needs ?enablejsapi=1 in src for control to work' };
+    }
+    if (media.type === 'vimeo') {
+      const fn = cmd === 'stop' ? 'pause' : cmd;
+      try { el.contentWindow.postMessage(JSON.stringify({ method: fn }), '*'); } catch (_) {}
+      return { ok: true, action: cmd, id: media.id, title: media.title };
+    }
+    return { ok: false, error: 'Unknown media type: ' + media.type };
+  }
 
   function _firstMeetingLabel(events) {
     const e = events[0];
@@ -1416,6 +1671,8 @@
       'When the user asks to "open in new tab", "pop out", or "expand" a division, call popout_division. For analytics or chart questions on a division, call list_analytics_reports first to discover available reports, then read_analytics to pull the actual numbers behind the chart.',
       'When the user asks for an overall scan of the dashboard ("what is on the dashboard", "scan everything", "summarize the whole thing", "give me a full status", or any question that could span multiple divisions), call read_full_dashboard — it returns every page\'s title + text + iframe content in one call, even for hidden pages.',
       'If the user has popped a division out into a separate tab and you need to read what is in that tab, call list_popped_windows then read_popped_window. You can read the popped tab\'s text, iframes, and embed-mode state without the user having to switch back.',
+      'For fresh facts you do not know, call web_search (DuckDuckGo Instant Answer). For specific URL contents, call fetch_url — many sites will fail with CORS, so prefer known-friendly endpoints (raw GitHub files, JSON APIs, etc.).',
+      'For media playback ("play that video", "pause the song", "stop the audio", "play the X video"), call list_media first to discover what is on the page, then play_media / pause_media / stop_media with id or title. The tools work on native video/audio AND YouTube/Vimeo iframes (and even on media in popped-out tabs).',
       'Always respond with audio. Keep responses under 25 seconds unless reading a briefing.',
       `Today is ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}.`
     ].join(' ');
