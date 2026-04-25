@@ -478,7 +478,7 @@
         <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="partners">
             <i data-lucide="handshake" class="w-3.5 h-3.5"></i> Partners
         </a>
-        <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" href="tracker.html" target="_blank">
+        <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="tracker">
             <i data-lucide="kanban-square" class="w-3.5 h-3.5"></i> Tracker
         </a>
         <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="settings">
@@ -542,6 +542,20 @@
        • Data-placeholder panel for tables/summaries
      Every division renders via rdRenderDivisionPage(divId).
 ═══════════════════════════════════════════════════ -->
+
+<!-- ═══════════ PAGE: TRACKER (Master Project Tracker, Jarvis-readable) ═══════════ -->
+<div id="tracker" class="page hidden">
+    <div class="flex items-start justify-between flex-wrap gap-3 mb-2">
+        <div>
+            <h2 class="text-2xl font-bold text-zinc-100 tracking-tight">Master Project Tracker</h2>
+            <p class="text-xs text-zinc-500 mt-1">All platform tasks · filter, edit, sync to GitHub · readable by Jarvis</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="tracker.html" target="_blank" class="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition">Open in new tab</a>
+        </div>
+    </div>
+    <iframe id="tracker-iframe" src="tracker.html" style="width:100%;height:calc(100vh - 180px);min-height:600px;border:0;border-radius:12px;background:#0a1628" title="Master Project Tracker"></iframe>
+</div>
 
 <!-- ═══════════ PAGE: MASTER + FORECAST ═══════════ -->
 <div id="masterforecast" class="page active">
@@ -4600,42 +4614,7 @@ function rdExportDivisionPDF(divId) {
     w.document.write(`<!DOCTYPE html><html class="dark"><head><title>${panel.querySelector('h2')?.textContent || 'Poseidon'} — ${new Date().toLocaleDateString()}</title>${styles}<style>@media print { body { background:white !important; color:black !important; } canvas { max-width:100% !important; } }</style></head><body class="bg-[#0a1628] text-zinc-100 p-6">`);
     w.document.write(`<p class="text-xs text-zinc-500 mb-4">${new Date().toLocaleString()} · CTI Group Worldwide Services</p>`);
     w.document.write(panel.innerHTML);
-    w.document.write(`
-<!-- ═══ POSEIDON TRACKER BRIDGE — exposes tracker tasks to Jarvis ═══ -->
-<div id="poseidon-tracker-summary" style="position:absolute;left:-99999px;top:-99999px;width:1px;height:1px;overflow:hidden" aria-hidden="false"></div>
-<script>
-(async function loadTrackerForJarvis() {
-  try {
-    const url = "config/tasks.json";
-    const r = await fetch(url, { cache: "no-cache" });
-    if (!r.ok) return;
-    const j = await r.json();
-    window.poseidonTasks = j.tasks || [];
-    window.poseidonTasksMeta = j._meta || {};
-    // Build a plain-text summary Jarvis (read_dashboard_state) will pick up
-    const counts = { P0:0, P1:0, P2:0, P3:0, DONE:0 };
-    window.poseidonTasks.forEach(t => { if (t.s === "DONE") counts.DONE++; else counts[t.p] = (counts[t.p]||0)+1; });
-    const lines = [
-      "POSEIDON MASTER TRACKER — full task list (read by Jarvis):",
-      `Last updated: ${j._meta && j._meta.lastUpdated || "unknown"}`,
-      `Counts: ${counts.P0} P0 | ${counts.P1} P1 | ${counts.P2} P2 | ${counts.P3} P3 | ${counts.DONE} DONE | ${window.poseidonTasks.length} TOTAL`,
-      "",
-      "All tasks:"
-    ];
-    window.poseidonTasks.forEach(t => {
-      lines.push(`[${t.p}] [${t.s}] (${t.o}) ${t.d} | ${t.id} — ${t.t}${t.n ? " — " + t.n : ""}`);
-    });
-    const el = document.getElementById("poseidon-tracker-summary");
-    if (el) el.textContent = lines.join("\n");
-    console.log(`[Tracker Bridge] Loaded ${window.poseidonTasks.length} tasks for Jarvis`);
-  } catch (e) {
-    console.warn("[Tracker Bridge] Failed to load tasks.json:", e);
-  }
-})();
-</script>
-<!-- ═══ END TRACKER BRIDGE ═══ -->
-
-</body></html>`);
+    w.document.write(`</body></html>`);
     w.document.close();
     setTimeout(()=>{ try { w.print(); } catch(e){} }, 600);
 }
