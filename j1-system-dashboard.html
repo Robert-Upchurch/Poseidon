@@ -424,11 +424,11 @@
         <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="recruitingdivision">
             <i data-lucide="users" class="w-4 h-4"></i> Recruiting
         </a>
-        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="processingcuk">
-            <i data-lucide="file-check" class="w-4 h-4"></i> Processing (CUK)
-        </a>
         <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="j1housing">
             <i data-lucide="home" class="w-4 h-4"></i> J1 Housing
+        </a>
+        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="j1housingfinder">
+            <i data-lucide="map-pin" class="w-4 h-4"></i> J1 Housing Finder
         </a>
         <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="contracts">
             <i data-lucide="file-signature" class="w-4 h-4"></i> Sponsor Contracts
@@ -550,34 +550,21 @@
 <!-- (PAGE: MASTER + FORECAST removed — non-J1 in this dashboard.) -->
 <!-- (PAGE: FINANCE removed — non-J1 in this dashboard.) -->
 
-<!-- ═══════════ PAGE: PROCESSING (CUK) ═══════════ -->
-<div id="processingcuk" class="page hidden">
+<!-- (PAGE: PROCESSING (CUK) removed — out of scope for the J1 System Dashboard.) -->
+
+<!-- ═══════════ PAGE: J1 HOUSING FINDER (full-page iframe) ═══════════ -->
+<div id="j1housingfinder" class="page hidden">
     <div class="flex items-start justify-between flex-wrap gap-3 mb-2">
         <div>
-            <h2 class="text-2xl font-bold text-zinc-100 tracking-tight">Processing Dashboard (CUK)</h2>
-            <p class="text-xs text-zinc-500">Visa Processing · Document Tracking · Compliance</p>
+            <h2 class="text-2xl font-bold text-zinc-100 tracking-tight">J1 Housing Finder</h2>
+            <p class="text-xs text-zinc-500">Direct-owner rentals for J-1 participants · Craigslist · Airbnb · Vrbo · Rent-by-Owner</p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-            <button onclick="rdDivToolbar('processingcuk','refresh')" class="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg hover:from-teal-400 hover:to-cyan-400 transition-all flex items-center gap-1.5 shadow-[0_0_16px_rgba(20,184,166,0.35)]"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Update Dashboard</button>
-            <button onclick="rdDivToolbar('processingcuk','simulate')" class="px-3 py-1.5 text-xs font-semibold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 flex items-center gap-1.5"><i data-lucide="fast-forward" class="w-3.5 h-3.5"></i> Simulate Week</button>
-            <button onclick="rdDivToolbar('processingcuk','whatif')" class="px-3 py-1.5 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center gap-1.5"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> What-If</button>
-            <button onclick="rdDivToolbar('processingcuk','import')" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-1.5"><i data-lucide="upload" class="w-3.5 h-3.5"></i> Import</button>
-            <button onclick="rdDivToolbar('processingcuk','export')" class="px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> Export</button>
-            <button onclick="rdDivToolbar('processingcuk','pdf')" class="px-3 py-1.5 text-xs font-semibold bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> PDF</button>
+            <button onclick="document.getElementById('j1hf-iframe').contentWindow?.location.reload()" class="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg hover:from-teal-400 hover:to-cyan-400 transition-all flex items-center gap-1.5 shadow-[0_0_16px_rgba(20,184,166,0.35)]"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Reload</button>
+            <a href="j1-housing-finder-index.html" target="_blank" rel="noopener" class="px-3 py-1.5 text-xs font-semibold bg-zinc-800 text-zinc-100 border border-zinc-700 rounded-lg hover:border-teal-500/50 transition-all flex items-center gap-1.5"><i data-lucide="external-link" class="w-3.5 h-3.5"></i> Open in New Tab</a>
         </div>
     </div>
-    <div class="text-[11px] text-zinc-500 mb-4" data-division-staleness="processingcuk">Not yet updated — click Update Dashboard to refresh</div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Processing Volume + Forecast</h3><div class="relative" style="height:260px"><canvas id="cuk-chart-volume"></canvas></div></div>
-        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Visa Type Distribution</h3><div class="relative" style="height:260px"><canvas id="cuk-chart-types"></canvas></div></div>
-        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Processing Time Trend</h3><div class="relative" style="height:280px"><canvas id="cuk-chart-time"></canvas></div></div>
-        <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5"><h3 class="text-sm font-semibold text-zinc-200 mb-3">Approval vs Rejection Rate</h3><div class="relative" style="height:280px"><canvas id="cuk-chart-approval"></canvas></div></div>
-    </div>
-    <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4 mt-4">
-        <h3 class="text-sm font-semibold text-zinc-200">Processing Queue</h3>
-        <p class="text-xs text-zinc-500 mt-1">Placeholder — active cases populate when CUK feed is connected.</p>
-    </div>
+    <iframe id="j1hf-iframe" src="j1-housing-finder-index.html" style="width:100%;height:calc(100vh - 180px);min-height:600px;border:0;border-radius:12px;background:#0a1628" loading="lazy" title="J1 Housing Finder" allow="clipboard-read; clipboard-write"></iframe>
 </div>
 
 <!-- (PAGE: IT & TECHNOLOGY removed — non-J1 in this dashboard.) -->
