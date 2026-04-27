@@ -31,6 +31,48 @@
         .page.hidden { display:none !important; }
         @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
         .page:not(.hidden) { animation: fadeIn 0.25s ease-out; }
+
+        /* ═══ KPI CARD READABILITY (Robert 2026-04-27) ═══
+           Tints the dark-grey KPI cards used across most frames with a
+           blue similar to the Connect 365 button and brightens the
+           labels. Scoped to specific class combinations so unrelated UI
+           (sidebar, modals, page bodies) is unaffected. */
+        .dark .bg-zinc-900\/60.border-l-4.rounded-xl,
+        html.dark .bg-zinc-900\/60.border-l-4.rounded-xl {
+            background-color: rgba(29, 78, 216, 0.20) !important;
+            border-top-color: rgba(96, 165, 250, 0.45) !important;
+            border-right-color: rgba(96, 165, 250, 0.45) !important;
+            border-bottom-color: rgba(96, 165, 250, 0.45) !important;
+        }
+        .dark .bg-zinc-900\/60.border-l-4.rounded-xl .text-zinc-500,
+        html.dark .bg-zinc-900\/60.border-l-4.rounded-xl .text-zinc-500 {
+            color: #bfdbfe !important;
+        }
+        .dark .bg-zinc-950\/60.rounded-lg,
+        .dark .bg-zinc-950\/70.rounded-lg,
+        html.dark .bg-zinc-950\/60.rounded-lg,
+        html.dark .bg-zinc-950\/70.rounded-lg {
+            background-color: rgba(29, 78, 216, 0.16) !important;
+            border-color: rgba(96, 165, 250, 0.35) !important;
+        }
+        .dark .bg-zinc-950\/60.rounded-lg .text-zinc-500,
+        .dark .bg-zinc-950\/70.rounded-lg .text-zinc-500,
+        html.dark .bg-zinc-950\/60.rounded-lg .text-zinc-500,
+        html.dark .bg-zinc-950\/70.rounded-lg .text-zinc-500 {
+            color: #bfdbfe !important;
+        }
+        html:not(.dark) .bg-zinc-900\/60.border-l-4.rounded-xl,
+        html:not(.dark) .bg-zinc-950\/60.rounded-lg,
+        html:not(.dark) .bg-zinc-950\/70.rounded-lg {
+            background-color: rgba(219, 234, 254, 0.65) !important;
+            border-color: rgba(59, 130, 246, 0.50) !important;
+        }
+        html:not(.dark) .bg-zinc-900\/60.border-l-4.rounded-xl .text-zinc-500,
+        html:not(.dark) .bg-zinc-950\/60.rounded-lg .text-zinc-500,
+        html:not(.dark) .bg-zinc-950\/70.rounded-lg .text-zinc-500 {
+            color: #1e40af !important;
+        }
+
         /* Calendar grid specifics */
         .cal-month-grid { display:grid; grid-template-columns:repeat(7,1fr); }
         .cal-week-grid-inner { display:grid; grid-template-columns:56px repeat(7,1fr); }
