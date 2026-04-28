@@ -42,82 +42,90 @@
             height: calc(100vh - 140px) !important;
         }
 
-        /* ═══ KPI CARD READABILITY (Robert 2026-04-27) ═══
-           The dark-grey KPI cards used across most dashboard frames had
-           low-contrast labels that were hard to read. This override
-           tints them with a blue similar to the Connect 365 button and
-           brightens the inner labels. Scoped to the specific Tailwind
-           class combinations that mark a KPI card so unrelated UI
-           (sidebar, modals, page bodies) is unaffected.
+        /* ═══ KPI CARD READABILITY — BLANKET RULE (Robert 2026-04-27 round 3) ═══
+           Catches every KPI / panel card across the dashboard regardless of
+           which bg-zinc-* opacity or rounded-* variant the markup uses.
+           Three rounds of narrow fixes (PRs #33, #35, #36) kept missing
+           variants — this rule is intentionally aggressive: any element
+           with bg-zinc-{900,950}/{40,60,70,80} + any rounded class gets
+           the readable blue treatment. Sidebar, modals, body, header,
+           page wrappers don't use these specific class combinations so
+           they remain unaffected.
 
-           Light mode reverses to dark text on a soft blue background. */
+           Sister standing order in feedback_dashboard_readable_kpi_cards.md. */
 
-        /* Top-level KPI cards (rounded-xl + colored left stripe) */
-        .dark .bg-zinc-900\/60.border-l-4.rounded-xl,
-        html.dark .bg-zinc-900\/60.border-l-4.rounded-xl {
-            background-color: rgba(29, 78, 216, 0.20) !important;     /* blue-700 @ 20% */
-            border-top-color: rgba(96, 165, 250, 0.45) !important;
-            border-right-color: rgba(96, 165, 250, 0.45) !important;
-            border-bottom-color: rgba(96, 165, 250, 0.45) !important;
-        }
-        .dark .bg-zinc-900\/60.border-l-4.rounded-xl .text-zinc-500,
-        html.dark .bg-zinc-900\/60.border-l-4.rounded-xl .text-zinc-500 {
-            color: #bfdbfe !important;  /* blue-200 */
-        }
-
-        /* Inner sub-cards (smaller cards inside KPI groups). Matches any
-           rounded variant via attribute selector — covers `rounded`,
-           `rounded-md`, `rounded-lg`, `rounded-xl`, `rounded-2xl`. */
+        /* DARK MODE — blue tint on every grey card variant */
+        .dark [class*="bg-zinc-900/40"][class*="rounded"],
+        .dark [class*="bg-zinc-900/60"][class*="rounded"],
+        .dark [class*="bg-zinc-950/40"][class*="rounded"],
         .dark [class*="bg-zinc-950/60"][class*="rounded"],
         .dark [class*="bg-zinc-950/70"][class*="rounded"],
-        html.dark [class*="bg-zinc-950/60"][class*="rounded"],
-        html.dark [class*="bg-zinc-950/70"][class*="rounded"] {
-            background-color: rgba(29, 78, 216, 0.16) !important;
-            border-color: rgba(96, 165, 250, 0.35) !important;
+        .dark [class*="bg-zinc-950/80"][class*="rounded"] {
+            background-color: rgba(29, 78, 216, 0.20) !important;     /* blue-700 @ 20% */
+            border-color: rgba(96, 165, 250, 0.40) !important;
         }
+        .dark [class*="bg-zinc-900/40"][class*="rounded"] .text-zinc-500,
+        .dark [class*="bg-zinc-900/40"][class*="rounded"] .text-zinc-400,
+        .dark [class*="bg-zinc-900/60"][class*="rounded"] .text-zinc-500,
+        .dark [class*="bg-zinc-900/60"][class*="rounded"] .text-zinc-400,
+        .dark [class*="bg-zinc-950/40"][class*="rounded"] .text-zinc-500,
+        .dark [class*="bg-zinc-950/40"][class*="rounded"] .text-zinc-400,
         .dark [class*="bg-zinc-950/60"][class*="rounded"] .text-zinc-500,
+        .dark [class*="bg-zinc-950/60"][class*="rounded"] .text-zinc-400,
         .dark [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-500,
-        html.dark [class*="bg-zinc-950/60"][class*="rounded"] .text-zinc-500,
-        html.dark [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-500 {
-            color: #bfdbfe !important;  /* blue-200 */
+        .dark [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-400,
+        .dark [class*="bg-zinc-950/80"][class*="rounded"] .text-zinc-500 {
+            color: #bfdbfe !important;  /* blue-200 — readable label text */
+        }
+        .dark [class*="bg-zinc-900/40"][class*="rounded"] .text-zinc-100,
+        .dark [class*="bg-zinc-900/40"][class*="rounded"] .text-zinc-200,
+        .dark [class*="bg-zinc-900/60"][class*="rounded"] .text-zinc-100,
+        .dark [class*="bg-zinc-900/60"][class*="rounded"] .text-zinc-200,
+        .dark [class*="bg-zinc-950/40"][class*="rounded"] .text-zinc-100,
+        .dark [class*="bg-zinc-950/40"][class*="rounded"] .text-zinc-200,
+        .dark [class*="bg-zinc-950/60"][class*="rounded"] .text-zinc-100,
+        .dark [class*="bg-zinc-950/60"][class*="rounded"] .text-zinc-200,
+        .dark [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-100,
+        .dark [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-200,
+        .dark [class*="bg-zinc-950/80"][class*="rounded"] .text-zinc-100 {
+            color: #ffffff !important;  /* pure white numbers */
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
-        /* Light mode — softer blue tint with darker text. Same attribute-
-           selector approach to catch all rounded-* variants. */
-        html:not(.dark) .bg-zinc-900\/60.border-l-4.rounded-xl,
+        /* LIGHT MODE — soft blue tint with dark navy text */
+        html:not(.dark) [class*="bg-zinc-900/40"][class*="rounded"],
+        html:not(.dark) [class*="bg-zinc-900/60"][class*="rounded"],
+        html:not(.dark) [class*="bg-zinc-950/40"][class*="rounded"],
         html:not(.dark) [class*="bg-zinc-950/60"][class*="rounded"],
-        html:not(.dark) [class*="bg-zinc-950/70"][class*="rounded"] {
+        html:not(.dark) [class*="bg-zinc-950/70"][class*="rounded"],
+        html:not(.dark) [class*="bg-zinc-950/80"][class*="rounded"] {
             background-color: rgba(219, 234, 254, 0.65) !important;   /* blue-100 @ 65% */
             border-color: rgba(59, 130, 246, 0.50) !important;
         }
-        html:not(.dark) .bg-zinc-900\/60.border-l-4.rounded-xl .text-zinc-500,
+        html:not(.dark) [class*="bg-zinc-900/40"][class*="rounded"] .text-zinc-500,
+        html:not(.dark) [class*="bg-zinc-900/40"][class*="rounded"] .text-zinc-400,
+        html:not(.dark) [class*="bg-zinc-900/60"][class*="rounded"] .text-zinc-500,
+        html:not(.dark) [class*="bg-zinc-900/60"][class*="rounded"] .text-zinc-400,
+        html:not(.dark) [class*="bg-zinc-950/40"][class*="rounded"] .text-zinc-500,
+        html:not(.dark) [class*="bg-zinc-950/40"][class*="rounded"] .text-zinc-400,
         html:not(.dark) [class*="bg-zinc-950/60"][class*="rounded"] .text-zinc-500,
-        html:not(.dark) [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-500 {
+        html:not(.dark) [class*="bg-zinc-950/60"][class*="rounded"] .text-zinc-400,
+        html:not(.dark) [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-500,
+        html:not(.dark) [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-400,
+        html:not(.dark) [class*="bg-zinc-950/80"][class*="rounded"] .text-zinc-500 {
             color: #1e40af !important;  /* blue-800 */
         }
-
-        /* ═══ READABILITY HARDENING (Robert 2026-04-27 — round 2) ═══
-           Numbers and section headers across the dashboard need to be
-           crisp and clearly readable. Strengthen value text inside
-           card bodies and bump page-section h2/h3 headers. */
-
-        /* KPI VALUE numbers — bigger, brighter on dark; darker on light.
-           Broadened with attribute selectors to catch all rounded-* mini-cards. */
-        .dark .bg-zinc-900\/60.border-l-4.rounded-xl .text-zinc-100,
-        .dark .bg-zinc-900\/60.border-l-4.rounded-xl .text-zinc-200,
-        .dark [class*="bg-zinc-950/60"][class*="rounded"] .text-zinc-100,
-        .dark [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-100,
-        .dark [class*="bg-zinc-950/60"][class*="rounded"] .text-zinc-200,
-        .dark [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-200 {
-            color: #ffffff !important;  /* pure white for max readability */
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        }
-        html:not(.dark) .bg-zinc-900\/60.border-l-4.rounded-xl .text-zinc-100,
-        html:not(.dark) .bg-zinc-900\/60.border-l-4.rounded-xl .text-zinc-200,
+        html:not(.dark) [class*="bg-zinc-900/40"][class*="rounded"] .text-zinc-100,
+        html:not(.dark) [class*="bg-zinc-900/40"][class*="rounded"] .text-zinc-200,
+        html:not(.dark) [class*="bg-zinc-900/60"][class*="rounded"] .text-zinc-100,
+        html:not(.dark) [class*="bg-zinc-900/60"][class*="rounded"] .text-zinc-200,
+        html:not(.dark) [class*="bg-zinc-950/40"][class*="rounded"] .text-zinc-100,
+        html:not(.dark) [class*="bg-zinc-950/40"][class*="rounded"] .text-zinc-200,
         html:not(.dark) [class*="bg-zinc-950/60"][class*="rounded"] .text-zinc-100,
-        html:not(.dark) [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-100,
         html:not(.dark) [class*="bg-zinc-950/60"][class*="rounded"] .text-zinc-200,
-        html:not(.dark) [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-200 {
+        html:not(.dark) [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-100,
+        html:not(.dark) [class*="bg-zinc-950/70"][class*="rounded"] .text-zinc-200,
+        html:not(.dark) [class*="bg-zinc-950/80"][class*="rounded"] .text-zinc-100 {
             color: #0c1e3e !important;  /* near-black navy */
         }
 
@@ -586,9 +594,8 @@
         <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="calendar">
             <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Calendar
         </a>
-        <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="tracker">
-            <i data-lucide="kanban-square" class="w-3.5 h-3.5"></i> Tracker
-        </a>
+        <!-- Master Project Tracker lives only on the Poseidon Master dashboard.
+             Use the cross-dashboard switcher pill in the top-right header. -->
         <a class="nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="settings">
             <i data-lucide="settings" class="w-3.5 h-3.5"></i> Settings
         </a>
@@ -654,19 +661,9 @@
      Every division renders via rdRenderDivisionPage(divId).
 ═══════════════════════════════════════════════════ -->
 
-<!-- ═══════════ PAGE: TRACKER (Master Project Tracker, Jarvis-readable) ═══════════ -->
-<div id="tracker" class="page hidden">
-    <div class="flex items-start justify-between flex-wrap gap-3 mb-2">
-        <div>
-            <h2 class="text-2xl font-bold text-zinc-100 tracking-tight">Master Project Tracker</h2>
-            <p class="text-xs text-zinc-500 mt-1">All platform tasks · filter, edit, sync to GitHub · readable by Jarvis</p>
-        </div>
-        <div class="flex gap-2">
-            <a href="tracker.html" target="_blank" class="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition">Open in new tab</a>
-        </div>
-    </div>
-    <iframe id="tracker-iframe" src="tracker.html" style="width:100%;height:calc(100vh - 180px);min-height:600px;border:0;border-radius:12px;background:#0a1628" title="Master Project Tracker"></iframe>
-</div>
+<!-- (PAGE: TRACKER removed — Master Project Tracker lives only on the
+     Poseidon Master dashboard at /poseidon-dashboard-v6.html. Use the
+     cross-dashboard switcher pill in the top-right header to access it.) -->
 
 <!-- (PAGE: MASTER + FORECAST removed — non-J1 in this dashboard.) -->
 <!-- (PAGE: FINANCE removed — non-J1 in this dashboard.) -->

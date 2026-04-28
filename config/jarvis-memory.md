@@ -124,7 +124,8 @@ surface.
   → Sponsor Contracts page only.)
 
 **Other group (utility pages, was "Workspace"):**
-- Home (`dashboard`), Tasks, Calendar, Tracker, Settings
+- Home (`dashboard`), Tasks, Calendar, Settings
+- (Master Project Tracker removed from the J1 dashboard on 2026-04-27 — it lives on the Poseidon Master only. The tracker.html standalone page now also has a working light/dark toggle in its header.)
 
 ## J1 Recruiting page — what's actually on it (2026-04-27)
 
