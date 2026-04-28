@@ -903,7 +903,73 @@
         properties: { topic_or_id: { type: 'string' } },
         required: ['topic_or_id']
       }
-    }
+    },
+  
+    // ─── Email (Microsoft Graph) ────────────────────────────────────
+    {
+      type: 'function',
+      name: 'read_emails',
+      description: 'List recent emails from Microsoft 365. Use whenever the user asks "what emails do I have", "any emails from X", "show me my inbox", "anything urgent", "search emails about Y". Returns id, subject, from, received time, unread flag, attachments flag, preview snippet. Always call this BEFORE read_email to find the email id.',
+      parameters: {
+        type: 'object',
+        properties: {
+          folder:      { type: 'string', description: 'Mail folder display name (default "inbox"). Other examples: "sentitems", "drafts", "archive".' },
+          sender:      { type: 'string', description: 'Filter by sender email address (exact match).' },
+          subject:     { type: 'string', description: 'Filter by substring of subject line.' },
+          search:      { type: 'string', description: 'Free-text search across subject, body, sender (uses Graph $search). Mutually exclusive with sender/subject filters.' },
+          top:         { type: 'number', description: 'How many emails to return (default 10, max 50).' },
+          unread_only: { type: 'boolean', description: 'Return only unread emails.' }
+        }
+      }
+    },
+    {
+      type: 'function',
+      name: 'read_email',
+      description: 'Read the FULL body and headers of one specific email by id. Use this after read_emails when the user asks to "open that email", "read it", "what does it say", or to summarize it. Returns subject, from, to, cc, body (HTML stripped to plaintext), attachments flag, and webLink.',
+      parameters: {
+        type: 'object',
+        properties: { id: { type: 'string', description: 'The email message id from read_emails.' } },
+        required: ['id']
+      }
+    },
+    {
+      type: 'function',
+      name: 'list_email_attachments',
+      description: 'List the attachments on a specific email. Use when the user asks "what attachments are on that email" or before opening a specific attachment. Returns attachment id, filename, content type, size, and whether inline.',
+      parameters: {
+        type: 'object',
+        properties: { id: { type: 'string', description: 'The email message id.' } },
+        required: ['id']
+      }
+    },
+    {
+      type: 'function',
+      name: 'read_email_attachment',
+      description: 'Fetch the contents of an email attachment and return extracted text. Supports text/csv/json directly and PDFs via PDF.js. For other binary types returns metadata only — call open_email_attachment to open them in a new tab. Use whenever the user wants to "summarize the attachment", "what does the PDF say", "read me the contract", etc.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id:            { type: 'string', description: 'The email message id.' },
+          attachment_id: { type: 'string', description: 'The attachment id from list_email_attachments.' },
+          max_chars:     { type: 'number', description: 'Cap on returned text length (default 8000).' }
+        },
+        required: ['id','attachment_id']
+      }
+    },
+    {
+      type: 'function',
+      name: 'open_email_attachment',
+      description: 'Open an email attachment in a new browser tab (download/preview). Use when the user says "open the attachment", "show me the PDF", "let me see it". Works for any content type.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id:            { type: 'string', description: 'The email message id.' },
+          attachment_id: { type: 'string', description: 'The attachment id from list_email_attachments.' }
+        },
+        required: ['id','attachment_id']
+      }
+    },
+
   ];
 
   // ─── Tool implementations (executed on the dashboard) ───────────
@@ -1607,7 +1673,207 @@
     remember(args)        { if (!window.JarvisMemory) return { ok: false, error: 'Memory module not loaded' }; return window.JarvisMemory.remember(args); },
     recall({ query, limit }) { if (!window.JarvisMemory) return { ok: false, error: 'Memory module not loaded' }; return window.JarvisMemory.recall(query, limit); },
     list_memory({ limit } = {}) { if (!window.JarvisMemory) return { ok: false, error: 'Memory module not loaded' }; return window.JarvisMemory.list(limit); },
-    forget({ topic_or_id })  { if (!window.JarvisMemory) return { ok: false, error: 'Memory module not loaded' }; return window.JarvisMemory.forget(topic_or_id); }
+    forget({ topic_or_id })  { if (!window.JarvisMemory) return { ok: false, error: 'Memory module not loaded' }; return window.JarvisMemory.forget(topic_or_id); },
+  
+    // ═══════════════════════════════════════════════════
+    // EMAIL TOOLS (Microsoft Graph)
+    // ═══════════════════════════════════════════════════
+    async _o365TokenForScopes(scopes) {
+      const acct = (typeof _msalActiveOrFirst === 'function')
+        ? _msalActiveOrFirst()
+        : (window.msalInstance && window.msalInstance.getAllAccounts && window.msalInstance.getAllAccounts()[0]);
+      if (!acct) throw new Error('Microsoft 365 not connected. Tell the user to click "Sign in to M365".');
+      const r = await window.msalInstance.acquireTokenSilent({ scopes, account: acct });
+      return r.accessToken;
+    },
+
+    async _o365GraphJSON(url, scopes = ['Mail.Read']) {
+      const token = await this._o365TokenForScopes(scopes);
+      const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+      if (!resp.ok) throw new Error('Graph ' + resp.status + ': ' + await resp.text());
+      return await resp.json();
+    },
+
+    async _o365GraphBlob(url, scopes = ['Mail.Read']) {
+      const token = await this._o365TokenForScopes(scopes);
+      const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+      if (!resp.ok) throw new Error('Graph ' + resp.status + ': ' + await resp.text());
+      return await resp.blob();
+    },
+
+    async read_emails({ folder = 'inbox', sender, subject, search, top = 10, unread_only = false } = {}) {
+      try {
+        const select = 'id,subject,from,receivedDateTime,isRead,hasAttachments,bodyPreview,webLink';
+        let url;
+        if (search && search.trim()) {
+          // Graph $search needs ConsistencyLevel: eventual; using $search disables some filters.
+          url = `https://graph.microsoft.com/v1.0/me/messages?$top=${top}&$select=${select}&$search="${encodeURIComponent(search)}"`;
+        } else {
+          const parts = [];
+          if (sender)  parts.push(`from/emailAddress/address eq '${String(sender).replace(/'/g,"''")}'`);
+          if (subject) parts.push(`contains(subject,'${String(subject).replace(/'/g,"''")}')`);
+          if (unread_only) parts.push('isRead eq false');
+          const filter = parts.length ? `&$filter=${encodeURIComponent(parts.join(' and '))}` : '';
+          const orderBy = parts.length ? '' : '&$orderby=receivedDateTime desc';
+          url = `https://graph.microsoft.com/v1.0/me/mailFolders/${encodeURIComponent(folder)}/messages?$top=${top}&$select=${select}${orderBy}${filter}`;
+        }
+        const token = await this._o365TokenForScopes(['Mail.Read']);
+        const headers = { Authorization: 'Bearer ' + token };
+        if (search) headers['ConsistencyLevel'] = 'eventual';
+        const resp = await fetch(url, { headers });
+        if (!resp.ok) return { ok: false, error: 'Graph ' + resp.status + ': ' + await resp.text() };
+        const data = await resp.json();
+        const items = (data.value || []).map(m => ({
+          id: m.id,
+          subject: m.subject,
+          from: m.from?.emailAddress?.name || m.from?.emailAddress?.address,
+          fromAddress: m.from?.emailAddress?.address,
+          receivedAt: m.receivedDateTime,
+          unread: !m.isRead,
+          hasAttachments: !!m.hasAttachments,
+          preview: (m.bodyPreview || '').slice(0, 200),
+          webLink: m.webLink
+        }));
+        return { ok: true, count: items.length, emails: items };
+      } catch (e) {
+        return { ok: false, error: e.message };
+      }
+    },
+
+    async read_email({ id }) {
+      if (!id) return { ok: false, error: 'id is required' };
+      try {
+        const m = await this._o365GraphJSON(
+          `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(id)}?$select=id,subject,from,toRecipients,ccRecipients,receivedDateTime,body,bodyPreview,hasAttachments,importance,webLink`,
+          ['Mail.Read']
+        );
+        // Strip HTML to plaintext for the LLM
+        let body = m.body?.content || '';
+        if ((m.body?.contentType || '').toLowerCase() === 'html') {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = body;
+          body = tmp.innerText.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+        }
+        return {
+          ok: true,
+          email: {
+            id: m.id,
+            subject: m.subject,
+            from: m.from?.emailAddress,
+            to: (m.toRecipients || []).map(r => r.emailAddress),
+            cc: (m.ccRecipients || []).map(r => r.emailAddress),
+            receivedAt: m.receivedDateTime,
+            importance: m.importance,
+            hasAttachments: !!m.hasAttachments,
+            body: body.slice(0, 20000),
+            webLink: m.webLink
+          }
+        };
+      } catch (e) {
+        return { ok: false, error: e.message };
+      }
+    },
+
+    async list_email_attachments({ id }) {
+      if (!id) return { ok: false, error: 'id is required' };
+      try {
+        const data = await this._o365GraphJSON(
+          `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(id)}/attachments?$select=id,name,contentType,size,isInline`,
+          ['Mail.Read']
+        );
+        return { ok: true, attachments: (data.value || []).map(a => ({
+          id: a.id, name: a.name, contentType: a.contentType, sizeBytes: a.size, inline: a.isInline
+        })) };
+      } catch (e) { return { ok: false, error: e.message }; }
+    },
+
+    async read_email_attachment({ id, attachment_id, max_chars = 8000 }) {
+      if (!id || !attachment_id) return { ok: false, error: 'id and attachment_id are required' };
+      try {
+        const a = await this._o365GraphJSON(
+          `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(attachment_id)}`,
+          ['Mail.Read']
+        );
+        const ctype = (a.contentType || '').toLowerCase();
+        const name  = a.name || 'attachment';
+
+        // Decode base64 payload
+        let bytes = null;
+        if (a.contentBytes) {
+          const bin = atob(a.contentBytes);
+          bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        }
+        if (!bytes) return { ok: false, error: 'No contentBytes returned (maybe an item-attachment, not a file).' };
+
+        // Plain text / CSV / JSON
+        if (ctype.startsWith('text/') || ctype === 'application/json' || ctype === 'application/csv') {
+          const text = new TextDecoder('utf-8').decode(bytes);
+          return { ok: true, name, contentType: ctype, sizeBytes: a.size, text: text.slice(0, max_chars), truncated: text.length > max_chars };
+        }
+
+        // PDF — lazy-load PDF.js from CDN, extract text
+        if (ctype === 'application/pdf' || /\.pdf$/i.test(name)) {
+          if (!window.pdfjsLib) {
+            await new Promise((res, rej) => {
+              const s = document.createElement('script');
+              s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
+              s.type = 'module';
+              s.onload = res; s.onerror = rej;
+              document.head.appendChild(s);
+              setTimeout(() => window.pdfjsLib ? res() : rej(new Error('pdf.js timeout')), 8000);
+            }).catch(() => {});
+            // Fallback: classic UMD build
+            if (!window.pdfjsLib) {
+              await new Promise((res, rej) => {
+                const s = document.createElement('script');
+                s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                s.onload = res; s.onerror = rej;
+                document.head.appendChild(s);
+              }).catch(() => {});
+              if (window.pdfjsLib) {
+                window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+              }
+            }
+          }
+          if (!window.pdfjsLib) return { ok: false, error: 'PDF.js failed to load; cannot extract PDF text.' };
+          const pdf = await window.pdfjsLib.getDocument({ data: bytes }).promise;
+          let text = '';
+          for (let p = 1; p <= pdf.numPages; p++) {
+            const page = await pdf.getPage(p);
+            const content = await page.getTextContent();
+            text += content.items.map(it => it.str).join(' ') + '\n\n';
+            if (text.length > max_chars * 2) break;
+          }
+          return { ok: true, name, contentType: ctype, sizeBytes: a.size, pages: pdf.numPages, text: text.slice(0, max_chars), truncated: text.length > max_chars };
+        }
+
+        // Other binary — return metadata + a hint to open it
+        return { ok: true, name, contentType: ctype, sizeBytes: a.size, text: null, note: 'Binary attachment — call open_email_attachment to view.' };
+      } catch (e) {
+        return { ok: false, error: e.message };
+      }
+    },
+
+    async open_email_attachment({ id, attachment_id }) {
+      if (!id || !attachment_id) return { ok: false, error: 'id and attachment_id are required' };
+      try {
+        const a = await this._o365GraphJSON(
+          `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(attachment_id)}`,
+          ['Mail.Read']
+        );
+        if (!a.contentBytes) return { ok: false, error: 'No contentBytes (item-attachment?)' };
+        const bin = atob(a.contentBytes);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const blob = new Blob([bytes], { type: a.contentType || 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        return { ok: true, name: a.name, contentType: a.contentType };
+      } catch (e) { return { ok: false, error: e.message }; }
+    },
+
   };
 
   // ─── Media helpers ────────────────────────────────────────────────
@@ -2305,6 +2571,7 @@
       'DEFAULT LENGTH — one or two sentences. Go longer only when (a) Robert explicitly asks for detail, (b) you are reading a briefing, or (c) the answer truly requires it. When in doubt, be shorter.',
       'You have full tool access to the dashboard DOM: reading state, navigating pages, saving tasks/events, running simulations, opening the Directory, reading the changelog, generating briefings, and producing video briefs.',
       'When the user asks "what\'s on my day", "brief me", or similar, call morning_briefing, then deliver the returned script naturally.',
+      'For ANY email-related question — "do I have any emails", "anything from X", "what does that email say", "open the attachment", "summarize the contract attachment", "read me the PDF", "urgent emails", "unread emails" — call read_emails first to find candidates and grab the email id, then read_email for the full body, list_email_attachments for attachments, read_email_attachment to extract attachment text (PDFs supported via PDF.js), and open_email_attachment to open in a new tab. ALWAYS read_email or read_email_attachment before summarizing — do NOT speculate from the preview alone. If Microsoft 365 is not signed in, tell the user to click "Sign in to M365" on the dashboard.',
       'When the user asks about a KPI on a specific division, call read_kpi with that division.',
       'When the user asks you to navigate ("take me to finance", "open J1 housing"), call go_to_page.',
       'When the user asks to add a task or event, call save_task / save_event.',

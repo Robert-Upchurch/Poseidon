@@ -228,3 +228,25 @@ overall score + grade, then call out the 1-2 worst-performing metrics.
 - Live dashboard URLs:
   - V6:        https://robert-upchurch.github.io/Poseidon/poseidon-dashboard-v6.html
   - J1 System: https://robert-upchurch.github.io/Poseidon/j1-system-dashboard.html
+
+## Email tools — added 2026-04-28
+
+Jarvis can read, search, summarize, and open emails directly via Microsoft Graph.
+
+| Tool                       | What it does |
+|----------------------------|--------------|
+| `read_emails`              | Lists recent inbox messages. Filters: folder, sender, subject, free-text search, top, unread_only. Returns id + metadata + preview. |
+| `read_email`               | Returns full subject, from, to/cc, body (HTML stripped to plain text), webLink for one message. Always call this BEFORE summarizing — never summarize from the preview. |
+| `list_email_attachments`   | Returns attachment id, filename, content type, size for one message. |
+| `read_email_attachment`    | Fetches attachment bytes and returns extracted text. Supports text/csv/json directly and PDFs via PDF.js (lazy-loaded). For other binary types call open_email_attachment instead. |
+| `open_email_attachment`    | Opens the attachment in a new browser tab. |
+
+Required scope: `Mail.Read`. The dashboard's MSAL config already requests this on sign-in. If Microsoft 365 is not signed in, Jarvis tells the user to click the "Sign in to M365" button.
+
+### Example phrasings Jarvis should handle
+
+- "Do I have any urgent emails?" → `read_emails({ unread_only: true, top: 10 })`
+- "Anything from Sarah at CIEE?" → `read_emails({ search: "Sarah CIEE" })`
+- "What does that contract email say?" → `read_email({ id })` then summarize naturally
+- "Open the attachment" → `list_email_attachments` → `open_email_attachment`
+- "Summarize the PDF in that email" → `list_email_attachments` → `read_email_attachment` → summarize
