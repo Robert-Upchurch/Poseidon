@@ -8721,17 +8721,29 @@ window.__j1hfOnFrameError = function(f) {
 // ═══════════════════════════════════════════════════
 async function runSystemCheck(opts) {
     opts = opts || {};
-    const allowReload = opts.allowReload !== false;
+    const isStartup    = opts.startup === true;
+    const allowReload  = opts.allowReload !== false;
+    const allowSignIn  = opts.allowSignIn !== false && !isStartup;  // never auto-redirect on startup
+
     const btn = document.getElementById('system-check-btn');
-    const setBtn = (label, cls, icon) => {
+    const setBtn = (label, cls, icon, onClick) => {
         if (!btn) return;
         btn.className = 'px-3 py-1.5 text-xs font-semibold border rounded-lg transition-all flex items-center gap-1.5 shadow-sm ' + cls;
         btn.innerHTML = '<i data-lucide="' + icon + '" class="w-3.5 h-3.5' + (icon==='loader-2'?' animate-spin':'') + '"></i><span class="btn-label">' + label + '</span>';
         if (typeof lucide !== 'undefined') { try { lucide.createIcons(); } catch(_){} }
+        btn.onclick = onClick || (() => runSystemCheck());
     };
+    const G = 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-500';
+    const A = 'bg-amber-600 text-white border-amber-500';
+    const R = 'bg-red-600 text-white border-red-500 hover:bg-red-500';
+    const B = 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500';
+
+    // Loop guard
+    let attempt = 0;
+    try { attempt = parseInt(sessionStorage.getItem('poseidon_repair_count') || '0', 10); } catch(_) {}
 
     btn && (btn.disabled = true);
-    setBtn('Checking…', 'bg-amber-600 text-white border-amber-500', 'loader-2');
+    setBtn(isStartup ? 'Checking system…' : 'Checking…', A, 'loader-2');
 
     async function _runAllChecks() {
         const sync = (typeof window.poseidonHealth === 'function')
@@ -8769,11 +8781,11 @@ async function runSystemCheck(opts) {
                     try {
                         if (frame.contentDocument && frame.contentDocument.body && frame.contentDocument.body.innerText.length > 50) return resolve(true);
                     } catch (_) { return resolve(false); }
-                    if (Date.now() - start > 8000) return resolve(false);
+                    if (Date.now() - start > 6000) return resolve(false);
                     setTimeout(poll, 250);
                 })();
             });
-            results.push({ name: 'J1 Housing iframe content readable', ok: readable, err: readable ? null : 'frame did not deliver readable body within 8s' });
+            results.push({ name: 'J1 Housing iframe content readable', ok: readable });
         }
         for (const fnName of ['renderDashboardHome','renderTasks','renderCalendar']) {
             const fn = window[fnName];
@@ -8784,90 +8796,115 @@ async function runSystemCheck(opts) {
         return results;
     }
 
-    // Pass 1: identify failures.
-    let results = await _runAllChecks();
-    let failed = results.filter(r => !r.ok);
-
-    if (failed.length === 0) {
-        setBtn('System Complete', 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-500', 'check-circle');
+    function _showReady() {
+        try { sessionStorage.removeItem('poseidon_repair_count'); } catch(_){}
+        try { sessionStorage.removeItem('poseidon_signin_tried'); } catch(_){}
+        try { sessionStorage.removeItem('poseidon_hard_reloaded'); } catch(_){}
+        setBtn('System Ready', G, 'check-circle');
         btn && (btn.disabled = false);
-        return { ok: true, failed: 0, results };
     }
 
-    // Pass 2: auto-repair.
-    setBtn('Auto-repairing…', 'bg-amber-600 text-white border-amber-500', 'loader-2');
-    const failedNames = new Set(failed.map(r => r.name));
+    function _showSignIn() {
+        setBtn('Sign in to M365', B, 'log-in', () => {
+            if (typeof o365SignIn === 'function') o365SignIn();
+        });
+        btn && (btn.disabled = false);
+    }
 
-    // Repair: msalInstance missing -> o365Init
-    if (failedNames.has('msalInstance created') && typeof o365Init === 'function') {
+    function _showResidual(failed) {
+        const m365 = failed.some(r => /M365|Microsoft Graph/i.test(r.name));
+        if (m365) return _showSignIn();
+        setBtn(failed.length + ' issue' + (failed.length>1?'s':''), R, 'alert-triangle');
+        btn && (btn.disabled = false);
+    }
+
+    // Pass 1: check.
+    let results = await _runAllChecks();
+    let failed = results.filter(r => !r.ok);
+    if (failed.length === 0) { _showReady(); return { ok: true, failed: 0, results }; }
+
+    // Out of attempts? Stop here without further repairs.
+    if (attempt >= 2) { _showResidual(failed); return { ok: false, failed: failed.length, results }; }
+
+    try { sessionStorage.setItem('poseidon_repair_count', String(attempt + 1)); } catch(_){}
+
+    setBtn(isStartup ? 'Auto-repairing system…' : 'Auto-repairing…', A, 'loader-2');
+    const names = new Set(failed.map(r => r.name));
+
+    // Repair: msalInstance missing
+    if (names.has('msalInstance created') && typeof o365Init === 'function') {
         try { o365Init(); await new Promise(r => setTimeout(r, 1500)); } catch(_) {}
     }
 
-    // Repair: M365 not connected / token can't be acquired -> sign-in redirect.
-    // Microsoft cookies are usually present so this returns silently and reloads
-    // the page back here with an account in cache.
-    const needSignIn = failedNames.has('M365 connected')
-                    || failedNames.has('M365 token acquired silently')
-                    || failedNames.has('Microsoft Graph /me responds');
-    if (needSignIn && typeof o365SignIn === 'function') {
-        // Save a flag so after the redirect we can resume the check.
-        try { sessionStorage.setItem('poseidon_resume_check', '1'); } catch(_){}
-        o365SignIn();
-        return { ok: false, redirecting: true };  // page navigates away here
-    }
+    // Repair: tasks/calEvents shape
+    if (names.has('tasks is array')) { try { localStorage.setItem('poseidon-tasks', '[]'); } catch(_){} }
+    if (names.has('calEvents is array')) { try { localStorage.setItem('poseidon-events', '[]'); } catch(_){} }
 
-    // Repair: tasks/calEvents not arrays -> reset their localStorage shape.
-    if (failedNames.has('tasks is array') || failedNames.has('calEvents is array')) {
-        try { localStorage.setItem('poseidon-tasks',  '[]'); } catch(_){}
-        try { localStorage.setItem('poseidon-events', '[]'); } catch(_){}
-    }
-
-    // Repair: iframe not readable -> reload iframe src.
-    if (failedNames.has('J1 Housing iframe content readable')) {
+    // Repair: iframe not readable
+    if (names.has('J1 Housing iframe content readable')) {
         const frame = document.getElementById('j1hf-iframe');
-        if (frame) { try { frame.src = frame.src; } catch(_){} await new Promise(r => setTimeout(r, 2000)); }
+        if (frame) { try { frame.src = frame.src; } catch(_){} await new Promise(r => setTimeout(r, 2500)); }
     }
 
-    // Repair: a page div, button, or library is missing -> hard reload (CDN/cache miss).
-    const fatalNames = ['Connect 365 button in DOM','Update 365 button in DOM','MSAL library loaded',
+    // Repair: M365 sign-in. Only redirect when user clicked the button (not on startup),
+    // and only once per session.
+    const needSignIn = names.has('M365 connected') || names.has('M365 token acquired silently') || names.has('Microsoft Graph /me responds');
+    if (needSignIn && allowSignIn) {
+        let signInTried = false;
+        try { signInTried = sessionStorage.getItem('poseidon_signin_tried') === '1'; } catch(_){}
+        if (!signInTried && typeof o365SignIn === 'function') {
+            try { sessionStorage.setItem('poseidon_signin_tried', '1'); } catch(_){}
+            try { sessionStorage.setItem('poseidon_resume_check', '1'); } catch(_){}
+            o365SignIn();
+            return { ok: false, redirecting: true };
+        }
+    }
+
+    // Repair: hard reload as last resort for missing DOM/library, once per session.
+    const fatal = ['Connect 365 button in DOM','Update 365 button in DOM','MSAL library loaded',
         'Dashboard page (#dashboard) exists','Tasks page (#tasks) exists','Calendar page (#calendar) exists',
         'J1 Housing Finder page exists','j1hf iframe exists'];
-    if (allowReload && fatalNames.some(n => failedNames.has(n))) {
-        // Use a hard reload (bypass cache).
-        try { sessionStorage.setItem('poseidon_resume_check', '1'); } catch(_){}
-        location.reload();
-        return { ok: false, reloading: true };
-    }
-
-    // Pass 3: re-check after repairs.
-    setBtn('Re-checking…', 'bg-amber-600 text-white border-amber-500', 'loader-2');
-    results = await _runAllChecks();
-    failed = results.filter(r => !r.ok);
-
-    if (failed.length === 0) {
-        setBtn('System Complete', 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-500', 'check-circle');
-    } else {
-        // Last-resort: hard reload once if user hasn't already done one this session.
-        if (allowReload && !sessionStorage.getItem('poseidon_repair_attempted')) {
-            try { sessionStorage.setItem('poseidon_repair_attempted', '1'); } catch(_){}
+    if (allowReload && fatal.some(n => names.has(n))) {
+        let reloaded = false;
+        try { reloaded = sessionStorage.getItem('poseidon_hard_reloaded') === '1'; } catch(_){}
+        if (!reloaded) {
+            try { sessionStorage.setItem('poseidon_hard_reloaded', '1'); } catch(_){}
+            try { sessionStorage.setItem('poseidon_resume_check', '1'); } catch(_){}
             location.reload();
             return { ok: false, reloading: true };
         }
-        setBtn('Cannot auto-fix · click to retry', 'bg-red-600 text-white border-red-500 hover:bg-red-500', 'alert-triangle');
     }
-    btn && (btn.disabled = false);
-    return { ok: failed.length === 0, failed: failed.length, results };
+
+    // Re-check after non-disruptive repairs.
+    setBtn('Re-checking…', A, 'loader-2');
+    results = await _runAllChecks();
+    failed = results.filter(r => !r.ok);
+
+    if (failed.length === 0) { _showReady(); return { ok: true, failed: 0, results }; }
+    _showResidual(failed);
+    return { ok: false, failed: failed.length, results };
 }
 
-// If we returned from a sign-in redirect, resume the check automatically.
+// Auto-run on startup. Triggers ~4s after DOMContentLoaded so MSAL +
+// enhancement modules have time to initialize. Skips the sign-in redirect
+// (startup mode is non-disruptive).
+(function _scheduleStartupSystemCheck() {
+    function go() {
+        try { setTimeout(() => runSystemCheck({ startup: true }), 4000); } catch(_) {}
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+    else go();
+})();
+
+// If we just returned from a sign-in redirect, resume the check (NOT in startup mode
+// so it can react to the now-signed-in state and finish silently).
 (function _resumeAfterRedirect() {
     function tryResume() {
         let flag = null;
         try { flag = sessionStorage.getItem('poseidon_resume_check'); } catch(_) {}
         if (!flag) return;
         try { sessionStorage.removeItem('poseidon_resume_check'); } catch(_) {}
-        // Wait a beat for o365Init/handleRedirectPromise to settle.
-        setTimeout(() => { if (typeof runSystemCheck === 'function') runSystemCheck(); }, 4000);
+        setTimeout(() => { if (typeof runSystemCheck === 'function') runSystemCheck(); }, 3500);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tryResume);
     else tryResume();
