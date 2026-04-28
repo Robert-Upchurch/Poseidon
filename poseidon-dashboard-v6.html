@@ -630,6 +630,9 @@
         <button id="o365-update-btn" onclick="o365Update()" class="hidden px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white border border-emerald-500 rounded-lg hover:bg-emerald-500 hover:border-emerald-400 transition-all flex items-center gap-1.5 shadow-sm" title="Refresh Microsoft 365 data (mail, calendar, tasks, files)">
             <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i><span class="btn-label">Update 365</span>
         </button>
+        <button id="system-check-btn" onclick="runSystemCheck()" class="px-3 py-1.5 text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 rounded-lg hover:bg-zinc-700 hover:border-zinc-600 transition-all flex items-center gap-1.5 shadow-sm" title="Run a complete self-check of every dashboard subsystem">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i><span class="btn-label">System Check</span>
+        </button>
         <button id="theme-toggle" onclick="toggleTheme()" class="w-10 h-10 flex items-center justify-center rounded-lg border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition-all shrink-0" title="Toggle light/dark mode">
             <i data-lucide="sun" class="w-4 h-4"></i>
         </button>
@@ -7332,6 +7335,107 @@ window.__j1hfOnFrameError = function(f) {
     if (s) s.innerHTML = '<span class="text-red-400">&#10007; Frame failed to load. <a href="j1-housing-finder-index.html" target="_blank" class="underline">Open in new tab</a></span>';
     window.__j1hfFrameReady = false;
 };
+
+
+// ═══════════════════════════════════════════════════
+// EXTENDED SYSTEM CHECK (button-driven, async)
+// Runs all sync checks PLUS:
+//   - M365 token can be silently acquired (if signed in)
+//   - Microsoft Graph /me responds 200 (if signed in)
+//   - j1hf-iframe contentDocument is readable (same-origin sanity)
+//   - V6/J1 page render functions don't throw on currently-loaded data
+// Updates the System Check button label + color through the lifecycle.
+// ═══════════════════════════════════════════════════
+async function runSystemCheck() {
+    const btn = document.getElementById('system-check-btn');
+    const setBtn = (label, cls, icon) => {
+        if (!btn) return;
+        btn.className = 'px-3 py-1.5 text-xs font-semibold border rounded-lg transition-all flex items-center gap-1.5 shadow-sm ' + cls;
+        btn.innerHTML = '<i data-lucide="' + icon + '" class="w-3.5 h-3.5' + (icon==='loader-2'?' animate-spin':'') + '"></i><span class="btn-label">' + label + '</span>';
+        if (typeof lucide !== 'undefined') { try { lucide.createIcons(); } catch(_){} }
+    };
+
+    btn && (btn.disabled = true);
+    setBtn('Checking…', 'bg-amber-600 text-white border-amber-500', 'loader-2');
+
+    // 1) Sync core checks (re-uses the existing health check definition).
+    const sync = (typeof window.poseidonHealth === 'function')
+        ? window.poseidonHealth({ verbose: false })
+        : { results: [{ name: 'poseidonHealth missing', ok: false, err: 'function not defined' }], failed: 1 };
+
+    const results = [...sync.results];
+
+    // 2) M365 token + Graph reachability — only when signed in.
+    const acct = (typeof _msalActiveOrFirst === 'function') ? _msalActiveOrFirst()
+        : (window.msalInstance && window.msalInstance.getAllAccounts && window.msalInstance.getAllAccounts()[0]);
+    if (acct && window.msalInstance) {
+        let token = null;
+        try {
+            const r = await window.msalInstance.acquireTokenSilent({ scopes: ['User.Read'], account: acct });
+            token = r.accessToken;
+            results.push({ name: 'M365 token acquired silently', ok: !!token });
+        } catch (e) {
+            results.push({ name: 'M365 token acquired silently', ok: false, err: e.message || 'token error' });
+        }
+        if (token) {
+            try {
+                const resp = await fetch('https://graph.microsoft.com/v1.0/me?$select=displayName,mail',
+                    { headers: { Authorization: 'Bearer ' + token } });
+                results.push({ name: 'Microsoft Graph /me responds', ok: resp.ok, err: resp.ok ? null : 'HTTP ' + resp.status });
+            } catch (e) {
+                results.push({ name: 'Microsoft Graph /me responds', ok: false, err: e.message });
+            }
+        }
+    } else {
+        results.push({ name: 'M365 connected', ok: false, err: 'No signed-in account' });
+    }
+
+    // 3) j1hf iframe contentDocument readable (waits up to 8s for it to load).
+    const frame = document.getElementById('j1hf-iframe');
+    if (frame) {
+        const readable = await new Promise(resolve => {
+            const start = Date.now();
+            (function poll() {
+                try {
+                    if (frame.contentDocument && frame.contentDocument.body && frame.contentDocument.body.innerText.length > 50) {
+                        return resolve(true);
+                    }
+                } catch (_) { return resolve(false); }
+                if (Date.now() - start > 8000) return resolve(false);
+                setTimeout(poll, 250);
+            })();
+        });
+        results.push({ name: 'J1 Housing iframe content readable', ok: readable, err: readable ? null : 'frame did not deliver readable body within 8s' });
+    }
+
+    // 4) Render functions don't throw.
+    const renderFns = ['renderDashboardHome','renderTasks','renderCalendar'];
+    for (const fnName of renderFns) {
+        const fn = window[fnName];
+        if (typeof fn !== 'function') {
+            results.push({ name: fnName + ' callable', ok: false, err: 'not a function' });
+            continue;
+        }
+        try { fn(); results.push({ name: fnName + ' callable', ok: true }); }
+        catch (e) { results.push({ name: fnName + ' callable', ok: false, err: e.message }); }
+    }
+
+    // Report
+    const failed = results.filter(r => !r.ok);
+    console.groupCollapsed('%cSystem Check: ' + (failed.length ? failed.length + ' FAILED' : results.length + ' PASSED'),
+        'color:' + (failed.length ? '#f87171' : '#34d399') + ';font-weight:bold');
+    console.table(results.map(r => ({ check: r.name, status: r.ok ? 'OK' : 'FAIL', error: r.err || '' })));
+    console.groupEnd();
+
+    if (failed.length === 0) {
+        setBtn('System Complete', 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-500', 'check-circle');
+    } else {
+        setBtn(failed.length + ' issue' + (failed.length>1?'s':'') + ' — see console',
+               'bg-red-600 text-white border-red-500 hover:bg-red-500', 'alert-triangle');
+    }
+    btn && (btn.disabled = false);
+    return { ok: failed.length === 0, failed: failed.length, results };
+}
 
 // ═══════════════════════════════════════════════════
 // STARTUP HEALTH CHECK (added 2026-04-28)
