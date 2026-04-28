@@ -17,8 +17,37 @@ tailwind.config = { darkMode: 'class', theme: { extend: {
 }}}
 </script>
 <style>
-body { font-family:'Inter',sans-serif; background:#0a1628; color:#fafafa; min-height:100vh; }
+body { font-family:'Inter',sans-serif; transition:background-color 0.3s, color 0.3s; min-height:100vh; }
+html.dark body { background:#0a1628; color:#fafafa; }
 html:not(.dark) body { background:#f8fafc; color:#0f172a; }
+
+/* DARK mode chrome */
+html.dark header { background:#0f1e2e; border-bottom-color:#27272a; }
+html.dark #stats > div, html.dark .bg-\[\#0f1e2e\] { background:#0f1e2e !important; border-color:#27272a !important; }
+html.dark select, html.dark input[type="text"], html.dark textarea { background:#18181b !important; border-color:#3f3f46 !important; color:#fafafa !important; }
+html.dark .bg-zinc-800 { background:#27272a !important; }
+html.dark .text-zinc-500 { color:#a1a1aa !important; }
+html.dark .text-zinc-400 { color:#d4d4d8 !important; }
+
+/* LIGHT mode — soft blue tint matching the dashboards */
+html:not(.dark) header { background:#ffffff !important; border-bottom-color:#cbd5e1 !important; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+html:not(.dark) header h1 { color:#0f172a !important; }
+html:not(.dark) header p { color:#475569 !important; }
+html:not(.dark) #stats > div { background:#dbeafe !important; border-color:#3b82f6 !important; color:#1e3a8a !important; }
+html:not(.dark) #stats > div .text-zinc-500 { color:#1e40af !important; }
+html:not(.dark) .bg-\[\#0f1e2e\] { background:#dbeafe !important; border-color:#3b82f6 !important; color:#0f172a !important; }
+html:not(.dark) #task-list .bg-\[\#0f1e2e\],
+html:not(.dark) #task-list > div { background:#ffffff !important; border-color:#e2e8f0 !important; color:#0f172a !important; }
+html:not(.dark) select, html:not(.dark) input[type="text"], html:not(.dark) textarea { background:#ffffff !important; border-color:#cbd5e1 !important; color:#0f172a !important; }
+html:not(.dark) .bg-zinc-800, html:not(.dark) .bg-zinc-900 { background:#e2e8f0 !important; color:#0f172a !important; }
+html:not(.dark) .hover\:bg-zinc-700:hover, html:not(.dark) .hover\:bg-zinc-800:hover { background:#cbd5e1 !important; }
+html:not(.dark) .text-zinc-500 { color:#475569 !important; }
+html:not(.dark) .text-zinc-400 { color:#334155 !important; }
+html:not(.dark) .text-zinc-300 { color:#1e293b !important; }
+html:not(.dark) .border-zinc-800, html:not(.dark) .border-zinc-700 { border-color:#cbd5e1 !important; }
+html:not(.dark) #modal { background:rgba(15, 23, 42, 0.4) !important; }
+html:not(.dark) #modal > div { background:#ffffff !important; border-color:#cbd5e1 !important; color:#0f172a !important; }
+
 .task-row { transition: all .15s; }
 .task-row:hover { transform: translateX(2px); }
 .priority-bar { width:4px; align-self:stretch; border-radius:2px; }
@@ -28,6 +57,27 @@ html:not(.dark) body { background:#f8fafc; color:#0f172a; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (max-width: 640px) { .task-meta { flex-wrap: wrap; } }
 </style>
+<script>
+// Apply theme BEFORE DOMContentLoaded to avoid FOUC. Canonical pattern
+// from feedback_dashboard_light_dark_toggle.md.
+(function(){
+  try {
+    var stored = localStorage.getItem('poseidon-tracker-theme') || 'dark';
+    document.documentElement.classList.toggle('dark', stored === 'dark');
+  } catch(_) { document.documentElement.classList.add('dark'); }
+})();
+function toggleTrackerTheme(){
+  var isDark = document.documentElement.classList.toggle('dark');
+  // toggling above flips the state, so the "now" is what classList says
+  isDark = document.documentElement.classList.contains('dark');
+  try { localStorage.setItem('poseidon-tracker-theme', isDark ? 'dark' : 'light'); } catch(_) {}
+  var btn = document.getElementById('tracker-theme-toggle');
+  if (btn) btn.innerHTML = isDark
+    ? '<i data-lucide="sun" class="w-3.5 h-3.5"></i>'
+    : '<i data-lucide="moon" class="w-3.5 h-3.5"></i>';
+  if (window.lucide) try { lucide.createIcons(); } catch(_){}
+}
+</script>
 </head>
 <body>
 
@@ -46,6 +96,7 @@ html:not(.dark) body { background:#f8fafc; color:#0f172a; }
       <button id="btn-pull" class="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 hover:bg-zinc-700 transition flex items-center gap-1.5"><i data-lucide="download-cloud" class="w-3.5 h-3.5"></i> Pull</button>
       <button id="btn-push" class="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 hover:bg-zinc-700 transition flex items-center gap-1.5"><i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i> Push</button>
       <button id="btn-token" class="px-2 py-1.5 text-xs rounded-lg bg-zinc-800 hover:bg-zinc-700 transition" title="GitHub PAT"><i data-lucide="key" class="w-3.5 h-3.5"></i></button>
+      <button id="tracker-theme-toggle" onclick="toggleTrackerTheme()" class="px-2 py-1.5 text-xs rounded-lg bg-zinc-800 hover:bg-zinc-700 transition" title="Toggle light/dark mode"><i data-lucide="sun" class="w-3.5 h-3.5"></i></button>
     </div>
   </div>
   <div id="status-banner" class="hidden px-4 py-2 text-xs"></div>
@@ -400,6 +451,17 @@ if (TASKS.length === 0) {
   render();
 }
 lucide.createIcons();
+
+// Sync the theme-toggle button icon to the actual stored theme on first paint
+(function syncThemeBtn(){
+  var btn = document.getElementById('tracker-theme-toggle');
+  if (!btn) return;
+  var isDark = document.documentElement.classList.contains('dark');
+  btn.innerHTML = isDark
+    ? '<i data-lucide="sun" class="w-3.5 h-3.5"></i>'
+    : '<i data-lucide="moon" class="w-3.5 h-3.5"></i>';
+  if (window.lucide) try { lucide.createIcons(); } catch(_){}
+})();
 </script>
 
 </body>
