@@ -644,6 +644,9 @@
         <button id="o365-connect-btn" onclick="o365SignIn()" class="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white border border-blue-500 rounded-lg hover:bg-blue-500 hover:border-blue-400 transition-all flex items-center gap-1.5 shadow-sm" title="Connect Microsoft 365">
             <i data-lucide="cloud" class="w-3.5 h-3.5"></i><span class="btn-label">Connect 365</span>
         </button>
+        <button id="o365-update-btn" onclick="o365Update()" class="hidden px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white border border-emerald-500 rounded-lg hover:bg-emerald-500 hover:border-emerald-400 transition-all flex items-center gap-1.5 shadow-sm" title="Refresh Microsoft 365 data (mail, calendar, tasks, files)">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i><span class="btn-label">Update 365</span>
+        </button>
         <button id="theme-toggle" onclick="toggleTheme()" class="w-10 h-10 flex items-center justify-center rounded-lg border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition-all shrink-0" title="Toggle light/dark mode">
             <i data-lucide="sun" class="w-4 h-4"></i>
         </button>
@@ -2810,8 +2813,15 @@ const repos = [
 ];
 
 // ───── LIVE STATE (localStorage-backed) ─────
-let tasks = JSON.parse(localStorage.getItem('poseidon-tasks') || '[]');
-let calEvents = JSON.parse(localStorage.getItem('poseidon-events') || '[]');
+// Tolerant load: accepts a flat array OR the {TASKS, META, SHA} envelope
+// written by the Poseidon enhancement modules.
+function _poseidonNormalizeArray(raw, key) {
+    if (Array.isArray(raw)) return raw;
+    if (raw && typeof raw === 'object' && Array.isArray(raw[key])) return raw[key];
+    return [];
+}
+let tasks = _poseidonNormalizeArray(JSON.parse(localStorage.getItem('poseidon-tasks') || '[]'), 'TASKS');
+let calEvents = _poseidonNormalizeArray(JSON.parse(localStorage.getItem('poseidon-events') || '[]'), 'EVENTS');
 let currentPage = 'dashboard';
 let calView = 'month';
 let calDate = new Date();
@@ -6242,6 +6252,7 @@ function o365Init() {
             if (accounts.length > 0) {
                 o365Account = accounts[0];
                 o365UpdateUI(true);
+                o365LoadAll();
             }
         }
     }).catch(e => console.error('MSAL init error:', e));
@@ -6259,6 +6270,7 @@ function o365SignOut() {
 
 function o365UpdateUI(connected) {
     const btn = $('o365-connect-btn');
+    const updBtn = $('o365-update-btn');
     const status = $('o365-status');
     if (btn) {
         if (connected) {
@@ -6270,6 +6282,10 @@ function o365UpdateUI(connected) {
             btn.onclick = o365SignIn;
             btn.className = 'px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 transition-colors';
         }
+    }
+    if (updBtn) {
+        if (connected) updBtn.classList.remove('hidden');
+        else updBtn.classList.add('hidden');
     }
     if (status) {
         status.innerHTML = connected
@@ -6298,6 +6314,40 @@ async function o365Fetch(url) {
 
 async function o365LoadAll() {
     await Promise.all([o365LoadMail(), o365LoadCalendar(), o365LoadTasks(), o365LoadFiles()]);
+}
+
+// Manual refresh — wired to the "Update 365" button.
+// Re-fetches mail, calendar, tasks, files from Microsoft Graph.
+async function o365Update() {
+    const btn = document.getElementById('o365-update-btn');
+    const setBtn = (html) => {
+        if (!btn) return;
+        btn.innerHTML = html;
+        if (typeof lucide !== 'undefined') { try { lucide.createIcons(); } catch(_){} }
+    };
+    if (btn) { btn.disabled = true; btn.dataset.origHtml = btn.dataset.origHtml || btn.innerHTML; }
+    setBtn('<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span class="btn-label">Updating...</span>');
+    try {
+        if (!msalInstance) throw new Error('MSAL not initialized');
+        if (!o365Account) {
+            const accts = msalInstance.getAllAccounts();
+            if (accts.length) o365Account = accts[0];
+            else { o365SignIn(); return; }
+        }
+        await o365LoadAll();
+        setBtn('<i data-lucide="check" class="w-3.5 h-3.5"></i><span class="btn-label">Updated</span>');
+        setTimeout(() => {
+            if (btn && btn.dataset.origHtml) setBtn(btn.dataset.origHtml);
+            if (btn) btn.disabled = false;
+        }, 1500);
+    } catch (e) {
+        console.error('o365Update error:', e);
+        setBtn('<i data-lucide="alert-circle" class="w-3.5 h-3.5"></i><span class="btn-label">Failed</span>');
+        setTimeout(() => {
+            if (btn && btn.dataset.origHtml) setBtn(btn.dataset.origHtml);
+            if (btn) btn.disabled = false;
+        }, 2500);
+    }
 }
 
 async function o365LoadMail() {
@@ -8580,49 +8630,4 @@ function renderImportSummary(parsedOptions, activeIdx) {
                 <div>
                     <div class="text-[11px] font-semibold text-amber-400 mb-1">○ Missing / Unclear (${missing.length})</div>
                     <div class="bg-zinc-900/60 border border-zinc-800 rounded p-2 max-h-60 overflow-y-auto text-[11px] text-zinc-400">
-                        ${missing.length ? missing.map(m => `<div>• ${m}</div>`).join('') : '<div class="text-zinc-500">All known fields found.</div>'}
-                    </div>
-                </div>
-            </div>
-        </div>`;
-
-    function _escape(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-}
-
-function clearImportedPdfData() {
-    if (!confirm('Clear pasted PDF text and parsed results?')) return;
-    localStorage.removeItem(J1PDF_RAW_KEY);
-    localStorage.removeItem(J1PDF_PARSED_KEY);
-    const ta = $('j1pdf-input'); if (ta) ta.value = '';
-    const opts = $('j1pdf-options'); if (opts) { opts.classList.add('hidden'); opts.innerHTML = ''; }
-    const sum  = $('j1pdf-summary'); if (sum)  { sum.classList.add('hidden');  sum.innerHTML  = ''; }
-    _showJ1HStatus('✓ Imported PDF data cleared', true);
-}
-
-function loadImportedPdfData() {
-    const raw = localStorage.getItem(J1PDF_RAW_KEY);
-    if (raw && $('j1pdf-input')) $('j1pdf-input').value = raw;
-    const parsed = _getParsedOptionsCached();
-    if (parsed && parsed.options && parsed.options.length) {
-        if (parsed.options.length > 1) renderHousingOptionsSelector(parsed.options);
-        renderImportSummary(parsed.options, 0);
-    }
-}
-
-// Wire on DOM ready (after main init already ran)
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadImportedPdfData);
-} else {
-    loadImportedPdfData();
-}
-
-</script>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     POSEIDON ENHANCEMENT MODULES (v6.1 Jarvis Release)
-     Loads: training · directory · version+changelog · LLM layer
-     · Grok voice assistant. Non-destructive — existing code untouched.
-     ═══════════════════════════════════════════════════════════════ -->
-<script src="js/poseidon-modules/poseidon-integration.js" defer></script>
-</body>
-</html>
+          
