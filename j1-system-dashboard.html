@@ -8706,6 +8706,76 @@ window.__j1hfOnFrameError = function(f) {
     window.__j1hfFrameReady = false;
 };
 
+// ═══════════════════════════════════════════════════
+// STARTUP HEALTH CHECK (added 2026-04-28)
+// Verifies every recent fix is in place. Runs 3s after DOMContentLoaded.
+// Call window.poseidonHealth() to re-run anytime.
+// ═══════════════════════════════════════════════════
+window.poseidonHealth = function poseidonHealth(opts) {
+    opts = opts || {};
+    const verbose = opts.verbose !== false;
+    const checks = [
+        ['MSAL library loaded',                    () => typeof msal !== 'undefined'],
+        ['msalInstance created',                   () => typeof msalInstance !== 'undefined' && msalInstance !== null],
+        ['o365SignIn function defined',            () => typeof o365SignIn === 'function'],
+        ['o365Update function defined',            () => typeof o365Update === 'function'],
+        ['o365LoadAll function defined',           () => typeof o365LoadAll === 'function'],
+        ['Auto-refresh helpers defined',           () => typeof _o365StartAutoRefresh === 'function'],
+        ['Connect 365 button in DOM',              () => !!document.getElementById('o365-connect-btn')],
+        ['Update 365 button in DOM',               () => !!document.getElementById('o365-update-btn')],
+        ['_poseidonNormalizeArray defined',        () => typeof _poseidonNormalizeArray === 'function'],
+        ['tasks is array',                         () => Array.isArray(tasks)],
+        ['calEvents is array',                     () => Array.isArray(calEvents)],
+        ['Dashboard page (#dashboard) exists',     () => !!document.getElementById('dashboard')],
+        ['Tasks page (#tasks) exists',             () => !!document.getElementById('tasks')],
+        ['Calendar page (#calendar) exists',       () => !!document.getElementById('calendar')],
+        ['J1 Housing Finder page exists',          () => !!document.getElementById('j1housingfinder')],
+        ['j1hf iframe exists',                     () => !!document.getElementById('j1hf-iframe')],
+        ['Jarvis loaded (PoseidonJarvis)',         () => typeof PoseidonJarvis === 'object' && PoseidonJarvis !== null],
+        ['Jarvis memory loaded (JarvisMemory)',    () => typeof JarvisMemory === 'object' && JarvisMemory !== null]
+    ];
+    const results = checks.map(([name, fn]) => {
+        let ok = false, err = null;
+        try { ok = !!fn(); } catch (e) { err = e.message; }
+        return { name, ok, err };
+    });
+    const failed = results.filter(r => !r.ok);
+    const summary = { total: results.length, passed: results.length - failed.length, failed: failed.length, results };
+    if (verbose) {
+        console.groupCollapsed('%cPoseidon health check: ' + (failed.length ? failed.length + ' FAILED' : 'all ' + results.length + ' OK'),
+            'color:' + (failed.length ? '#f87171' : '#34d399') + ';font-weight:bold');
+        console.table(results.map(r => ({ check: r.name, status: r.ok ? 'OK' : 'FAIL', error: r.err || '' })));
+        console.groupEnd();
+    }
+    // Visual banner (small, top-right). Auto-dismiss when all pass.
+    let bar = document.getElementById('poseidon-health-banner');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'poseidon-health-banner';
+        bar.style.cssText = 'position:fixed;top:8px;right:8px;z-index:99998;padding:6px 10px;border-radius:8px;font:500 11px/1.4 system-ui,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.3);cursor:pointer;max-width:320px';
+        bar.title = 'Click to re-run health check';
+        bar.onclick = () => window.poseidonHealth();
+        document.body.appendChild(bar);
+    }
+    if (failed.length) {
+        bar.style.background = '#7f1d1d';
+        bar.style.color = '#fecaca';
+        bar.innerHTML = '⚠ Poseidon: ' + failed.length + ' check' + (failed.length>1?'s':'') + ' failed — open console for details';
+    } else {
+        bar.style.background = '#064e3b';
+        bar.style.color = '#a7f3d0';
+        bar.innerHTML = '✓ Poseidon ready · ' + results.length + ' checks passed';
+        setTimeout(() => { try { bar.remove(); } catch(_){} }, 5000);
+    }
+    return summary;
+};
+// Run once shortly after DOMContentLoaded (gives MSAL + enhancement modules time).
+(function _scheduleHealthCheck() {
+    function go() { try { setTimeout(() => window.poseidonHealth(), 3000); } catch(_){} }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+    else go();
+})();
+
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════
