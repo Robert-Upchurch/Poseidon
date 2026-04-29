@@ -6298,15 +6298,18 @@ let o365Account = null;
 function o365Init() {
     if (typeof msal === 'undefined') { console.warn('MSAL not loaded'); return; }
     msalInstance = new msal.PublicClientApplication(msalConfig);
+    window.msalInstance = msalInstance;  // expose so Jarvis (external file) can find it
     msalInstance.initialize().then(() => msalInstance.handleRedirectPromise()).then(resp => {
         if (resp && resp.account) {
             o365Account = resp.account;
+            window.o365Account = o365Account;
             o365UpdateUI(true);
             o365LoadAll();
         } else {
             const accounts = msalInstance.getAllAccounts();
             if (accounts.length > 0) {
                 o365Account = accounts[0];
+                window.o365Account = o365Account;
                 o365UpdateUI(true);
                 o365LoadAll();
             }
@@ -8765,6 +8768,7 @@ window.__j1hfOnFrameError = function(f) {
 
 // ─── EMAILS PAGE ────────────────────────────────────────────────
 let _emailsCache = [];
+window._emailsCache = _emailsCache;
 
 async function _emailsAcquireMailToken(acct) {
     // Silent only — popups are unreliable. If this throws, the caller
@@ -8818,6 +8822,7 @@ async function emailsRefresh() {
     }
     const data = await resp.json();
     _emailsCache = data.value || [];
+    window._emailsCache = _emailsCache;
     if (_emailsCache.length === 0) {
         _emailsBanner('warn', 'Microsoft Graph returned 0 messages. Most likely the token does not have Mail.Read consent. Click "Force Re-consent".');
         _emailsListMsg('<div class="text-center py-12"><p class="text-zinc-300 text-sm font-semibold">No emails returned</p><p class="text-zinc-500 text-xs mt-2">Microsoft Graph accepted the request but sent zero messages.</p><p class="text-zinc-500 text-xs">Click <span class="text-blue-300 font-semibold">Force Re-consent</span> above to re-authenticate.</p></div>');
