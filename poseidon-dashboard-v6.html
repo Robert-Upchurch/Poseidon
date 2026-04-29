@@ -7394,22 +7394,11 @@ window.__j1hfOnFrameError = function(f) {
 let _emailsCache = [];
 
 async function _emailsAcquireMailToken(acct) {
-    try {
-        const r = await window.msalInstance.acquireTokenSilent({ scopes: ['Mail.Read'], account: acct });
-        return r.accessToken;
-    } catch (e) {
-        // Likely interaction_required because Mail.Read was not in the
-        // original consent. Pop up a brief Microsoft window to grant it.
-        if (typeof window.msalInstance.acquireTokenPopup === 'function') {
-            try {
-                const r2 = await window.msalInstance.acquireTokenPopup({ scopes: ['Mail.Read'], account: acct });
-                return r2.accessToken;
-            } catch (e2) {
-                throw e2;
-            }
-        }
-        throw e;
-    }
+    // Silent only — popups are unreliable. If this throws, the caller
+    // shows a banner instructing the user to click "Force Re-consent",
+    // which uses a full-page redirect to grant consent.
+    const r = await msalInstance.acquireTokenSilent({ scopes: ['Mail.Read'], account: acct });
+    return r.accessToken;
 }
 
 function _emailsBanner(kind, msg) {
@@ -7429,12 +7418,12 @@ function _emailsListMsg(html) {
 
 async function emailsRefresh() {
     _emailsBanner('info', 'Refreshing…');
-    if (!window.msalInstance || !window.msalInstance.getAllAccounts || !window.msalInstance.getAllAccounts().length) {
+    if (!msalInstance || !msalInstance.getAllAccounts || !msalInstance.getAllAccounts().length) {
         _emailsBanner('warn', 'Microsoft 365 is not connected on this tab. Click "Sign in to M365" in the top header.');
         _emailsListMsg('<div class="text-center py-12 text-zinc-500 text-xs">Sign in to M365 to load emails.</div>');
         return;
     }
-    const acct = window.msalInstance.getAllAccounts()[0];
+    const acct = msalInstance.getAllAccounts()[0];
     let token;
     try { token = await _emailsAcquireMailToken(acct); }
     catch (e) {
@@ -7466,18 +7455,16 @@ async function emailsRefresh() {
 }
 
 async function emailsForceConsent() {
-    _emailsBanner('info', 'Opening Microsoft consent window…');
+    _emailsBanner('info', 'Redirecting to Microsoft for consent…');
     try {
-        if (typeof window.msalInstance.loginPopup === 'function') {
-            await window.msalInstance.loginPopup({
-                scopes: ['User.Read','Mail.Read','Calendars.Read','Tasks.Read','Files.Read'],
-                prompt: 'consent'
-            });
-            _emailsBanner('ok', 'Re-consent complete. Refreshing emails…');
-            return emailsRefresh();
+        if (!msalInstance) {
+            _emailsBanner('error', 'MSAL is not initialized on this tab. Reloading the page (Ctrl+F5) and try again.');
+            return;
         }
-        // Fallback: redirect-based re-consent.
-        await window.msalInstance.loginRedirect({
+        // Save a flag so when the redirect returns we land back on the
+        // Emails page and auto-fire Refresh.
+        try { sessionStorage.setItem('poseidon_resume_emails', '1'); } catch (_) {}
+        await msalInstance.loginRedirect({
             scopes: ['User.Read','Mail.Read','Calendars.Read','Tasks.Read','Files.Read'],
             prompt: 'consent'
         });
@@ -7485,6 +7472,23 @@ async function emailsForceConsent() {
         _emailsBanner('error', 'Re-consent failed: ' + (e.errorCode || e.message || e));
     }
 }
+
+// After a Force Re-consent redirect, return to the Emails page and refresh.
+(function _resumeEmailsAfterRedirect() {
+    function tryResume() {
+        let flag = null;
+        try { flag = sessionStorage.getItem('poseidon_resume_emails'); } catch (_) {}
+        if (!flag) return;
+        try { sessionStorage.removeItem('poseidon_resume_emails'); } catch (_) {}
+        // Wait for o365Init/handleRedirectPromise to finish, then go to Emails.
+        setTimeout(() => {
+            if (typeof switchPage === 'function') switchPage('emails');
+            if (typeof emailsRefresh === 'function') setTimeout(emailsRefresh, 500);
+        }, 3000);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tryResume);
+    else tryResume();
+})();
 
 function renderEmails() {
     const list = $('emails-list'); if (!list) return;
@@ -7525,7 +7529,7 @@ async function emailsOpen(id) {
     const detail = $('emails-detail'); if (!detail) return;
     detail.innerHTML = '<div class="text-zinc-500 text-xs">Loading…</div>';
     try {
-        const acct = window.msalInstance.getAllAccounts()[0];
+        const acct = msalInstance.getAllAccounts()[0];
         const token = await _emailsAcquireMailToken(acct);
         const r = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(id)}?$select=id,subject,from,toRecipients,receivedDateTime,body,hasAttachments,webLink`,
             { headers: { Authorization: 'Bearer ' + token } });
@@ -7568,7 +7572,7 @@ async function emailsOpen(id) {
 
 async function emailsDownloadAttachment(messageId, attId, name, contentType) {
     try {
-        const acct = window.msalInstance.getAllAccounts()[0];
+        const acct = msalInstance.getAllAccounts()[0];
         const token = await _emailsAcquireMailToken(acct);
         const r = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attId)}`,
             { headers: { Authorization: 'Bearer ' + token } });
