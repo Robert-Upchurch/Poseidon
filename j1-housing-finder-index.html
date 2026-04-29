@@ -348,16 +348,46 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 10px;
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 0.75rem;
             z-index: 500;
             box-shadow: var(--shadow);
             font-size: 0.75rem;
+            max-width: 220px;
+            transition: padding var(--transition-speed);
         }
 
         .map-legend h4 {
-            margin-bottom: 0.4rem;
+            margin: 0;
             font-size: 0.75rem;
             color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            cursor: pointer;
+            user-select: none;
+            padding: 0.1rem 0;
+        }
+
+        .map-legend h4 .legend-chevron {
+            transition: transform var(--transition-speed);
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+
+        .map-legend.collapsed h4 .legend-chevron {
+            transform: rotate(-90deg);
+        }
+
+        .legend-body {
+            display: block;
+            margin-top: 0.4rem;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .map-legend.collapsed .legend-body {
+            display: none;
         }
 
         .legend-item {
@@ -372,6 +402,7 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
+            flex-shrink: 0;
         }
 
         /* ===== WORK ADDRESS DISTANCE BAR ===== */
@@ -818,22 +849,24 @@
     <div class="main-layout">
         <div class="map-container">
             <div id="map"></div>
-            <div class="map-legend">
-                <h4>Map Legend</h4>
-                <div class="legend-item"><span style="color:#ef4444;font-size:14px;line-height:10px;">★</span> Host Company</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Miami / Fort Lauderdale</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> Orlando / Kissimmee</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#f97316"></span> Dallas / DFW</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#a855f7"></span> Fayetteville / Syracuse</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#ec4899"></span> Atlanta</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#06b6d4"></span> Chicago</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#eab308"></span> San Francisco / LA</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#14b8a6"></span> Seattle</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#f43f5e"></span> Las Vegas</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span> New Orleans / Nashville</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#64748b"></span> DC / Boston / Charlotte</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#d97706"></span> Denver / Phoenix</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#6366f1"></span> Other Cities</div>
+            <div id="map-legend" class="map-legend collapsed" onclick="if(event.target.closest('h4'))this.classList.toggle('collapsed')">
+                <h4 title="Click to expand or collapse"><span>Map Legend</span><span class="legend-chevron">&#9662;</span></h4>
+                <div class="legend-body">
+                    <div class="legend-item"><span style="color:#ef4444;font-size:14px;line-height:10px;">&#9733;</span> Host Company</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Miami / Fort Lauderdale</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> Orlando / Kissimmee</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#f97316"></span> Dallas / DFW</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#a855f7"></span> Fayetteville / Syracuse</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#ec4899"></span> Atlanta</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#06b6d4"></span> Chicago</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#eab308"></span> San Francisco / LA</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#14b8a6"></span> Seattle</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#f43f5e"></span> Las Vegas</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span> New Orleans / Nashville</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#64748b"></span> DC / Boston / Charlotte</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#d97706"></span> Denver / Phoenix</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#6366f1"></span> Other Cities</div>
+                </div>
             </div>
         </div>
         <div class="listings-panel" id="listings-panel">
