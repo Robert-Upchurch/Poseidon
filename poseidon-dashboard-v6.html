@@ -712,7 +712,7 @@
         </div>
         <!-- RIGHT — read pane -->
         <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4 min-h-[260px]">
-            <div id="emails-detail" class="text-sm text-zinc-300">
+            <div id="emails-detail" class="text-sm text-zinc-300 overflow-y-auto max-h-[calc(100vh-220px)]">
                 <div class="text-center py-12 text-zinc-500 text-xs">Select an email on the left to read it.</div>
             </div>
         </div>
@@ -7535,24 +7535,33 @@ async function emailsOpen(id) {
             { headers: { Authorization: 'Bearer ' + token } });
         if (!r.ok) throw new Error('Graph ' + r.status);
         const m = await r.json();
-        let bodyText = m.body?.content || '';
-        if ((m.body?.contentType || '').toLowerCase() === 'html') {
-            const tmp = document.createElement('div'); tmp.innerHTML = bodyText;
-            bodyText = tmp.innerText;
-        }
-        const attHtml = m.hasAttachments ? `<div id="email-att-${id}" class="mt-3 p-2 bg-zinc-950 border border-zinc-800 rounded text-[11px] text-zinc-400">Loading attachments…</div>` : '';
-        detail.innerHTML = `
-            <div class="flex items-start justify-between gap-3 mb-3 flex-wrap">
-                <div>
-                    <div class="text-base font-semibold text-zinc-100">${h(m.subject || '(no subject)')}</div>
-                    <div class="text-xs text-zinc-500 mt-1">From: ${h(m.from?.emailAddress?.name || '')} &lt;${h(m.from?.emailAddress?.address || '')}&gt;</div>
-                    <div class="text-[11px] text-zinc-600">${new Date(m.receivedDateTime).toLocaleString()}</div>
-                </div>
-                <a href="${m.webLink}" target="_blank" rel="noopener" class="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> Open in Outlook</a>
-            </div>
-            <div class="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">${h(bodyText.slice(0, 8000))}${bodyText.length > 8000 ? '<span class="text-zinc-500">… (truncated)</span>' : ''}</div>
-            ${attHtml}
-        `;
+        const isHtml = (m.body?.contentType || '').toLowerCase() === 'html';
+        const rawBody = m.body?.content || '';
+        // Inner-frame HTML: same body for HTML mails; <pre> for plain text.
+        const innerHtml = isHtml
+            ? rawBody
+            : '<pre style="white-space:pre-wrap;font-family:inherit">' + h(rawBody) + '</pre>';
+        // Document we feed into the sandboxed iframe via srcdoc.
+        const frameDoc = '<!doctype html><html><head><meta charset="utf-8">' +
+            '<base target="_blank">' +
+            '<style>html,body{margin:0;padding:0}body{font-family:-apple-system,Segoe UI,Inter,sans-serif;color:#222;background:#fff;padding:1rem;line-height:1.55;font-size:14px;word-wrap:break-word}a{color:#2563eb}img{max-width:100%;height:auto}table{max-width:100%}pre{white-space:pre-wrap;word-wrap:break-word}</style>' +
+            '</head><body>' + innerHtml + '</body></html>';
+        const attHtml = m.hasAttachments
+            ? '<div id="email-att-' + id + '" class="mt-3 p-2 bg-zinc-950 border border-zinc-800 rounded text-[11px] text-zinc-400">Loading attachments…</div>'
+            : '';
+        detail.innerHTML = '' +
+            '<div class="flex items-start justify-between gap-3 mb-3 flex-wrap">' +
+                '<div>' +
+                    '<div class="text-base font-semibold text-zinc-100">' + h(m.subject || '(no subject)') + '</div>' +
+                    '<div class="text-xs text-zinc-500 mt-1">From: ' + h(m.from?.emailAddress?.name || '') + ' &lt;' + h(m.from?.emailAddress?.address || '') + '&gt;</div>' +
+                    '<div class="text-[11px] text-zinc-600">' + new Date(m.receivedDateTime).toLocaleString() + '</div>' +
+                '</div>' +
+                '<a href="' + m.webLink + '" target="_blank" rel="noopener" class="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> Open in Outlook</a>' +
+            '</div>' +
+            '<iframe id="email-body-frame" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" style="width:100%;height:520px;border:1px solid #27272a;border-radius:8px;background:#fff" title="Email body"></iframe>' +
+            attHtml;
+        const bodyFrame = document.getElementById('email-body-frame');
+        if (bodyFrame) bodyFrame.srcdoc = frameDoc;
         if (typeof lucide !== 'undefined') lucide.createIcons();
         if (m.hasAttachments) {
             const attR = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(id)}/attachments?$select=id,name,contentType,size`,
