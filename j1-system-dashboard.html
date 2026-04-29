@@ -3271,7 +3271,10 @@ function renderMonthView() {
     const daysInMonth = new Date(y, m+1, 0).getDate();
     const todayStr = _localDateStr();
 
-    let html = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="text-xs text-zinc-500 text-center font-semibold py-2">${d}</div>`).join('');
+    // Day-of-week headers are rendered in the static markup above the
+    // grid (see <div class="grid grid-cols-7 mb-1">), so we don't repeat
+    // them inside the grid here.
+    let html = '';
 
     for (let i = 0; i < firstDay; i++) html += '<div class="border border-zinc-800/30 rounded-lg p-1 min-h-[80px]"></div>';
     for (let d = 1; d <= daysInMonth; d++) {
@@ -6548,8 +6551,9 @@ async function o365LoadCalendar() {
     // Robert 2026-04-29: extend to next 24 months, force device-local
     // time (Prefer outlook.timezone), paginate via @odata.nextLink.
     const now = new Date();
-    const start = new Date(now.getTime() -   7*86400000).toISOString();
-    const end   = new Date(now.getTime() + 730*86400000).toISOString(); // ~24 months
+    // Robert 2026-04-29: 3 years back, 5 years forward.
+    const start = new Date(now.getTime() - 1095*86400000).toISOString(); // ~3 years back
+    const end   = new Date(now.getTime() + 1825*86400000).toISOString(); // ~5 years forward
     const tz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (_) { return 'UTC'; } })();
     const token = await o365GetToken();
     if (!token) return;
