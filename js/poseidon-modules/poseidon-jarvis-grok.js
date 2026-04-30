@@ -990,6 +990,49 @@
       parameters: { type: 'object', properties: {} }
     },
 
+    // ─── Email: compose + delete ────────────────────────────────────
+    {
+      type: 'function',
+      name: 'compose_email',
+      description: 'Compose and SEND an email via Microsoft 365. Use when the user says "send an email to X", "reply to Y", "email Z about this", or "draft and send". ALWAYS say the recipient, subject, and a brief summary of the body out loud to Robert and wait for verbal confirmation BEFORE calling this. Requires Mail.Send consent — if blocked, tell Robert to click "Force Re-consent" on the Emails page.',
+      parameters: {
+        type: 'object',
+        properties: {
+          to:      { type: 'string', description: 'Recipient email address or comma-separated list.' },
+          subject: { type: 'string', description: 'Email subject line.' },
+          body:    { type: 'string', description: 'Email body — plain text or HTML.' },
+          cc:      { type: 'string', description: 'Optional CC addresses (comma-separated).' }
+        },
+        required: ['to','subject','body']
+      }
+    },
+    {
+      type: 'function',
+      name: 'delete_email',
+      description: 'Delete (move to Deleted Items) a specific email by id. Use when the user says "delete that email", "remove it", "trash it". ALWAYS confirm the subject and sender out loud before deleting. Call read_emails first to get the id. Requires Mail.ReadWrite consent — if blocked, tell Robert to click "Force Re-consent" on the Emails page.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'The email message id from read_emails or read_email.' }
+        },
+        required: ['id']
+      }
+    },
+
+    // ─── Tasks: delete ──────────────────────────────────────────────
+    {
+      type: 'function',
+      name: 'delete_task',
+      description: 'Delete a task from the Poseidon task list. Use when the user says "remove that task", "delete task X", "clear it off the list", "it\'s done, delete it". Match by numeric task id or by partial title substring. Always confirm the task title out loud before deleting.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id:          { type: 'number', description: 'Numeric task id (from read_dashboard_state or the Tasks page).' },
+          title_match: { type: 'string', description: 'Case-insensitive title substring — deletes the first match.' }
+        }
+      }
+    },
+
   ];
 
   // ─── Tool implementations (executed on the dashboard) ───────────
@@ -1995,6 +2038,90 @@
       return { ok: true, subject, from, received: stamp, body: body.slice(0, 12000) };
     },
 
+    // ─── compose_email — send via Microsoft Graph ───────────────────
+    async compose_email({ to, subject, body, cc } = {}) {
+      if (!to || !subject || !body) return { ok: false, error: 'to, subject, and body are all required.' };
+      try {
+        const token = await this._o365TokenForScopes(['Mail.Send']);
+        const toList = String(to).split(',').map(a => ({ emailAddress: { address: a.trim() } }));
+        const ccList = cc ? String(cc).split(',').map(a => ({ emailAddress: { address: a.trim() } })) : [];
+        const isHtml = body.trim().startsWith('<');
+        const payload = {
+          message: {
+            subject: String(subject),
+            body: { contentType: isHtml ? 'HTML' : 'Text', content: String(body) },
+            toRecipients: toList,
+            ...(ccList.length ? { ccRecipients: ccList } : {})
+          },
+          saveToSentItems: true
+        };
+        const resp = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (resp.status === 202 || resp.ok) return { ok: true, sent: true, to, subject };
+        const errText = await resp.text().catch(() => '');
+        if (resp.status === 403 || resp.status === 401) {
+          return { ok: false, error: 'Mail.Send permission not yet granted. Tell Robert to click "Force Re-consent" on the Emails page to add send permission, then try again.' };
+        }
+        return { ok: false, error: 'Graph ' + resp.status + ': ' + errText };
+      } catch (e) {
+        if (e.errorCode === 'interaction_required' || (e.message||'').includes('interaction_required')) {
+          return { ok: false, error: 'Mail.Send requires re-consent. Tell Robert to click "Force Re-consent" on the Emails page, then try again.' };
+        }
+        return { ok: false, error: e.message };
+      }
+    },
+
+    // ─── delete_email — move to Deleted Items via Microsoft Graph ───
+    async delete_email({ id } = {}) {
+      if (!id) return { ok: false, error: 'id is required. Call read_emails first to find the email id.' };
+      try {
+        const token = await this._o365TokenForScopes(['Mail.ReadWrite']);
+        const resp = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        if (resp.status === 204 || resp.ok) {
+          if (Array.isArray(window._emailsCache)) {
+            window._emailsCache = window._emailsCache.filter(m => m.id !== id);
+          }
+          return { ok: true, deleted: true, id };
+        }
+        const errText = await resp.text().catch(() => '');
+        if (resp.status === 403 || resp.status === 401) {
+          return { ok: false, error: 'Mail.ReadWrite permission not yet granted. Tell Robert to click "Force Re-consent" on the Emails page to add delete permission, then try again.' };
+        }
+        return { ok: false, error: 'Graph ' + resp.status + ': ' + errText };
+      } catch (e) {
+        if (e.errorCode === 'interaction_required' || (e.message||'').includes('interaction_required')) {
+          return { ok: false, error: 'Mail.ReadWrite requires re-consent. Tell Robert to click "Force Re-consent" on the Emails page, then try again.' };
+        }
+        return { ok: false, error: e.message };
+      }
+    },
+
+    // ─── delete_task — remove from local task list ──────────────────
+    delete_task({ id, title_match } = {}) {
+      let tasks = _readNormalizedTasks();
+      let removed = null;
+      if (id !== undefined && id !== null) {
+        removed = tasks.find(t => t.id === id || t.id === Number(id));
+        tasks = tasks.filter(t => t.id !== id && t.id !== Number(id));
+      } else if (title_match) {
+        const q = String(title_match).toLowerCase();
+        removed = tasks.find(t => (t.title || '').toLowerCase().includes(q));
+        tasks = tasks.filter(t => !(t.title || '').toLowerCase().includes(q));
+      } else {
+        return { ok: false, error: 'Provide id or title_match to identify the task.' };
+      }
+      if (!removed) return { ok: false, error: 'No matching task found.' };
+      localStorage.setItem('poseidon-tasks', JSON.stringify(tasks));
+      if (typeof window.renderTasks === 'function') try { window.renderTasks(); } catch (_) {}
+      return { ok: true, deleted: removed };
+    },
+
   };
 
   // ─── Media helpers ────────────────────────────────────────────────
@@ -2695,7 +2822,8 @@
       'For ANY email-related question — "do I have any emails", "anything from X", "what does that email say", "open the attachment", "summarize the contract attachment", "read me the PDF", "urgent emails", "unread emails" — call read_emails first to find candidates and grab the email id, then read_email for the full body, list_email_attachments for attachments, read_email_attachment to extract attachment text (PDFs supported via PDF.js), and open_email_attachment to open in a new tab. ALWAYS read_email or read_email_attachment before summarizing — do NOT speculate from the preview alone. If Microsoft 365 is not signed in, tell the user to click "Sign in to M365" on the dashboard.',
       'When the user asks about a KPI on a specific division, call read_kpi with that division.',
       'When the user asks you to navigate ("take me to finance", "open J1 housing"), call go_to_page.',
-      'When the user asks to add a task or event, call save_task / save_event.',
+      'When the user asks to add a task or event, call save_task / save_event. To DELETE a task, call delete_task with the task id or a title_match substring — always confirm the task title out loud before executing.',
+      'EMAIL ACTIONS — compose_email: when Robert says "send an email", "reply to X", or "email Y about Z", draft the email, then SAY the recipient + subject + body summary out loud and wait for confirmation before calling compose_email. delete_email: when Robert says "delete that email" or "trash it", say the subject and sender out loud and wait for confirmation, then call delete_email with the id from read_emails. Both tools require extra M365 permissions (Mail.Send / Mail.ReadWrite) — if they fail with a permissions error, tell Robert to click "Force Re-consent" on the Emails page and try again.',
       'When the user asks anything about cruise line contracts, fees, terms, obligations, legal, insurance, positions, compliance, or pros/cons — first call read_contracts (or read_contracts_lines for a quick line list), then summarize the results. The Contracts dashboard is fully readable end-to-end via these tools.',
       'When the user asks to "open in new tab", "pop out", or "expand" a division, call popout_division. For analytics or chart questions on a division, call list_analytics_reports first to discover available reports, then read_analytics to pull the actual numbers behind the chart.',
       'When the user asks for an overall scan of the dashboard ("what is on the dashboard", "scan everything", "summarize the whole thing", "give me a full status", or any question that could span multiple divisions), call read_full_dashboard — it returns every page\'s title + text + iframe content in one call, even for hidden pages.',

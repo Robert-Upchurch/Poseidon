@@ -285,3 +285,26 @@ read_full_dashboard now polls each iframe up to 6 seconds for its body to
 become content-readable before reading. Combined with the dashboard's
 eager-load + onload tracker on every iframe, "frame not loading" should be
 gone.
+
+## Jarvis capabilities added 2026-04-30
+
+### Email actions (require re-consent for new scopes)
+- **compose_email** — Jarvis can compose and SEND emails via Microsoft 365 Graph.
+  Always confirms recipient, subject, and body out loud before sending.
+  Requires **Mail.Send** scope — if not yet consented, tell Robert to click
+  "Force Re-consent" on the Emails page to grant it.
+- **delete_email** — Jarvis can delete (move to Deleted Items) a specific email
+  by id (from read_emails). Always confirms subject + sender before deleting.
+  Requires **Mail.ReadWrite** scope — same Force Re-consent flow.
+- **search_emails / read_email / attachments** — already fully functional.
+
+### Task actions
+- **save_task** — add a new task (already existed).
+- **delete_task** — Jarvis can now DELETE a task by numeric id or by
+  partial title match. Confirms task title before deleting.
+
+### Calendar
+- The "Schedule" panel (formerly "Upcoming") now shows events from the
+  past 60 days AND future events (up to 40 total), not just upcoming ones.
+- MSAL scopes expanded to include Mail.Send, Mail.ReadWrite, Tasks.ReadWrite
+  on both dashboards.
