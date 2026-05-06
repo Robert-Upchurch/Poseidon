@@ -1033,6 +1033,36 @@
       }
     },
 
+    // ────────────────────────────────────────────────────────────────
+    // Cross-dashboard tools (added 2026-05-06).
+    // Surface other CTI Group dashboards by NAME and verified URL.
+    // Jarvis can list them and open them in a new tab. Jarvis CANNOT
+    // read content from external-origin dashboards (browser sandbox).
+    // ────────────────────────────────────────────────────────────────
+    {
+      type: 'function',
+      name: 'list_cti_dashboards',
+      description: 'Return the verified list of CTI Group dashboards (name, route, role). Use this when the user asks "what dashboards do we have", "where is X", or before suggesting a dashboard switch.',
+      parameters: { type: 'object', properties: {} }
+    },
+    {
+      type: 'function',
+      name: 'open_cti_dashboard',
+      description: 'Open another CTI Group dashboard in a new tab. Use ONLY values returned by list_cti_dashboards — do not invent dashboard ids. Same-origin dashboards (poseidon, j1-system, j1-housing-finder, tracker) live on this domain; upchurch-financial lives on a different origin (Cloudflare Pages, password-gated).',
+      parameters: {
+        type: 'object',
+        properties: {
+          dashboard_id: {
+            type: 'string',
+            enum: ['poseidon','j1-system','j1-housing-finder','tracker','upchurch-financial'],
+            description: 'Verified dashboard id from list_cti_dashboards.'
+          }
+        },
+        required: ['dashboard_id']
+      }
+    },
+
+
   ];
 
   // ─── Tool implementations (executed on the dashboard) ───────────
@@ -1043,6 +1073,37 @@
       return { ok: true, page: page_id };
     },
 
+
+    // ── Cross-dashboard impl (added 2026-05-06) ────────────────────
+    list_cti_dashboards() {
+      // Verified URLs, no inventions. Mirrors the cross-dashboard nav
+      // shipped on the Upchurch dashboard (v4.7.14).
+      return {
+        ok: true,
+        dashboards: [
+          { id: 'poseidon',           name: 'Poseidon Dashboard V6',     url: 'https://robert-upchurch.github.io/Poseidon/poseidon-dashboard-v6.html',  role: 'CTI master command center' },
+          { id: 'j1-system',          name: 'J1 System Dashboard',       url: 'https://robert-upchurch.github.io/Poseidon/j1-system-dashboard.html',    role: 'CUK · J1 Division · Housing Finder' },
+          { id: 'j1-housing-finder',  name: 'J1 Housing Finder',         url: 'https://robert-upchurch.github.io/Poseidon/j1-housing-finder-index.html', role: 'Participant housing search tool' },
+          { id: 'tracker',            name: 'Poseidon Master Tracker',   url: 'https://robert-upchurch.github.io/Poseidon/tracker.html',                 role: 'Cross-division task tracker' },
+          { id: 'upchurch-financial', name: 'Upchurch Financial Command Center', url: 'https://upchurch-financial-dashboard.pages.dev/',                  role: 'Personal + CTI finance (separate origin, password-gated)' }
+        ]
+      };
+    },
+
+    open_cti_dashboard({ dashboard_id }) {
+      const map = {
+        'poseidon':           'https://robert-upchurch.github.io/Poseidon/poseidon-dashboard-v6.html',
+        'j1-system':          'https://robert-upchurch.github.io/Poseidon/j1-system-dashboard.html',
+        'j1-housing-finder':  'https://robert-upchurch.github.io/Poseidon/j1-housing-finder-index.html',
+        'tracker':            'https://robert-upchurch.github.io/Poseidon/tracker.html',
+        'upchurch-financial': 'https://upchurch-financial-dashboard.pages.dev/'
+      };
+      const url = map[dashboard_id];
+      if (!url) return { ok: false, error: 'Unknown dashboard_id. Call list_cti_dashboards first.' };
+      try { window.open(url, '_blank', 'noopener'); }
+      catch (_) { return { ok: false, error: 'window.open blocked' }; }
+      return { ok: true, dashboard_id, url };
+    },
     save_task({ title, due, priority }) {
       if (typeof window.saveTask === 'function' && typeof window.openTaskModal === 'function') {
         try {
