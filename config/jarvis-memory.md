@@ -325,22 +325,27 @@ gone.
   reading** — Jarvis cannot read its DOM due to the browser cross-origin
   sandbox.
 
-### Hard guardrails for the Upchurch dashboard
-- **No content reading** — the Upchurch dashboard contains personal
-  financial + privileged litigation work product (Citi wire fraud, IRS
-  Treasury collection, attorney communications). Jarvis must NOT attempt
-  to read its DOM, files, or emails. The cross-origin sandbox enforces
-  this technically; the rule above codifies it as policy.
-- **Metadata only when discussing it** — if Robert asks "what's on the
-  Upchurch dashboard?", refer to public metadata only: section names,
-  dashboard structure, navigation links. Never quote figures, attorney
-  names, or document contents.
-- **Documents & Emails Hub** on Upchurch is per-device localStorage +
-  IndexedDB. Jarvis cannot reach it from this origin.
-- **Outlook intake on Upchurch is unwired** — that domain has no MSAL.
-  When Robert asks about Upchurch emails, direct him to the Poseidon
-  Emails page (which IS authenticated) and remind him to use the Hub's
-  manual mirror form to tag relevant emails to Upchurch sections.
+### Cross-origin reality (still true)
+- The Upchurch dashboard runs on a **different origin**
+  (`upchurch-financial-dashboard.pages.dev`) than the Poseidon dashboards
+  (`robert-upchurch.github.io/Poseidon/`). The Jarvis instance loaded
+  inside Poseidon CANNOT read the Upchurch DOM or its localStorage
+  through any browser API — that's enforced by the same-origin policy,
+  not by code we write. Cross-dashboard tools `list_cti_dashboards` and
+  `open_cti_dashboard` are still navigation-only.
+- **What's NEW (2026-05-06):** Robert authorized a **second Jarvis
+  instance** to live INSIDE the Upchurch dashboard (v4.7.21). That
+  instance runs in the Upchurch origin and can read Upchurch's DOM,
+  Hub data, and emails directly. The two Jarvis instances are
+  independent: they share xAI Grok as the underlying brain but have
+  **separate API keys** (per-origin localStorage) and **separate chat
+  histories**. Refer to the Upchurch Jarvis when Robert wants Upchurch
+  content; refer to this Poseidon Jarvis for everything else.
+- **Override of prior guardrail:** the previous "no content reading
+  from Upchurch" rule (added earlier 2026-05-06) is rescinded. Robert
+  explicitly OK'd reading Upchurch content via the Upchurch-side
+  Jarvis instance. From the Poseidon-side instance you still cannot
+  reach Upchurch — the cross-origin barrier is technical, not policy.
 
 ### Cross-dashboard health-check schedule (registered 2026-05-06)
 Two scheduled tasks run automatically (America/New_York):
@@ -352,3 +357,48 @@ read-only HTTP availability check on all 5 dashboards, an open-PR
 snapshot for both repos, and a P0/DOING anomaly check on
 `config/tasks.json`. Robert is notified only on anomalies; healthy
 runs are silent.
+
+## Standing facts about the dashboard ecosystem (added 2026-05-06)
+
+### All five dashboards have light + dark mode
+Verified 2026-05-06. Toggle persists across sessions via localStorage:
+- Upchurch — `data-theme="dark|light"` + `localStorage.upchurch-theme`
+- Poseidon V6 — `html.dark` class + Tailwind `darkMode:'class'`
+- J1 System — same Tailwind pattern as V6
+- J1 Housing Finder — same pattern, separate origin (iframe-friendly)
+- Tracker — `localStorage.poseidon-tracker-theme`
+
+When Robert asks "make this look better in light mode" or "is dark mode
+broken on X", the toggle exists on every dashboard already. Don't add
+new toggles — use the existing ones.
+
+### Unified Dashboards dropdown switcher (added 2026-05-06)
+Every dashboard now carries the same `.cti-dash-switcher` component:
+- Upchurch master nav (since v4.7.14)
+- V6 app-header (PR #49, merged 2026-05-06)
+- J1 System top action row (PR #49)
+- Tracker header strip (PR #49)
+- J1 Housing Finder is iframe-embedded inside J1 System; standalone
+  carries the same back-link button.
+
+The dropdown lists all 5 dashboards with role description and flags
+the current one with gold "Current — …" styling. Click outside / Esc
+closes. CSS scoped under `.cti-dash-*` to avoid Tailwind collisions.
+
+### Upchurch dashboard standing facts (separate from Poseidon repo)
+- Live URL: https://upchurch-financial-dashboard.pages.dev/
+- Repo: `Robert-Upchurch/upchurch-financial-dashboard`
+- Stack: single-file static HTML on Cloudflare Pages, password-gated
+  (SHA-256 + salt, 24h localStorage session)
+- Microsoft 365: connected via MSAL since v4.7.18 (Mail.Read +
+  Mail.ReadWrite delegated, Azure App `aff2df6d-…`)
+- Documents & Emails Hub at `#hub` since v4.7.15
+- Sidebar shell since v4.7.17 (Poseidon V6 visual language: 240 px
+  fixed sidebar, dark navy + teal, mobile drawer below 900 px)
+- Full-width content since v4.7.20
+- **Jarvis embedded since v4.7.21** at the `#goal` section. Independent
+  from this Poseidon Jarvis — separate API key in Upchurch's localStorage,
+  separate chat history. Tool surface includes list_sections,
+  read_section (every page), read_kpis, read_emails (with unread_only
+  + section_id filters), mark_email_read, refresh_emails,
+  read_hub_documents, read_recent_updates.
