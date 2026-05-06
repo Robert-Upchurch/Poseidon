@@ -308,3 +308,47 @@ gone.
   past 60 days AND future events (up to 40 total), not just upcoming ones.
 - MSAL scopes expanded to include Mail.Send, Mail.ReadWrite, Tasks.ReadWrite
   on both dashboards.
+
+## Jarvis capabilities added 2026-05-06
+
+### Cross-dashboard navigation tools
+- **list_cti_dashboards** — returns the verified list of all five CTI Group
+  dashboards (Poseidon V6, J1 System, J1 Housing Finder, Master Tracker,
+  and the Upchurch Financial Command Center). Use this when Robert asks
+  "what dashboards do we have", "where is X", or before suggesting a
+  dashboard switch. **Verified URLs only** — never invent a route.
+- **open_cti_dashboard** — opens one of the five dashboards in a new tab.
+  Same-origin dashboards (poseidon, j1-system, j1-housing-finder, tracker)
+  live on `robert-upchurch.github.io/Poseidon/`. The Upchurch Financial
+  Command Center is on a **different origin** (`upchurch-financial-dashboard.pages.dev`,
+  Cloudflare Pages, password-gated) and is **opt-out for inline content
+  reading** — Jarvis cannot read its DOM due to the browser cross-origin
+  sandbox.
+
+### Hard guardrails for the Upchurch dashboard
+- **No content reading** — the Upchurch dashboard contains personal
+  financial + privileged litigation work product (Citi wire fraud, IRS
+  Treasury collection, attorney communications). Jarvis must NOT attempt
+  to read its DOM, files, or emails. The cross-origin sandbox enforces
+  this technically; the rule above codifies it as policy.
+- **Metadata only when discussing it** — if Robert asks "what's on the
+  Upchurch dashboard?", refer to public metadata only: section names,
+  dashboard structure, navigation links. Never quote figures, attorney
+  names, or document contents.
+- **Documents & Emails Hub** on Upchurch is per-device localStorage +
+  IndexedDB. Jarvis cannot reach it from this origin.
+- **Outlook intake on Upchurch is unwired** — that domain has no MSAL.
+  When Robert asks about Upchurch emails, direct him to the Poseidon
+  Emails page (which IS authenticated) and remind him to use the Hub's
+  manual mirror form to tag relevant emails to Upchurch sections.
+
+### Cross-dashboard health-check schedule (registered 2026-05-06)
+Two scheduled tasks run automatically (America/New_York):
+- **cti-cross-dashboard-healthcheck** — daily 08:00 ET
+- **cti-cross-dashboard-healthcheck-weekday-pm** — Mon–Fri 12:00 + 16:00 ET
+
+Together they cover M-F 8a/12p/4p + Sat-Sun 8a ET. Each run does a
+read-only HTTP availability check on all 5 dashboards, an open-PR
+snapshot for both repos, and a P0/DOING anomaly check on
+`config/tasks.json`. Robert is notified only on anomalies; healthy
+runs are silent.
