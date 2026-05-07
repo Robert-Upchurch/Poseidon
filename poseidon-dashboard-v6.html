@@ -13,6 +13,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- v6.1.x — shared media player module (replaces inline copy) -->
+    <script src="js/poseidon-modules/media-player.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.6.0/lib/msal-browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
@@ -2133,34 +2135,6 @@ document.addEventListener('keydown', function(e) {
 </div>
 
 <!-- ═══════════ MEDIA PLAYER BAR ═══════════ -->
-<div id="media-player-bar" class="fixed bottom-0 left-0 right-0 h-16 bg-zinc-900/95 border-t border-zinc-800 backdrop-blur-xl z-[999] px-4 hidden">
-    <div class="flex items-center h-full gap-3">
-        <div class="flex items-center gap-2 min-w-[160px] max-w-[220px]">
-            <div id="player-icon" class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-sm shrink-0">🎙️</div>
-            <div class="min-w-0"><div id="player-title" class="text-xs font-medium text-zinc-300 truncate">No track</div><div id="player-subtitle" class="text-[10px] text-zinc-600 truncate">—</div></div>
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-            <button onclick="playerPrev()" class="text-zinc-500 hover:text-zinc-300 text-sm">⏮</button>
-            <button id="player-play-btn" onclick="playerToggle()" class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm hover:bg-indigo-600 transition-colors">▶</button>
-            <button onclick="playerNext()" class="text-zinc-500 hover:text-zinc-300 text-sm">⏭</button>
-        </div>
-        <div class="flex-1 flex items-center gap-2">
-            <span id="player-current-time" class="text-[10px] font-mono text-zinc-600 min-w-[32px] text-right">0:00</span>
-            <div id="player-progress-container" class="flex-1 h-1 bg-zinc-800 rounded cursor-pointer relative" onclick="playerSeek(event)">
-                <div id="player-progress" class="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded transition-[width] duration-100" style="width:0%"></div>
-            </div>
-            <span id="player-duration" class="text-[10px] font-mono text-zinc-600 min-w-[32px]">0:00</span>
-        </div>
-        <div class="flex items-center gap-1.5 shrink-0">
-            <button onclick="playerMute()" id="player-vol-icon" class="text-zinc-500 hover:text-zinc-300 text-sm">🔊</button>
-            <input type="range" id="player-volume" min="0" max="100" value="80" class="w-16 accent-indigo-500" oninput="playerSetVolume(this.value)">
-        </div>
-        <button onclick="playerClose()" class="text-zinc-600 hover:text-zinc-400 text-sm">✕</button>
-    </div>
-</div>
-
-
-
 <script>
 // ═══════════════════════════════════════════════════
 // POSEIDON DASHBOARD v5 — JavaScript Engine
@@ -5373,61 +5347,6 @@ async function o365LoadFiles() {
     console.log('OneDrive files loaded:', data.value.length);
 }
 
-// ═══════════════════════════════════════════════════
-// MEDIA PLAYER ENGINE
-// ═══════════════════════════════════════════════════
-
-let playerAudio = null;
-let playerPlaying = false;
-let playerQueue = [];
-let playerIdx = 0;
-
-function playerToggle() {
-    if (!playerAudio) return;
-    if (playerPlaying) { playerAudio.pause(); playerPlaying = false; }
-    else { playerAudio.play(); playerPlaying = true; }
-    updatePlayerBtn();
-}
-
-function updatePlayerBtn() {
-    const btn = $('player-play-btn');
-    if (btn) btn.textContent = playerPlaying ? '⏸' : '▶';
-}
-
-function playerPrev() { if (playerIdx > 0) { playerIdx--; loadPlayerTrack(); } }
-function playerNext() { if (playerIdx < playerQueue.length - 1) { playerIdx++; loadPlayerTrack(); } }
-
-function loadPlayerTrack() {
-    if (!playerQueue.length) return;
-    const track = playerQueue[playerIdx];
-    if ($('player-title')) $('player-title').textContent = track.title || 'Track';
-    if ($('player-subtitle')) $('player-subtitle').textContent = track.artist || '';
-}
-
-function playerSeek(e) {
-    if (!playerAudio) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    playerAudio.currentTime = pct * playerAudio.duration;
-}
-
-function playerMute() {
-    if (!playerAudio) return;
-    playerAudio.muted = !playerAudio.muted;
-    const icon = $('player-vol-icon');
-    if (icon) icon.textContent = playerAudio.muted ? '🔇' : '🔊';
-}
-
-function playerSetVolume(v) {
-    if (playerAudio) playerAudio.volume = v / 100;
-}
-
-function playerClose() {
-    if (playerAudio) { playerAudio.pause(); playerAudio = null; }
-    playerPlaying = false;
-    const bar = $('media-player-bar');
-    if (bar) bar.classList.add('hidden');
-}
 
 // ═══════════════════════════════════════════════════
 // JARVIS AI MODAL
