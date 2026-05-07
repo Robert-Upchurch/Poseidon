@@ -89,7 +89,7 @@ Robert's master landing page is `C:\Users\ceo\OneDrive - CTI Group Worldwide Ser
 
 Static site — no build step. To preview:
 ```powershell
-cd "$env:USERPROFILE\OneDrive - CTI Group Worldwide Services Inc\POSEIDON\Claude-Workspace\Code-Projects\Poseidon-Dashboard-V5"
+cd "C:\Projects\Poseidon"
 python -m http.server 8000   # http://localhost:8000/poseidon-dashboard-v6.html
 ```
 
