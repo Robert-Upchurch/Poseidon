@@ -556,11 +556,19 @@ document.addEventListener('keydown', function(e) {
 <script>
 (function () {
   var GATE_KEY = 'poseidon_auth_v1';
-  var PASS = '1234';
+  var ROLE_KEY  = 'poseidon_role_v1';
+  // To add a new role: add an entry to ROLES and set ROLE_PAGES[role] to an array
+  // of page-ids to restrict that role, or null for full access.
+  var ROLES = { 'Rubu61211439!': 'admin', 'CTI2026': 'staff' };
+  var ROLE_PAGES = { 'admin': null, 'staff': null };
   var gate = document.getElementById('poseidon-gate');
   if (!gate) return;
   try {
-    if (sessionStorage.getItem(GATE_KEY) === '1') { gate.remove(); return; }
+    if (sessionStorage.getItem(GATE_KEY) === '1') {
+      window.poseidonRole = sessionStorage.getItem(ROLE_KEY) || 'staff';
+      window.poseidonRolePages = ROLE_PAGES[window.poseidonRole] || null;
+      gate.remove(); return;
+    }
   } catch (_) {}
   var form = document.getElementById('poseidon-gate-form');
   var input = document.getElementById('poseidon-gate-input');
@@ -576,8 +584,14 @@ document.addEventListener('keydown', function(e) {
   setTimeout(function () { try { input.focus(); } catch (_) {} }, 60);
   form.addEventListener('submit', function (e) {
     e.preventDefault();
-    if (input.value === PASS) {
-      try { sessionStorage.setItem(GATE_KEY, '1'); } catch (_) {}
+    var _role = ROLES[input.value];
+    if (_role !== undefined) {
+      try {
+        sessionStorage.setItem(GATE_KEY, '1');
+        sessionStorage.setItem(ROLE_KEY, _role);
+      } catch (_) {}
+      window.poseidonRole = _role;
+      window.poseidonRolePages = ROLE_PAGES[_role] || null;
       gate.style.transition = 'opacity 0.3s ease';
       gate.style.opacity = '0';
       setTimeout(function () { gate.remove(); }, 320);
