@@ -6423,7 +6423,7 @@ const msalConfig = {
     },
     cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
 };
-const o365Scopes = ['User.Read','Mail.Read','Mail.Send','Mail.ReadWrite','Calendars.Read','Tasks.Read','Tasks.ReadWrite','Files.Read'];
+const o365Scopes = ['User.Read','Mail.Read','Mail.Send','Mail.ReadWrite','Calendars.Read','Calendars.ReadWrite','Tasks.Read','Tasks.ReadWrite','Files.Read'];
 let msalInstance = null;
 let o365Account = null;
 
@@ -8996,7 +8996,7 @@ async function emailsForceConsent() {
         // Emails page and auto-fire Refresh.
         try { sessionStorage.setItem('poseidon_resume_emails', '1'); } catch (_) {}
         await msalInstance.loginRedirect({
-            scopes: ['User.Read','Mail.Read','Mail.Send','Mail.ReadWrite','Calendars.Read','Tasks.Read','Tasks.ReadWrite','Files.Read'],
+            scopes: ['User.Read','Mail.Read','Mail.Send','Mail.ReadWrite','Calendars.Read','Calendars.ReadWrite','Tasks.Read','Tasks.ReadWrite','Files.Read'],
             prompt: 'consent'
         });
     } catch (e) {

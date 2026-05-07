@@ -3245,18 +3245,19 @@ function renderProductionStudio() {
     }
 }
 
-function playStudioAsset(type, name) {
-    // Show in media player bar
-    const bar = $('media-player-bar');
-    if (bar) bar.classList.remove('hidden');
-    if ($('player-title')) $('player-title').textContent = name;
-    if ($('player-subtitle')) $('player-subtitle').textContent = type === 'vo' ? 'Voiceover' : type === 'broll' ? 'B-Roll' : 'Music';
-    // Visual feedback
+function playStudioAsset(type, name, url) {
+    // If a direct URL is provided, open in the shared media player bar
+    if (url && typeof window.playerOpen === 'function') {
+        const label = type === 'vo' ? 'Voiceover' : type === 'broll' ? 'B-Roll' : 'Music';
+        window.playerOpen({ url, title: name, artist: label, autoplay: true });
+        return;
+    }
+    // No direct URL — just show a toast (don't show an empty player bar)
     const toast = document.createElement('div');
-    toast.className = 'fixed bottom-20 right-6 bg-violet-600 text-white px-4 py-2 rounded-lg text-sm shadow-xl z-50';
-    toast.textContent = `Now playing: ${name}`;
+    toast.className = 'fixed bottom-6 right-6 bg-violet-600 text-white px-4 py-2 rounded-lg text-sm shadow-xl z-50';
+    toast.textContent = `▶ ${name} — open in Drive to play`;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2500);
+    setTimeout(() => toast.remove(), 3000);
 }
 
 // ═══════════════════════════════════════════════════
@@ -5057,7 +5058,7 @@ const msalConfig = {
     },
     cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
 };
-const o365Scopes = ['User.Read','Mail.Read','Mail.Send','Mail.ReadWrite','Calendars.Read','Tasks.Read','Tasks.ReadWrite','Files.Read'];
+const o365Scopes = ['User.Read','Mail.Read','Mail.Send','Mail.ReadWrite','Calendars.Read','Calendars.ReadWrite','Tasks.Read','Tasks.ReadWrite','Files.Read'];
 let msalInstance = null;
 let o365Account = null;
 
@@ -7630,7 +7631,7 @@ async function emailsForceConsent() {
         // Emails page and auto-fire Refresh.
         try { sessionStorage.setItem('poseidon_resume_emails', '1'); } catch (_) {}
         await msalInstance.loginRedirect({
-            scopes: ['User.Read','Mail.Read','Mail.Send','Mail.ReadWrite','Calendars.Read','Tasks.Read','Tasks.ReadWrite','Files.Read'],
+            scopes: ['User.Read','Mail.Read','Mail.Send','Mail.ReadWrite','Calendars.Read','Calendars.ReadWrite','Tasks.Read','Tasks.ReadWrite','Files.Read'],
             prompt: 'consent'
         });
     } catch (e) {

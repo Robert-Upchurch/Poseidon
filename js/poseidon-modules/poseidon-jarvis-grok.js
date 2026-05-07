@@ -519,7 +519,7 @@
     {
       type: 'function',
       name: 'save_event',
-      description: 'Create a calendar event in the user\'s local calendar.',
+      description: 'Create a calendar event. Saves to the dashboard calendar AND posts to Microsoft Outlook if M365 is signed in (requires Calendars.ReadWrite — if blocked, tell Robert to click "Force Re-consent" on the Emails page). params: title, date YYYY-MM-DD, time HH:MM 24h (default 09:00), notes.',
       parameters: {
         type: 'object',
         properties: {
@@ -1019,6 +1019,21 @@
       }
     },
 
+    {
+      type: 'function',
+      name: 'reply_email',
+      description: 'Reply to an existing email thread via Microsoft 365. Use when Robert says "reply to that email", "respond to X", "write back to them". Read the original email first (read_email) to understand context, then draft, SAY the reply body out loud and wait for verbal confirmation BEFORE calling this. Requires Mail.Send consent — if blocked, tell Robert to click "Force Re-consent" on the Emails page.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id:        { type: 'string',  description: 'The email message id to reply to (from read_emails or read_email).' },
+          body:      { type: 'string',  description: 'Reply body — plain text or HTML.' },
+          reply_all: { type: 'boolean', description: 'If true, reply-all (include all original recipients). Default false.' }
+        },
+        required: ['id','body']
+      }
+    },
+
     // ─── Tasks: delete ──────────────────────────────────────────────
     {
       type: 'function',
@@ -1128,12 +1143,58 @@
       return { ok: true, task: { title, due, priority }, via: 'direct' };
     },
 
-    save_event({ title, date, time, notes }) {
+    async save_event({ title, date, time, notes }) {
+      // 1. Always save locally — instant calendar refresh
       let events = []; try { events = JSON.parse(localStorage.getItem('poseidon-events') || '[]'); } catch (_) {}
       events.push({ id: Date.now(), title, date, time: time || '09:00', notes: notes || '', created: new Date().toISOString() });
       localStorage.setItem('poseidon-events', JSON.stringify(events));
       if (typeof window.renderCalendar === 'function') try { window.renderCalendar(); } catch (_) {}
-      return { ok: true, event: { title, date, time } };
+
+      // 2. Also post to Outlook via Microsoft Graph (Calendars.ReadWrite)
+      let outlook = null;
+      try {
+        const token = await this._o365TokenForScopes(['Calendars.ReadWrite']);
+        if (token) {
+          const pad = n => String(n).padStart(2, '0');
+          const [yr, mo, dy] = (date || '').split('-').map(Number);
+          const [hh, mm]    = (time || '09:00').split(':').map(Number);
+          const tz = (Intl && Intl.DateTimeFormat().resolvedOptions().timeZone) || 'America/New_York';
+          const startStr = `${yr}-${pad(mo)}-${pad(dy)}T${pad(hh)}:${pad(mm)}:00`;
+          const endHh    = (hh + 1 >= 24) ? 23 : hh + 1;
+          const endStr   = `${yr}-${pad(mo)}-${pad(dy)}T${pad(endHh)}:${pad(mm)}:00`;
+          const payload  = {
+            subject: title,
+            start: { dateTime: startStr, timeZone: tz },
+            end:   { dateTime: endStr,   timeZone: tz },
+            ...(notes ? { body: { contentType: 'Text', content: notes } } : {})
+          };
+          const resp = await fetch('https://graph.microsoft.com/v1.0/me/events', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (resp.ok) {
+            const ev = await resp.json();
+            outlook = { ok: true, id: ev.id, webLink: ev.webLink };
+          } else {
+            const errText = await resp.text().catch(() => '');
+            outlook = (resp.status === 403 || resp.status === 401)
+              ? { ok: false, error: 'Calendars.ReadWrite not consented — click "Force Re-consent" on the Emails page, then try again.' }
+              : { ok: false, error: 'Graph ' + resp.status + ': ' + errText.slice(0, 200) };
+          }
+        } else {
+          outlook = { ok: false, error: 'Not signed in to M365 — event saved to dashboard calendar only.' };
+        }
+      } catch (e) {
+        if (e.errorCode === 'interaction_required' || (e.message||'').includes('interaction_required')) {
+          outlook = { ok: false, error: 'Calendars.ReadWrite requires re-consent — click "Force Re-consent" on the Emails page, then try again.' };
+        } else if ((e.message||'').toLowerCase().includes('no account') || (e.message||'').includes('no_account')) {
+          outlook = { ok: false, error: 'Not signed in to M365 — event saved to dashboard calendar only.' };
+        } else {
+          outlook = { ok: false, error: e.message };
+        }
+      }
+      return { ok: true, event: { title, date, time: time || '09:00' }, savedLocally: true, outlook };
     },
 
     read_dashboard_state(args) {
@@ -2015,25 +2076,15 @@
         // PDF — lazy-load PDF.js from CDN, extract text
         if (ctype === 'application/pdf' || /\.pdf$/i.test(name)) {
           if (!window.pdfjsLib) {
+            // v3.11.174 UMD — ES-module mjs builds export to module scope, not window
             await new Promise((res, rej) => {
               const s = document.createElement('script');
-              s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
-              s.type = 'module';
+              s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
               s.onload = res; s.onerror = rej;
               document.head.appendChild(s);
-              setTimeout(() => window.pdfjsLib ? res() : rej(new Error('pdf.js timeout')), 8000);
             }).catch(() => {});
-            // Fallback: classic UMD build
-            if (!window.pdfjsLib) {
-              await new Promise((res, rej) => {
-                const s = document.createElement('script');
-                s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-                s.onload = res; s.onerror = rej;
-                document.head.appendChild(s);
-              }).catch(() => {});
-              if (window.pdfjsLib) {
-                window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-              }
+            if (window.pdfjsLib) {
+              window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             }
           }
           if (!window.pdfjsLib) return { ok: false, error: 'PDF.js failed to load; cannot extract PDF text.' };
@@ -2159,6 +2210,36 @@
         if (e.errorCode === 'interaction_required' || (e.message||'').includes('interaction_required')) {
           return { ok: false, error: 'Mail.ReadWrite requires re-consent. Tell Robert to click "Force Re-consent" on the Emails page, then try again.' };
         }
+        return { ok: false, error: e.message };
+      }
+    },
+
+    // ─── reply_email — reply in-thread via Microsoft Graph ─────────
+    async reply_email({ id, body, reply_all = false } = {}) {
+      if (!id || !body) return { ok: false, error: 'id and body are required.' };
+      try {
+        const token = await this._o365TokenForScopes(['Mail.Send']);
+        const isHtml = body.trim().startsWith('<');
+        const payload = {
+          message: { body: { contentType: isHtml ? 'HTML' : 'Text', content: String(body) } },
+          saveToSentItems: true
+        };
+        const ep = reply_all
+          ? `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(id)}/replyAll`
+          : `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(id)}/reply`;
+        const resp = await fetch(ep, {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (resp.status === 202 || resp.ok) return { ok: true, replied: true, id, reply_all };
+        const errText = await resp.text().catch(() => '');
+        if (resp.status === 403 || resp.status === 401)
+          return { ok: false, error: 'Mail.Send permission not yet granted. Tell Robert to click "Force Re-consent" on the Emails page, then try again.' };
+        return { ok: false, error: 'Graph ' + resp.status + ': ' + errText };
+      } catch (e) {
+        if (e.errorCode === 'interaction_required' || (e.message||'').includes('interaction_required'))
+          return { ok: false, error: 'Mail.Send requires re-consent. Click "Force Re-consent" on the Emails page, then try again.' };
         return { ok: false, error: e.message };
       }
     },
@@ -2883,8 +2964,8 @@
       'For ANY email-related question — "do I have any emails", "anything from X", "what does that email say", "open the attachment", "summarize the contract attachment", "read me the PDF", "urgent emails", "unread emails" — call read_emails first to find candidates and grab the email id, then read_email for the full body, list_email_attachments for attachments, read_email_attachment to extract attachment text (PDFs supported via PDF.js), and open_email_attachment to open in a new tab. ALWAYS read_email or read_email_attachment before summarizing — do NOT speculate from the preview alone. If Microsoft 365 is not signed in, tell the user to click "Sign in to M365" on the dashboard.',
       'When the user asks about a KPI on a specific division, call read_kpi with that division.',
       'When the user asks you to navigate ("take me to finance", "open J1 housing"), call go_to_page.',
-      'When the user asks to add a task or event, call save_task / save_event. To DELETE a task, call delete_task with the task id or a title_match substring — always confirm the task title out loud before executing.',
-      'EMAIL ACTIONS — compose_email: when Robert says "send an email", "reply to X", or "email Y about Z", draft the email, then SAY the recipient + subject + body summary out loud and wait for confirmation before calling compose_email. delete_email: when Robert says "delete that email" or "trash it", say the subject and sender out loud and wait for confirmation, then call delete_email with the id from read_emails. Both tools require extra M365 permissions (Mail.Send / Mail.ReadWrite) — if they fail with a permissions error, tell Robert to click "Force Re-consent" on the Emails page and try again.',
+      'When the user asks to add a task or event, call save_task / save_event. save_event saves to both the dashboard calendar AND posts to Microsoft Outlook (requires Calendars.ReadWrite — if the outlook field in the result shows an error, tell Robert to click "Force Re-consent" on the Emails page). To DELETE a task, call delete_task with the task id or a title_match substring — always confirm the task title out loud before executing.',
+      'EMAIL ACTIONS — compose_email: when Robert says "send a new email" or "email Y about Z", draft the email, SAY the recipient + subject + body summary out loud and wait for verbal confirmation BEFORE calling compose_email. reply_email: when Robert says "reply to that", "respond to X", "write back" — call read_email first to understand the thread, draft the reply, SAY the reply body out loud and wait for confirmation, then call reply_email with the original message id and reply_all=true only if he says "reply all". delete_email: when Robert says "delete that email" or "trash it", say the subject and sender out loud and wait for confirmation, then call delete_email. All three require Mail.Send or Mail.ReadWrite permissions — if blocked, tell Robert to click "Force Re-consent" on the Emails page and try again.',
       'When the user asks anything about cruise line contracts, fees, terms, obligations, legal, insurance, positions, compliance, or pros/cons — first call read_contracts (or read_contracts_lines for a quick line list), then summarize the results. The Contracts dashboard is fully readable end-to-end via these tools.',
       'When the user asks to "open in new tab", "pop out", or "expand" a division, call popout_division. For analytics or chart questions on a division, call list_analytics_reports first to discover available reports, then read_analytics to pull the actual numbers behind the chart.',
       'When the user asks for an overall scan of the dashboard ("what is on the dashboard", "scan everything", "summarize the whole thing", "give me a full status", or any question that could span multiple divisions), call read_full_dashboard — it returns every page\'s title + text + iframe content in one call, even for hidden pages.',
