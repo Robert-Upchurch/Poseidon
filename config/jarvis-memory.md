@@ -401,4 +401,51 @@ closes. CSS scoped under `.cti-dash-*` to avoid Tailwind collisions.
   separate chat history. Tool surface includes list_sections,
   read_section (every page), read_kpis, read_emails (with unread_only
   + section_id filters), mark_email_read, refresh_emails,
-  read_hub_documents, read_recent_updates.
+  read_hub_documents, read_recent_updates,
+  diagnose_jarvis_capabilities (v4.7.32, 2026-05-07).
+
+## Standing rule: Jarvis cross-dashboard parity (Robert 2026-05-07)
+
+> "As we continue to build new dashboards, Jarvis should have access
+> to all features across all dashboards and be able to have the same
+> functions across each and every dashboard."
+
+When a NEW CTI Group dashboard is built (or an existing one gains new
+features), Jarvis must reach feature parity with the rest of the
+ecosystem before the dashboard ships. Specifically:
+
+1. **Same Jarvis voice + chrome** — port `poseidon-jarvis-grok.js` (or
+   the upchurch-side `jarvis-upchurch.js` mirror) to the new dashboard
+   with the same surgical edits used for Upchurch (see v4.7.23 changelog):
+   localStorage namespace per-origin, page enum / section-id list,
+   `go_to_page` impl matched to that dashboard's nav style,
+   `window.msalInstance` shim for Graph access.
+2. **Same tool surface** — every dashboard's Jarvis must expose at
+   minimum: `list_sections`, `read_section` / `read_page_content`
+   adapted to that dashboard's structure, `read_full_dashboard`,
+   `read_emails` family (if M365 wired on that origin), `read_kpis`,
+   `read_hub_documents` if a Hub exists, `read_recent_updates`,
+   `web_search`, `fetch_url`, `play_media` family,
+   `diagnose_jarvis_capabilities`.
+3. **Same media player** — load `js/poseidon-modules/media-player.js`
+   (Poseidon repo) or `js/media-player.js` (Upchurch repo mirror).
+   Single shared module; do not re-implement.
+4. **Same Dashboards switcher dropdown** — `.cti-dash-switcher`
+   component in the top header so the user can move between
+   dashboards without back-buttoning.
+5. **Same theme toggle** with `data-theme` attribute / `html.dark`
+   class, persisted in localStorage with a per-origin key.
+6. **Same diagnostic tool** — `diagnose_jarvis_capabilities` must
+   probe the same surfaces (MSAL, Graph, xAI, PDF.js, media player,
+   sections) so Robert can ask "diagnose yourself" on any dashboard
+   and get a consistent report.
+
+When a dashboard CANNOT support a feature (e.g., no MSAL on that
+origin, no Graph access), Jarvis's diagnostic must SAY so explicitly.
+The rule is parity OR an explicit, documented gap — never a silent
+hole the user discovers by trying.
+
+If you build a new dashboard without doing this work, expect Robert
+to push back with: "I want the same Jarvis [features] on this
+dashboard too" (verbatim phrasing he has used 3+ times in May 2026).
+Pre-empt that by shipping parity in the initial dashboard PR.
