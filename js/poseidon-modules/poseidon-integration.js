@@ -19,7 +19,7 @@
   // changes. Format: YYYY-MM-DD-tag.
   // 2026-05-07-skills — added Jarvis Skills Library tools
   //   (query_skill, classify_skill_domain, list_skill_domains).
-  const MODULES_VERSION = '2026-05-08-search-migration';
+  const MODULES_VERSION = '2026-05-08-eastern-time';
 
   const MODULES = [
     'poseidon-training.js',

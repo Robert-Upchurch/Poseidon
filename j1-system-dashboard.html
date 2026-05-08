@@ -3117,8 +3117,31 @@ function getGreeting() {
     return 'Good Evening';
 }
 
+// Eastern Time defaults for the whole dashboard (Robert 2026-05-08).
+// IANA name for client-side Intl; Windows TZ name for Microsoft Graph
+// (Prefer: outlook.timezone). 'Eastern Standard Time' is the Windows
+// zone that observes DST and switches automatically between EST/EDT.
+const POSEIDON_TZ = 'America/New_York';
+const POSEIDON_TZ_WINDOWS = 'Eastern Standard Time';
+function fmtET(d, opts) {
+    if (d == null || d === '') return '';
+    try { return new Date(d).toLocaleString('en-US', Object.assign({ timeZone: POSEIDON_TZ }, opts || {})); }
+    catch (_) { return String(d); }
+}
+function fmtETDate(d, opts) {
+    if (d == null || d === '') return '';
+    try { return new Date(d).toLocaleDateString('en-US', Object.assign({ timeZone: POSEIDON_TZ }, opts || {})); }
+    catch (_) { return String(d); }
+}
+function fmtETTime(d, opts) {
+    if (d == null || d === '') return '';
+    try { return new Date(d).toLocaleTimeString('en-US', Object.assign({ timeZone: POSEIDON_TZ, hour: 'numeric', minute: '2-digit' }, opts || {})); }
+    catch (_) { return String(d); }
+}
 function formatDate(d) {
-    return d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+    // Forces the "today" header to render Eastern Time even if the
+    // user's device is on Pacific / UTC / London / etc.
+    return new Date(d).toLocaleDateString('en-US', { timeZone: POSEIDON_TZ, weekday:'long', month:'long', day:'numeric', year:'numeric' });
 }
 
 // ═══════════════════════════════════════════════════
@@ -6716,7 +6739,7 @@ async function o365LoadMail() {
                     <span class="text-sm mt-0.5">${m.isRead?'📧':'📬'}</span>
                     <div class="min-w-0">
                         <div class="text-xs text-zinc-300 truncate">${h(m.subject||'(no subject)')}</div>
-                        <div class="text-[10px] text-zinc-600">${m.from?.emailAddress?.name||''} · ${new Date(m.receivedDateTime).toLocaleString()}</div>
+                        <div class="text-[10px] text-zinc-600">${m.from?.emailAddress?.name||''} · ${fmtET(m.receivedDateTime)} ET</div>
                     </div>
                 </div>
             `).join('')}
@@ -6750,14 +6773,17 @@ async function o365LoadCalendar() {
     const result = { ok: false, count: 0, error: null, at: new Date().toISOString() };
     try {
         const now = new Date();
-        const start = new Date(now.getTime() - 730*86400000).toISOString();
-        const end   = new Date(now.getTime() + 1095*86400000).toISOString();
-        const tz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (_) { return 'UTC'; } })();
+        // Robert 2026-05-08: 12 months back + ~4 yrs forward = 1825 days
+        // (Graph's hard cap). Bias forward — CEOs schedule far ahead.
+        const start = new Date(now.getTime() - 365*86400000).toISOString();
+        const end   = new Date(now.getTime() + 1460*86400000).toISOString();
         const token = await o365GetToken();
         if (!token) { result.error = 'No M365 token (sign in via Connect 365).'; window._lastOutlookSync = result; return result; }
         const headers = {
             'Authorization': 'Bearer ' + token,
-            'Prefer':        'outlook.timezone="' + tz + '"'
+            // Force Graph to return start/end in Eastern Time so the
+            // dashboard renders ET without per-event conversion.
+            'Prefer':        'outlook.timezone="' + POSEIDON_TZ_WINDOWS + '"'
         };
         let url = 'https://graph.microsoft.com/v1.0/me/calendarView'
                 + '?startDateTime=' + start
@@ -9184,7 +9210,7 @@ function renderEmails() {
                     <div class="text-[10px] text-zinc-600 mt-0.5 truncate">${h((m.bodyPreview || '').slice(0,100))}</div>
                 </div>
                 <div class="flex flex-col items-end gap-1 shrink-0">
-                    <div class="text-[10px] text-zinc-600">${new Date(m.receivedDateTime).toLocaleDateString()}</div>
+                    <div class="text-[10px] text-zinc-600">${fmtETDate(m.receivedDateTime)}</div>
                     ${m.hasAttachments ? '<span class="text-[10px] text-amber-400" title="Has attachments">📎</span>' : ''}
                 </div>
             </div>
@@ -9221,7 +9247,7 @@ async function emailsOpen(id) {
                 '<div>' +
                     '<div class="text-base font-semibold text-zinc-100">' + h(m.subject || '(no subject)') + '</div>' +
                     '<div class="text-xs text-zinc-500 mt-1">From: ' + h(m.from?.emailAddress?.name || '') + ' &lt;' + h(m.from?.emailAddress?.address || '') + '&gt;</div>' +
-                    '<div class="text-[11px] text-zinc-600">' + new Date(m.receivedDateTime).toLocaleString() + '</div>' +
+                    '<div class="text-[11px] text-zinc-600">' + fmtET(m.receivedDateTime) + ' ET</div>' +
                 '</div>' +
                 '<a href="' + m.webLink + '" target="_blank" rel="noopener" class="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> Open in Outlook</a>' +
             '</div>' +

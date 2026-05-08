@@ -1515,7 +1515,10 @@
           const pad = n => String(n).padStart(2, '0');
           const [yr, mo, dy] = (date || '').split('-').map(Number);
           const [hh, mm]    = (time || '09:00').split(':').map(Number);
-          const tz = (Intl && Intl.DateTimeFormat().resolvedOptions().timeZone) || 'America/New_York';
+          // Robert 2026-05-08: lock all Outlook writes to Eastern
+          // Time so events land in his CEO calendar consistently
+          // regardless of which device or location he's on.
+          const tz = 'America/New_York';
           const startStr = `${yr}-${pad(mo)}-${pad(dy)}T${pad(hh)}:${pad(mm)}:00`;
           const endHh    = (hh + 1 >= 24) ? 23 : hh + 1;
           const endStr   = `${yr}-${pad(mo)}-${pad(dy)}T${pad(endHh)}:${pad(mm)}:00`;
