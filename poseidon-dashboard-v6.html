@@ -534,6 +534,98 @@ document.addEventListener('keydown', function(e) {
 </script>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
+<script>
+/* ─── CTI Cross-Origin Snapshot Publisher ─────────────────────────────
+ * When this dashboard is loaded with ?cti-snapshot=1 (typically inside
+ * a hidden iframe by another dashboard's Jarvis), publish a snapshot
+ * via postMessage instead of rendering normally.
+ * Works across GitHub Pages <-> Cloudflare Pages (postMessage is not
+ * subject to the same-origin policy for outbound messages).
+ * ─────────────────────────────────────────────────────────────────── */
+(function () {
+  if (!new URLSearchParams(location.search).has('cti-snapshot')) return;
+
+  // Hide visual content during the brief settle window
+  var hide = document.createElement('style');
+  hide.id = '__cti_snap_hide';
+  hide.textContent = 'body{visibility:hidden!important;}';
+  (document.head || document.documentElement).appendChild(hide);
+
+  function dashId() {
+    var p = location.pathname.toLowerCase();
+    if (p.includes('j1-system')) return 'j1-system';
+    if (location.hostname.includes('upchurch')) return 'upchurch-financial';
+    return 'poseidon';
+  }
+
+  function readJSON(key) {
+    try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) { return []; }
+  }
+
+  function buildSnapshot() {
+    var pages = {};
+    // V6 + J1 use .page divs; Upchurch uses <section id>
+    document.querySelectorAll('.page, section[id]').forEach(function(el) {
+      if (!el.id) return;
+      var heading = el.querySelector('h1, h2, h3, h4, [class*="page-title"]');
+      var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      pages[el.id] = {
+        title: (heading ? heading.textContent.trim() : el.id).slice(0, 120),
+        text: text.slice(0, 5000),
+        length: text.length
+      };
+    });
+    return {
+      dashboard: dashId(),
+      url: location.origin + location.pathname,
+      capturedAt: new Date().toISOString(),
+      pageTitle: document.title,
+      activePage: (document.querySelector('.page:not(.hidden)') || {}).id || null,
+      pages: pages,
+      pageCount: Object.keys(pages).length,
+      tasks: readJSON('poseidon-tasks').slice(-50),
+      events: readJSON('poseidon-events').slice(-50),
+      m365Account: (function() {
+        try {
+          var keys = Object.keys(localStorage).filter(function(k){return k.indexOf('msal.account.keys')===0;});
+          return keys.length > 0;
+        } catch (_) { return false; }
+      })()
+    };
+  }
+
+  function publish() {
+    try {
+      var snap = buildSnapshot();
+      // Always reply (even if no parent — harmless)
+      window.parent && window.parent.postMessage({
+        type: 'cti-snapshot-response',
+        dashboard: snap.dashboard,
+        data: snap
+      }, '*');
+      document.title = '[CTI Snapshot Ready]';
+      // Surface a tiny visible confirmation in case someone pops the URL directly
+      hide.textContent = 'body{visibility:visible!important;background:#0a1628;color:#7dd3fc;font-family:ui-monospace,monospace;}';
+      var note = document.createElement('div');
+      note.style.cssText = 'padding:24px;font-size:13px;line-height:1.6;';
+      note.textContent = 'CTI snapshot published — ' + snap.pageCount + ' pages from ' + snap.dashboard;
+      (document.body || document.documentElement).insertBefore(note, document.body ? document.body.firstChild : null);
+    } catch (e) {
+      window.parent && window.parent.postMessage({
+        type: 'cti-snapshot-response',
+        error: e.message
+      }, '*');
+    }
+  }
+
+  // Wait for content to settle before snapshotting
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { setTimeout(publish, 2500); });
+  } else {
+    setTimeout(publish, 2500);
+  }
+})();
+</script>
 
 <!-- ═══════════════════════════════════════════════════════════════
      POSEIDON PASSWORD GATE (v6.1 Jarvis Release)

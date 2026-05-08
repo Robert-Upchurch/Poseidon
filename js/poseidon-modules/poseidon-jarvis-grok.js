@@ -1141,6 +1141,26 @@
         required: ['dashboard', 'command']
       }
     },
+    {
+      type: 'function',
+      name: 'read_remote_dashboard',
+      description: 'Read live content from ANY CTI dashboard, including cross-origin (Upchurch Financial on Cloudflare Pages). Mounts the target dashboard in a hidden iframe with ?cti-snapshot=1 — the target replies with a postMessage containing every page id, page title, and the first 5000 chars of page text. Use this whenever Robert asks about content on another dashboard. Cached for 5 min per dashboard. Returns { ok, snapshot } where snapshot.pages is a dict of { pageId: { title, text, length } }.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dashboard: {
+            type: 'string',
+            enum: ['poseidon', 'j1-system', 'upchurch-financial'],
+            description: '"poseidon" = Poseidon Master V6 (same origin), "j1-system" = J1 System Dashboard (same origin), "upchurch-financial" = Upchurch Financial Command Center (Cloudflare Pages, separate origin).'
+          },
+          force_refresh: {
+            type: 'boolean',
+            description: 'If true, ignore the 5-min cache and re-mount the iframe. Default false.'
+          }
+        },
+        required: ['dashboard']
+      }
+    },
 
 
   ];
@@ -1205,6 +1225,62 @@
       _ctiChannel.postMessage({ type: 'jarvis-command', target: dashboard, command, args, from: window.location.pathname, ts: Date.now() });
       return { ok: true, sent: true, dashboard, command,
         note: 'Command broadcast — takes effect immediately if that dashboard is open in another tab.' };
+    },
+
+    // ── Cross-origin reader ────────────────────────────────────────
+    // Mount the target dashboard in a hidden iframe with ?cti-snapshot=1
+    // and wait for its postMessage reply. Works across origins because
+    // postMessage is not subject to same-origin restrictions on outbound.
+    async read_remote_dashboard({ dashboard, force_refresh = false } = {}) {
+      const URLS = {
+        'poseidon':            'https://robert-upchurch.github.io/Poseidon/poseidon-dashboard-v6.html',
+        'j1-system':           'https://robert-upchurch.github.io/Poseidon/j1-system-dashboard.html',
+        'upchurch-financial':  'https://upchurch-financial-dashboard.pages.dev/'
+      };
+      const url = URLS[dashboard];
+      if (!url) return { ok: false, error: 'Unknown dashboard. Use: poseidon, j1-system, upchurch-financial' };
+
+      // 5-min in-memory cache
+      window._ctiRemoteCache = window._ctiRemoteCache || {};
+      const cached = window._ctiRemoteCache[dashboard];
+      if (!force_refresh && cached && (Date.now() - cached.at < 5 * 60 * 1000)) {
+        return { ok: true, dashboard, snapshot: cached.data, age_seconds: Math.round((Date.now() - cached.at) / 1000), cached: true };
+      }
+
+      return await new Promise((resolve) => {
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1024px;height:600px;border:0;visibility:hidden;';
+        iframe.src = url + (url.includes('?') ? '&' : '?') + 'cti-snapshot=1&_ts=' + Date.now();
+        let settled = false;
+        const cleanup = () => {
+          window.removeEventListener('message', onMsg);
+          try { iframe.remove(); } catch (_) {}
+        };
+        const onMsg = (evt) => {
+          const m = evt.data;
+          if (!m || m.type !== 'cti-snapshot-response') return;
+          // Verify the source matches our iframe (otherwise reject)
+          if (evt.source !== iframe.contentWindow) return;
+          if (settled) return;
+          settled = true;
+          if (m.error) {
+            cleanup();
+            return resolve({ ok: false, dashboard, error: 'Snapshot publisher errored: ' + m.error });
+          }
+          window._ctiRemoteCache[dashboard] = { at: Date.now(), data: m.data };
+          cleanup();
+          resolve({ ok: true, dashboard, snapshot: m.data, fresh: true });
+        };
+        window.addEventListener('message', onMsg);
+        document.body.appendChild(iframe);
+        // 15-second timeout
+        setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          resolve({ ok: false, dashboard, error: 'Timeout (15s) waiting for snapshot from ' + url + '. The target dashboard may not have the snapshot publisher injected yet.' });
+        }, 15000);
+      });
     },
 
     async save_task({ title, due, priority }) {
@@ -3103,7 +3179,7 @@
       'STRICT J1/CRUISE PARTITION (Robert 2026-04-27) — the two dashboards have a hard rule. POSEIDON MASTER carries everything cruise / maritime: Cruise Line Contracts, cruise lines, ships, sea-based recruiting, Cruise Ship Candidates. CTI GROUP · J1 SYSTEM DASHBOARD carries everything J-1: J-1 recruiting, J1 candidates, J1 housing, J1 sponsor contracts (Alliance Abroad / CIEE / Green Heart), J1 hosting companies, airline tickets, J1 Housing Finder, J1 Contract Analysis. NOTHING J1 lives on Poseidon. NOTHING cruise lives on the J1 dashboard. If a user asks about something on the wrong dashboard, redirect them to the correct one via the cross-dashboard switcher pill in the top-right header. Each dashboard has an "Other" sidebar entry (page id "other") which is a holding area for ambiguous items pending categorization — never confuse "Other" with content that has a clear J1 or cruise home.',
       'POSEIDON SIDEBAR (after 2026-04-27 cleanup) — Master + Forecast · Finance · Recruiting · IT & Technology · Contracts (Cruise Line Contract Negotiation) · Other · then the Workspace group. Removed: Processing (CUK), J1 Division, J1 Housing — all relocated to the J1 System Dashboard. The Recruiting page on Poseidon now has only Recruiting Overview / Cruise Ship Candidates / Recruiting Workflow tabs (no more J-1 Candidates tab — that\'s on the J1 dashboard).',
       'If the user has popped a division out into a separate tab and you need to read what is in that tab, call list_popped_windows then read_popped_window. You can read the popped tab\'s text, iframes, and embed-mode state without the user having to switch back.',
-      'CROSS-DASHBOARD VISIBILITY — you can read and interact with every CTI dashboard without navigating away. (1) read_cross_dashboard({dashboard}): reads the cached state snapshot of "poseidon" or "j1-system" from shared localStorage — use this to answer questions like "what tasks are on the J1 dashboard", "check the J1 calendar", "what is on the Poseidon finance page". If the snapshot age_minutes > 5, call interact_cross_dashboard({dashboard, command:"refresh_snapshot"}) first. (2) interact_cross_dashboard({dashboard, command, args}): sends live commands to another open tab — go_to_page navigates that tab, refresh_snapshot tells it to update its cache. (3) open_cti_dashboard: opens another dashboard in a new tab. (4) list_cti_dashboards: lists all verified CTI dashboard URLs. Use these tools proactively whenever Robert asks about another dashboard — never say you cannot see it.',
+      'CROSS-DASHBOARD VISIBILITY — you can read every CTI dashboard, including cross-origin ones, without navigating away. PRIMARY TOOL: read_remote_dashboard({dashboard}) — works for "poseidon", "j1-system", AND "upchurch-financial" (cross-origin to Cloudflare Pages). It mounts the target dashboard in a hidden iframe and reads back every page id, title, and the first 5000 chars of each page text. Use this tool by default for "what is on the X dashboard", "tell me about Upchurch", "read the finance page on Poseidon", etc. Cached 5 min — pass force_refresh:true to bypass. SECONDARY TOOLS: read_cross_dashboard({dashboard}) reads the same-origin localStorage snapshot (faster, only "poseidon" + "j1-system"). interact_cross_dashboard sends live commands to another OPEN tab. open_cti_dashboard opens a new tab. list_cti_dashboards lists URLs. Use these tools proactively — never say you cannot see another dashboard.',
       'INTERNET ACCESS — you have working web search. Call web_search whenever Robert asks about current events, news, prices, recent updates, partner intel, or anything outside your training data. Never say "I cannot search" or "I do not have internet access" — you do. Use depth: "advanced" for in-depth research questions, "basic" (default) for quick lookups. For specific URL contents, call fetch_url (CORS-limited; works for raw GitHub, JSON APIs, etc.).',
       'For media playback ("play that video", "pause the song", "stop the audio", "play the X video"), call list_media first to discover what is on the page, then play_media / pause_media / stop_media with id or title. The tools work on native video/audio AND YouTube/Vimeo iframes (and even on media in popped-out tabs).',
       'You have a long-term memory that persists across browser sessions. When the user tells you something worth keeping ("remember that X", a preference, a name, a deadline), call remember({topic, fact}). Before answering anything that depends on prior context (a person, a vendor, a past conversation, a stated preference), FIRST call recall(query) — your memory may already have it. Only use forget() when the user explicitly asks you to forget something.',
