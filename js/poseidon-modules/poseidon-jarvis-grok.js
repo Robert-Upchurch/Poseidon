@@ -81,9 +81,6 @@
     };
   }
 
-    pendingToolCalls: new Map()
-  };
-
   // ─── Utilities ─────────────────────────────────────────────────
   function getApiKey() {
     try { return localStorage.getItem(LS_API_KEY) || window.GROK_API_KEY || ''; } catch (_) { return window.GROK_API_KEY || ''; }
