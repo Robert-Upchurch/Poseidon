@@ -13,6 +13,14 @@
     return script.src.replace(/poseidon-integration\.js.*$/, '');
   })();
 
+  // Version stamp appended to every module URL as ?v=… so a bump
+  // invalidates browser HTTP cache + SW static cache for ALL modules
+  // in one shot. Bump whenever any module under js/poseidon-modules/
+  // changes. Format: YYYY-MM-DD-tag.
+  // 2026-05-07-skills — added Jarvis Skills Library tools
+  //   (query_skill, classify_skill_domain, list_skill_domains).
+  const MODULES_VERSION = '2026-05-07-skills';
+
   const MODULES = [
     'poseidon-training.js',
     'poseidon-directory.js',
@@ -36,8 +44,9 @@
 
   (async () => {
     try {
-      for (const m of MODULES) await loadScript(BASE + m);
-      console.log('[Poseidon] All enhancement modules loaded from', BASE);
+      const qs = '?v=' + encodeURIComponent(MODULES_VERSION);
+      for (const m of MODULES) await loadScript(BASE + m + qs);
+      console.log('[Poseidon] All enhancement modules loaded from', BASE, 'version', MODULES_VERSION);
       bootstrapIntegrations();
     } catch (e) {
       console.error('[Poseidon] Integration loader failed:', e);
