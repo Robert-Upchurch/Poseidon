@@ -837,12 +837,13 @@
     {
       type: 'function',
       name: 'web_search',
-      description: 'Search the live web using Grok Live Search (server-side, with citations). Use this for ANYTHING outside your training data: current news, recent events, prices, scores, "what is X happening today", company updates, partner intel, or any fact that may have changed in the last 12 months. Returns a synthesized answer plus citation URLs. This actually works — do not refuse search requests, just call it.',
+      description: 'Search the live web with citations. Tries xAI Grok Agent Tools API first (same vendor as voice, no extra key); if Grok fails or is unavailable, automatically falls back to Tavily (if a Tavily key is configured). Use this for ANYTHING outside your training data: current news, recent events, prices, company updates, partner intel, or any fact that may have changed recently. Returns { provider, answer, citations[] } so you can tell Robert which engine answered. Do NOT refuse search requests — just call it.',
       parameters: {
         type: 'object',
         properties: {
           query: { type: 'string', description: 'Search query — write it as you would type into Google. Be specific.' },
-          depth: { type: 'string', enum: ['basic', 'advanced'], description: 'basic = 5 sources, fast. advanced = 15 sources, deeper research. Default basic.' }
+          depth: { type: 'string', enum: ['basic', 'advanced'], description: 'basic = up to 5 sources. advanced = up to 10 sources, deeper research. Default basic.' },
+          provider: { type: 'string', enum: ['auto', 'grok', 'tavily'], description: 'auto (default) = try Grok then Tavily fallback. grok = xAI only. tavily = Tavily only.' }
         },
         required: ['query']
       }
@@ -1229,6 +1230,96 @@
     }
 
   ];
+
+  // ─── Web search helpers (used by web_search tool) ───────────────
+  // Primary: xAI Agent Tools API. Fallback: Tavily.
+  async function _searchGrok(query, depth) {
+    const key = getApiKey();
+    if (!key) return { ok: false, error: 'No xAI API key configured. Open the Jarvis settings panel and paste it.' };
+    const body = {
+      model: 'grok-4.3',
+      input: [
+        { role: 'system', content: 'You are a research assistant. Answer the user\'s question concisely (under 120 words) using web sources. Include the most important factual detail. Do not pad.' },
+        { role: 'user',   content: query }
+      ],
+      tools: [{ type: 'web_search' }]
+    };
+    const r = await fetch('https://api.x.ai/v1/responses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) {
+      const err = await r.text();
+      return { ok: false, error: `${r.status} ${err.slice(0, 300)}` };
+    }
+    const d = await r.json();
+    let answer = '';
+    if (typeof d.output_text === 'string') answer = d.output_text;
+    else if (Array.isArray(d.output)) {
+      for (const item of d.output) {
+        const c = item && item.content;
+        if (Array.isArray(c)) {
+          for (const part of c) {
+            if (part && (part.type === 'output_text' || part.type === 'text') && part.text) answer += part.text;
+          }
+        } else if (typeof c === 'string') {
+          answer += c;
+        }
+      }
+    }
+    const citations = [];
+    // Top-level citations (always returned by Agent Tools API)
+    if (Array.isArray(d.citations)) {
+      for (const c of d.citations) {
+        if (typeof c === 'string' && c) citations.push({ url: c, title: '' });
+        else if (c && (c.url || c.uri)) citations.push({ url: c.url || c.uri, title: c.title || '' });
+      }
+    }
+    // Inline citations via annotations[] (de-duped against top-level)
+    if (Array.isArray(d.output)) {
+      for (const item of d.output) {
+        const c = item && item.content;
+        if (!Array.isArray(c)) continue;
+        for (const part of c) {
+          const anns = part && part.annotations;
+          if (!Array.isArray(anns)) continue;
+          for (const a of anns) {
+            if (a && (a.type === 'url_citation' || a.url)) {
+              const url = a.url || a.uri || '';
+              if (url && !citations.find(x => x.url === url)) citations.push({ title: a.title || '', url });
+            }
+          }
+        }
+      }
+    }
+    return { ok: true, provider: 'grok', model: 'grok-4.3', query, depth, answer: (answer || '').trim(), citations };
+  }
+
+  async function _searchTavily(query, depth) {
+    const key = (typeof localStorage !== 'undefined') ? localStorage.getItem('poseidon_tavily_api_key') : null;
+    if (!key) return { ok: false, error: 'Tavily fallback not configured. Run: localStorage.setItem("poseidon_tavily_api_key", "tvly-…")' };
+    const body = {
+      api_key: key,
+      query,
+      search_depth: depth === 'advanced' ? 'advanced' : 'basic',
+      max_results: depth === 'advanced' ? 10 : 5,
+      include_answer: true,
+      include_raw_content: false
+    };
+    const r = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) {
+      const err = await r.text();
+      return { ok: false, error: `${r.status} ${err.slice(0, 300)}` };
+    }
+    const d = await r.json();
+    const citations = (d.results || []).map(x => ({ title: x.title || '', url: x.url || '' })).filter(c => c.url);
+    return { ok: true, provider: 'tavily', query, depth, answer: d.answer || '', citations };
+  }
 
   // ─── Tool implementations (executed on the dashboard) ───────────
   const TOOL_IMPL = {
@@ -2051,75 +2142,42 @@
       }
     },
 
-    // ─── Web search — Grok Live Search via /v1/responses ────────────
-    // Same vendor as the realtime voice (no extra API key). Grok performs
-    // the search server-side and returns a synthesized answer + citations.
-    // depth: 'basic' → up to 5 sources (cheaper, faster)
-    //        'advanced' → up to 15 sources (deeper research)
-    async web_search({ query, depth = 'basic' }) {
-      try {
-        const key = getApiKey();
-        if (!key) return { ok: false, error: 'No Grok API key configured. Open the Jarvis settings panel and paste it.' };
-        const max = depth === 'advanced' ? 15 : 5;
-        const body = {
-          model: 'grok-4-latest',
-          input: [
-            { role: 'system', content: 'You are a research assistant. Answer the user\'s question concisely (under 120 words) using the provided web sources. Include the most important factual detail. Do not pad.' },
-            { role: 'user',   content: query }
-          ],
-          search_parameters: {
-            mode: 'on',
-            max_search_results: max,
-            return_citations: true
-          },
-          temperature: 0.3
-        };
-        const r = await fetch('https://api.x.ai/v1/responses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-          body: JSON.stringify(body)
-        });
-        if (!r.ok) {
-          const err = await r.text();
-          return { ok: false, error: `Grok search ${r.status}: ${err.slice(0, 300)}` };
-        }
-        const d = await r.json();
-        // Extract the synthesized answer from the responses-API shape.
-        let answer = '';
-        if (typeof d.output_text === 'string') answer = d.output_text;
-        else if (Array.isArray(d.output)) {
-          for (const item of d.output) {
-            const c = item && item.content;
-            if (Array.isArray(c)) {
-              for (const part of c) {
-                if (part && (part.type === 'output_text' || part.type === 'text') && part.text) answer += part.text;
-              }
-            } else if (typeof c === 'string') {
-              answer += c;
-            }
-          }
-        }
-        // Citations live under output[].content[].annotations[] for url_citation entries.
-        const citations = [];
-        if (Array.isArray(d.output)) {
-          for (const item of d.output) {
-            const c = item && item.content;
-            if (!Array.isArray(c)) continue;
-            for (const part of c) {
-              const anns = part && part.annotations;
-              if (!Array.isArray(anns)) continue;
-              for (const a of anns) {
-                if (a && (a.type === 'url_citation' || a.url)) {
-                  citations.push({ title: a.title || '', url: a.url || a.uri || '' });
-                }
-              }
-            }
-          }
-        }
-        return { ok: true, query, depth, answer: (answer || '').trim(), citations };
-      } catch (e) {
-        return { ok: false, error: 'web_search failed: ' + e.message };
+    // ─── Web search — xAI Agent Tools API (primary) + Tavily (fallback)
+    // 2026-05-08: xAI deprecated the /v1/responses search_parameters
+    // shape (HTTP 410) and replaced it with the Agent Tools API:
+    // tools=[{type:'web_search'}] on grok-4.3. Tavily is the resilience
+    // layer — if Grok ever returns 4xx/5xx (rate limit, deprecation,
+    // outage), the search still works as long as a Tavily key is set
+    // in localStorage('poseidon_tavily_api_key').
+    async web_search({ query, depth = 'basic', provider = 'auto' } = {}) {
+      const wantGrok   = provider === 'auto' || provider === 'grok';
+      const wantTavily = provider === 'auto' || provider === 'tavily';
+      const errors = [];
+
+      if (wantGrok) {
+        try {
+          const r = await _searchGrok(query, depth);
+          if (r.ok) return r;
+          errors.push('grok: ' + r.error);
+          // 410/deprecation/4xx/5xx all fall through to Tavily under 'auto'.
+        } catch (e) { errors.push('grok: ' + e.message); }
       }
+
+      if (wantTavily) {
+        try {
+          const r = await _searchTavily(query, depth);
+          if (r.ok) return r;
+          errors.push('tavily: ' + r.error);
+        } catch (e) { errors.push('tavily: ' + e.message); }
+      }
+
+      return {
+        ok: false,
+        error: 'All search providers failed. ' + errors.join(' | '),
+        hint: !localStorage.getItem('poseidon_tavily_api_key')
+          ? 'Configure a Tavily fallback: open the JS console and run localStorage.setItem("poseidon_tavily_api_key", "tvly-…YOUR-KEY") — Tavily has a free tier of 1,000 searches/month.'
+          : null
+      };
     },
 
     async fetch_url({ url, max_chars = 4000 }) {
@@ -3398,7 +3456,7 @@
       'JARVIS SKILLS LIBRARY — Robert built a multi-agent reference KB at the "Jarvis Skills" sidebar entry (page id jarvisskills). Six agent domains: tax-compliance, recruiting-j1 (REFERENCE ONLY — operational J-1 data lives on the J1 System Dashboard per the strict partition rule), cruise-staffing, marketing-bd, operations-process, ghr-platform. Each has a knowledge base, decision trees, data sources, and escalation rules. ROUTING — for ANY question about the Skills Library, an agent domain, or anything Robert asks Jarvis to "explain", "tell me about", "summarize", "go deep on", or "walk me through" in this library, follow this order: (1) classify_skill_domain({query}) to pick the right agent, OR list_skill_domains() if the question spans multiple agents; (2) read_skill_domain({domain}) for in-depth explanations — it returns EVERY KB entry with full content, every decision tree, every data source, every escalation rule, plus the partition warning and global escalation rules; (3) query_skill({domain, topic}) for a narrow topic search — it returns matching entries with full content. CRITICAL: do NOT use read_page_content("jarvisskills") for Skills questions — the structured tools above are the canonical source and always have the freshest data. NEVER answer from a "scaffold"-status entry as if it were verified — say it is a placeholder and Robert needs to upload source content. ALWAYS surface partition warnings and escalation rules when they apply.',
       'If the user has popped a division out into a separate tab and you need to read what is in that tab, call list_popped_windows then read_popped_window. You can read the popped tab\'s text, iframes, and embed-mode state without the user having to switch back.',
       'CROSS-DASHBOARD VISIBILITY — you can read every CTI dashboard, including cross-origin ones, without navigating away. PRIMARY TOOL: read_remote_dashboard({dashboard}) — works for "poseidon", "j1-system", AND "upchurch-financial" (cross-origin to Cloudflare Pages). It mounts the target dashboard in a hidden iframe and reads back every page id, title, and the first 5000 chars of each page text. Use this tool by default for "what is on the X dashboard", "tell me about Upchurch", "read the finance page on Poseidon", etc. Cached 5 min — pass force_refresh:true to bypass. SECONDARY TOOLS: read_cross_dashboard({dashboard}) reads the same-origin localStorage snapshot (faster, only "poseidon" + "j1-system"). interact_cross_dashboard sends live commands to another OPEN tab. open_cti_dashboard opens a new tab. list_cti_dashboards lists URLs. Use these tools proactively — never say you cannot see another dashboard.',
-      'INTERNET ACCESS — you have working web search. Call web_search whenever Robert asks about current events, news, prices, recent updates, partner intel, or anything outside your training data. Never say "I cannot search" or "I do not have internet access" — you do. Use depth: "advanced" for in-depth research questions, "basic" (default) for quick lookups. For specific URL contents, call fetch_url (CORS-limited; works for raw GitHub, JSON APIs, etc.).',
+      'INTERNET ACCESS — you have working web search with automatic failover. Call web_search whenever Robert asks about current events, news, prices, recent updates, partner intel, or anything outside your training data. The tool tries xAI Grok Agent Tools first; if Grok errors out (rate-limited, deprecated, outage), it AUTOMATICALLY falls back to Tavily (when a Tavily key is configured in localStorage poseidon_tavily_api_key). The result includes a "provider" field — mention which engine answered ("via Grok" or "via Tavily") only if Robert explicitly asks. NEVER say "I cannot search" or "the search service is unavailable" without first calling the tool — and if the tool returns ok:false with a hint about configuring Tavily, relay that hint exactly. Use depth: "advanced" for in-depth research questions, "basic" (default) for quick lookups. For specific URL contents, call fetch_url (CORS-limited; works for raw GitHub, JSON APIs, etc.).',
       'For media playback ("play that video", "pause the song", "stop the audio", "play the X video"), call list_media first to discover what is on the page, then play_media / pause_media / stop_media with id or title. The tools work on native video/audio AND YouTube/Vimeo iframes (and even on media in popped-out tabs).',
       'You have a long-term memory that persists across browser sessions. When the user tells you something worth keeping ("remember that X", a preference, a name, a deadline), call remember({topic, fact}). Before answering anything that depends on prior context (a person, a vendor, a past conversation, a stated preference), FIRST call recall(query) — your memory may already have it. Only use forget() when the user explicitly asks you to forget something.',
       _memorySnippet(),
