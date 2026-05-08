@@ -559,7 +559,14 @@ document.addEventListener('keydown', function(e) {
   }
 
   function readJSON(key) {
-    try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) { return []; }
+    try {
+      var raw = JSON.parse(localStorage.getItem(key) || '[]');
+      if (Array.isArray(raw)) return raw;
+      if (raw && typeof raw === 'object') {
+        for (var k in raw) if (Array.isArray(raw[k])) return raw[k];
+      }
+      return [];
+    } catch (_) { return []; }
   }
 
   function buildSnapshot() {
