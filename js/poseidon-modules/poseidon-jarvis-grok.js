@@ -46,6 +46,44 @@
     pendingToolCalls: new Map()
   };
 
+  // ─── Cross-dashboard sync (BroadcastChannel — all CTI dashboards share
+  //     the same GitHub Pages origin, so one channel reaches all tabs) ───
+  const _ctiChannel = (typeof BroadcastChannel !== 'undefined')
+    ? new BroadcastChannel('cti-poseidon-sync') : null;
+
+  function _ctiChannelBroadcast(type, data) {
+    if (!_ctiChannel) return;
+    try { _ctiChannel.postMessage({ type, data, from: window.location.pathname, ts: Date.now() }); } catch (_) {}
+  }
+
+  if (_ctiChannel) {
+    _ctiChannel.onmessage = function(evt) {
+      const msg = evt.data;
+      if (!msg || !msg.type) return;
+      if (msg.type === 'task-saved' || msg.type === 'task-deleted') {
+        if (typeof window.renderTasks === 'function') try { window.renderTasks(); } catch (_) {}
+      }
+      if (msg.type === 'event-saved') {
+        if (typeof window.renderCalendar === 'function') try { window.renderCalendar(); } catch (_) {}
+      }
+      if (msg.type === 'jarvis-command') {
+        const { command, args } = msg;
+        try {
+          if (command === 'go_to_page' && args && args.page_id) {
+            const link = document.querySelector(`.nav-link[data-page="${args.page_id}"]`);
+            if (link) link.click();
+          }
+          if (command === 'refresh_snapshot' && typeof window._writeCtiSnapshot === 'function') {
+            window._writeCtiSnapshot();
+          }
+        } catch (_) {}
+      }
+    };
+  }
+
+    pendingToolCalls: new Map()
+  };
+
   // ─── Utilities ─────────────────────────────────────────────────
   function getApiKey() {
     try { return localStorage.getItem(LS_API_KEY) || window.GROK_API_KEY || ''; } catch (_) { return window.GROK_API_KEY || ''; }
@@ -1076,6 +1114,36 @@
         required: ['dashboard_id']
       }
     },
+    {
+      type: 'function',
+      name: 'read_cross_dashboard',
+      description: 'Read cached state from any other CTI dashboard. All dashboards share the same GitHub Pages origin and write state snapshots to localStorage every 2 min. Use this to answer questions about another dashboard without navigating away.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dashboard: {
+            type: 'string',
+            enum: ['poseidon', 'j1-system'],
+            description: '"poseidon" = Poseidon Master V6 (cruise/maritime), "j1-system" = J1 System Dashboard.'
+          }
+        },
+        required: ['dashboard']
+      }
+    },
+    {
+      type: 'function',
+      name: 'interact_cross_dashboard',
+      description: 'Send a command to another CTI dashboard tab open in the browser. go_to_page navigates that tab to a page_id. refresh_snapshot forces it to update its state cache so read_cross_dashboard returns fresh data.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dashboard: { type: 'string', enum: ['poseidon', 'j1-system'] },
+          command:   { type: 'string', enum: ['go_to_page', 'refresh_snapshot'] },
+          args:      { type: 'object', description: 'For go_to_page: { page_id: "finance" }. Empty for refresh_snapshot.' }
+        },
+        required: ['dashboard', 'command']
+      }
+    },
 
 
   ];
@@ -1119,28 +1187,88 @@
       catch (_) { return { ok: false, error: 'window.open blocked' }; }
       return { ok: true, dashboard_id, url };
     },
-    save_task({ title, due, priority }) {
-      if (typeof window.saveTask === 'function' && typeof window.openTaskModal === 'function') {
-        try {
-          window.openTaskModal();
-          setTimeout(() => {
-            const input = document.getElementById('task-title-input') || document.querySelector('#task-modal input[type="text"]');
-            if (input) input.value = title;
-            const dueInput = document.getElementById('task-due-input') || document.querySelector('#task-modal input[type="date"]');
-            if (dueInput && due) dueInput.value = due;
-            const prInput = document.getElementById('task-priority-input') || document.querySelector('#task-modal select');
-            if (prInput && priority) prInput.value = priority;
-            try { window.saveTask(); } catch (_) {}
-          }, 120);
-          return { ok: true, task: { title, due, priority } };
-        } catch (e) { /* fall through to direct write */ }
-      }
-      // Direct write to localStorage
+
+    read_cross_dashboard({ dashboard }) {
+      const KEY_MAP = { 'poseidon': 'cti_snapshot_poseidon', 'j1-system': 'cti_snapshot_j1system' };
+      const key = KEY_MAP[dashboard];
+      if (!key) return { ok: false, error: 'Unknown dashboard. Use: poseidon, j1-system' };
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return { ok: false,
+          error: `No snapshot for "${dashboard}" yet. Open it in another tab first, or call interact_cross_dashboard({dashboard, command:'refresh_snapshot'}).` };
+        const snap = JSON.parse(raw);
+        const ageMins = Math.round((Date.now() - new Date(snap.capturedAt).getTime()) / 60000);
+        return { ok: true, dashboard, snapshot: snap, age_minutes: ageMins,
+          note: ageMins > 5 ? `Snapshot is ${ageMins} min old — call interact_cross_dashboard(refresh_snapshot) for fresh data.` : null };
+      } catch (e) { return { ok: false, error: 'Failed to parse snapshot: ' + e.message }; }
+    },
+
+    interact_cross_dashboard({ dashboard, command, args = {} }) {
+      if (!_ctiChannel) return { ok: false, error: 'BroadcastChannel not supported in this browser.' };
+      _ctiChannel.postMessage({ type: 'jarvis-command', target: dashboard, command, args, from: window.location.pathname, ts: Date.now() });
+      return { ok: true, sent: true, dashboard, command,
+        note: 'Command broadcast — takes effect immediately if that dashboard is open in another tab.' };
+    },
+
+    async save_task({ title, due, priority }) {
+      // 1. Save locally — instant dashboard refresh
       let tasks = _readNormalizedTasks();
       tasks.push({ id: Date.now(), title, due: due || null, priority: priority || 'medium', done: false, created: new Date().toISOString() });
       localStorage.setItem('poseidon-tasks', JSON.stringify(tasks));
       if (typeof window.renderTasks === 'function') try { window.renderTasks(); } catch (_) {}
-      return { ok: true, task: { title, due, priority }, via: 'direct' };
+
+      // 2. Post to Microsoft To Do — syncs to phone, iPad, Teams, Outlook on all devices
+      let todo = null;
+      try {
+        const token = await this._o365TokenForScopes(['Tasks.ReadWrite']);
+        if (token) {
+          const listResp = await fetch(
+            "https://graph.microsoft.com/v1.0/me/todo/lists?$filter=wellknownListName+eq+'defaultList'",
+            { headers: { Authorization: 'Bearer ' + token } }
+          );
+          if (listResp.ok) {
+            const listData = await listResp.json();
+            const listId = (listData.value || [])[0]?.id;
+            if (listId) {
+              const importance = priority === 'high' ? 'high' : priority === 'low' ? 'low' : 'normal';
+              const taskPayload = {
+                title,
+                importance,
+                ...(due ? { dueDateTime: { dateTime: due + 'T09:00:00.0000000', timeZone: 'UTC' } } : {})
+              };
+              const taskResp = await fetch(`https://graph.microsoft.com/v1.0/me/todo/lists/${listId}/tasks`, {
+                method: 'POST',
+                headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+                body: JSON.stringify(taskPayload)
+              });
+              if (taskResp.ok) {
+                const created = await taskResp.json();
+                todo = { ok: true, id: created.id };
+              } else {
+                const err = await taskResp.text().catch(() => '');
+                todo = (taskResp.status === 403 || taskResp.status === 401)
+                  ? { ok: false, error: 'Tasks.ReadWrite not consented — click "Force Re-consent" on the Emails page.' }
+                  : { ok: false, error: 'Graph ' + taskResp.status + ': ' + err.slice(0, 200) };
+              }
+            } else {
+              todo = { ok: false, error: 'No default task list found.' };
+            }
+          } else {
+            todo = { ok: false, error: 'Could not fetch To Do lists: ' + listResp.status };
+          }
+        } else {
+          todo = { ok: false, error: 'Not signed in to M365 — task saved to dashboard only.' };
+        }
+      } catch (e) {
+        todo = (e.errorCode === 'interaction_required' || (e.message || '').includes('interaction_required'))
+          ? { ok: false, error: 'Tasks.ReadWrite requires re-consent — click "Force Re-consent" on the Emails page.' }
+          : { ok: false, error: e.message };
+      }
+
+      // 3. Broadcast to all open CTI dashboard tabs (same GitHub Pages origin)
+      _ctiChannelBroadcast('task-saved', { title, due, priority });
+
+      return { ok: true, task: { title, due, priority }, savedLocally: true, todo };
     },
 
     async save_event({ title, date, time, notes }) {
@@ -1194,6 +1322,7 @@
           outlook = { ok: false, error: e.message };
         }
       }
+      _ctiChannelBroadcast('event-saved', { title, date, time: time || '09:00' });
       return { ok: true, event: { title, date, time: time || '09:00' }, savedLocally: true, outlook };
     },
 
@@ -2964,7 +3093,7 @@
       'For ANY email-related question — "do I have any emails", "anything from X", "what does that email say", "open the attachment", "summarize the contract attachment", "read me the PDF", "urgent emails", "unread emails" — call read_emails first to find candidates and grab the email id, then read_email for the full body, list_email_attachments for attachments, read_email_attachment to extract attachment text (PDFs supported via PDF.js), and open_email_attachment to open in a new tab. ALWAYS read_email or read_email_attachment before summarizing — do NOT speculate from the preview alone. If Microsoft 365 is not signed in, tell the user to click "Sign in to M365" on the dashboard.',
       'When the user asks about a KPI on a specific division, call read_kpi with that division.',
       'When the user asks you to navigate ("take me to finance", "open J1 housing"), call go_to_page.',
-      'When the user asks to add a task or event, call save_task / save_event. save_event saves to both the dashboard calendar AND posts to Microsoft Outlook (requires Calendars.ReadWrite — if the outlook field in the result shows an error, tell Robert to click "Force Re-consent" on the Emails page). To DELETE a task, call delete_task with the task id or a title_match substring — always confirm the task title out loud before executing.',
+      'When the user asks to add a task or event, call save_task / save_event. save_task saves to the dashboard AND to Microsoft To Do (syncs to phone, iPad, Teams, and Outlook on every device — requires Tasks.ReadWrite). save_event saves to the dashboard AND to Outlook Calendar (requires Calendars.ReadWrite). If either todo/outlook field in the result shows a permissions error, tell Robert to click "Force Re-consent" on the Emails page. To DELETE a task, call delete_task with the task id or a title_match substring — always confirm the task title out loud before executing.',
       'EMAIL ACTIONS — compose_email: when Robert says "send a new email" or "email Y about Z", draft the email, SAY the recipient + subject + body summary out loud and wait for verbal confirmation BEFORE calling compose_email. reply_email: when Robert says "reply to that", "respond to X", "write back" — call read_email first to understand the thread, draft the reply, SAY the reply body out loud and wait for confirmation, then call reply_email with the original message id and reply_all=true only if he says "reply all". delete_email: when Robert says "delete that email" or "trash it", say the subject and sender out loud and wait for confirmation, then call delete_email. All three require Mail.Send or Mail.ReadWrite permissions — if blocked, tell Robert to click "Force Re-consent" on the Emails page and try again.',
       'When the user asks anything about cruise line contracts, fees, terms, obligations, legal, insurance, positions, compliance, or pros/cons — first call read_contracts (or read_contracts_lines for a quick line list), then summarize the results. The Contracts dashboard is fully readable end-to-end via these tools.',
       'When the user asks to "open in new tab", "pop out", or "expand" a division, call popout_division. For analytics or chart questions on a division, call list_analytics_reports first to discover available reports, then read_analytics to pull the actual numbers behind the chart.',
@@ -2977,6 +3106,7 @@
       'STRICT J1/CRUISE PARTITION (Robert 2026-04-27) — the two dashboards have a hard rule. POSEIDON MASTER carries everything cruise / maritime: Cruise Line Contracts, cruise lines, ships, sea-based recruiting, Cruise Ship Candidates. CTI GROUP · J1 SYSTEM DASHBOARD carries everything J-1: J-1 recruiting, J1 candidates, J1 housing, J1 sponsor contracts (Alliance Abroad / CIEE / Green Heart), J1 hosting companies, airline tickets, J1 Housing Finder, J1 Contract Analysis. NOTHING J1 lives on Poseidon. NOTHING cruise lives on the J1 dashboard. If a user asks about something on the wrong dashboard, redirect them to the correct one via the cross-dashboard switcher pill in the top-right header. Each dashboard has an "Other" sidebar entry (page id "other") which is a holding area for ambiguous items pending categorization — never confuse "Other" with content that has a clear J1 or cruise home.',
       'POSEIDON SIDEBAR (after 2026-04-27 cleanup) — Master + Forecast · Finance · Recruiting · IT & Technology · Contracts (Cruise Line Contract Negotiation) · Other · then the Workspace group. Removed: Processing (CUK), J1 Division, J1 Housing — all relocated to the J1 System Dashboard. The Recruiting page on Poseidon now has only Recruiting Overview / Cruise Ship Candidates / Recruiting Workflow tabs (no more J-1 Candidates tab — that\'s on the J1 dashboard).',
       'If the user has popped a division out into a separate tab and you need to read what is in that tab, call list_popped_windows then read_popped_window. You can read the popped tab\'s text, iframes, and embed-mode state without the user having to switch back.',
+      'CROSS-DASHBOARD VISIBILITY — you can read and interact with every CTI dashboard without navigating away. (1) read_cross_dashboard({dashboard}): reads the cached state snapshot of "poseidon" or "j1-system" from shared localStorage — use this to answer questions like "what tasks are on the J1 dashboard", "check the J1 calendar", "what is on the Poseidon finance page". If the snapshot age_minutes > 5, call interact_cross_dashboard({dashboard, command:"refresh_snapshot"}) first. (2) interact_cross_dashboard({dashboard, command, args}): sends live commands to another open tab — go_to_page navigates that tab, refresh_snapshot tells it to update its cache. (3) open_cti_dashboard: opens another dashboard in a new tab. (4) list_cti_dashboards: lists all verified CTI dashboard URLs. Use these tools proactively whenever Robert asks about another dashboard — never say you cannot see it.',
       'INTERNET ACCESS — you have working web search. Call web_search whenever Robert asks about current events, news, prices, recent updates, partner intel, or anything outside your training data. Never say "I cannot search" or "I do not have internet access" — you do. Use depth: "advanced" for in-depth research questions, "basic" (default) for quick lookups. For specific URL contents, call fetch_url (CORS-limited; works for raw GitHub, JSON APIs, etc.).',
       'For media playback ("play that video", "pause the song", "stop the audio", "play the X video"), call list_media first to discover what is on the page, then play_media / pause_media / stop_media with id or title. The tools work on native video/audio AND YouTube/Vimeo iframes (and even on media in popped-out tabs).',
       'You have a long-term memory that persists across browser sessions. When the user tells you something worth keeping ("remember that X", a preference, a name, a deadline), call remember({topic, fact}). Before answering anything that depends on prior context (a person, a vendor, a past conversation, a stated preference), FIRST call recall(query) — your memory may already have it. Only use forget() when the user explicitly asks you to forget something.',

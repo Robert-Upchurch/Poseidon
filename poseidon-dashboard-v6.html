@@ -4407,6 +4407,56 @@ function rdExportDivisionPDF(divId) {
     w.document.write(panel.innerHTML);
     w.document.write(`
 
+<script>
+// ─── CTI Cross-Dashboard Snapshot Writer ────────────────────────────────
+// All CTI dashboards share the same GitHub Pages origin, so localStorage
+// is visible across all tabs. Each dashboard writes its state here every
+// 2 min. Jarvis read_cross_dashboard reads these keys from any dashboard.
+(function() {
+  var SNAP_KEY  = 'cti_snapshot_poseidon';
+  var DASH_NAME = 'Poseidon Master V6';
+  var PAGE_IDS  = ['masterforecast','finance','recruitingdivision','ittech','contracts','other','tasks','calendar','emails','videos','projects','settings'];
+
+  function _writeSnap() {
+    try {
+      var snap = {
+        dashboard:   DASH_NAME,
+        capturedAt:  new Date().toISOString(),
+        activePage:  (document.querySelector('.page:not(.hidden)') || {}).id || null,
+        pageTitle:   (document.getElementById('page-title') || {}).textContent || null,
+        tasks:       JSON.parse(localStorage.getItem('poseidon-tasks') || '[]').slice(-30),
+        events:      JSON.parse(localStorage.getItem('poseidon-events') || '[]').slice(-30),
+        pages: {}
+      };
+      PAGE_IDS.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        snap.pages[id] = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 800);
+      });
+      localStorage.setItem(SNAP_KEY, JSON.stringify(snap));
+    } catch(e) {}
+  }
+
+  // Expose so BroadcastChannel jarvis-command handler can trigger a refresh
+  window._writeCtiSnapshot = _writeSnap;
+
+  // Initial write after data renders
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { setTimeout(_writeSnap, 2500); });
+  } else {
+    setTimeout(_writeSnap, 2500);
+  }
+  setInterval(_writeSnap, 120000); // every 2 min
+
+  // Write on sidebar page navigation
+  document.addEventListener('click', function(e) {
+    var t = e.target;
+    var link = t && t.closest && t.closest('.nav-link');
+    if (link) setTimeout(_writeSnap, 600);
+  }, true);
+})();
+</script>
+
 </body></html>`);
     w.document.close();
     setTimeout(()=>{ try { w.print(); } catch(e){} }, 600);
