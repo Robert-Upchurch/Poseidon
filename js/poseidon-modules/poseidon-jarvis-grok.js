@@ -532,7 +532,7 @@
       parameters: {
         type: 'object',
         properties: {
-          page_id: { type: 'string', enum: ['masterforecast','finance','recruitingdivision','processingcuk','j1division','ittech','contracts','j1housing','j1housingfinder','partneronboarding','j1contractanalysis','other','dashboard','tasks','calendar','emails','videos','projects','partners','settings'], description: 'The page ID to open.' }
+          page_id: { type: 'string', enum: ['masterforecast','finance','recruitingdivision','processingcuk','j1division','ittech','contracts','jarvisskills','j1housing','j1housingfinder','partneronboarding','j1contractanalysis','other','dashboard','tasks','calendar','emails','videos','projects','partners','settings'], description: 'The page ID to open.' }
         },
         required: ['page_id']
       }
@@ -593,7 +593,7 @@
         properties: {
           page_id: {
             type: 'string',
-            enum: ['masterforecast','finance','recruitingdivision','processingcuk','j1division','ittech','contracts','j1housing','j1housingfinder','partneronboarding','j1contractanalysis','other','dashboard','tasks','calendar','emails','videos','projects','partners','settings'],
+            enum: ['masterforecast','finance','recruitingdivision','processingcuk','j1division','ittech','contracts','jarvisskills','j1housing','j1housingfinder','partneronboarding','j1contractanalysis','other','dashboard','tasks','calendar','emails','videos','projects','partners','settings'],
             description: 'The page whose content to read.'
           },
           max_len_per_field: {
@@ -1175,6 +1175,42 @@
       }
     },
 
+    // ── JARVIS SKILLS LIBRARY (added 2026-05-07) ──────────────────
+    {
+      type: 'function',
+      name: 'list_skill_domains',
+      description: 'List the agent domains in the Jarvis Skills Library. Returns the 6 agents (tax-compliance, recruiting-j1, cruise-staffing, marketing-bd, operations-process, ghr-platform) with their summaries, owners, partition warnings, and global escalation rules. Call this first whenever Robert asks "what does Jarvis know" or routes a query you are unsure about.',
+      parameters: { type: 'object', properties: {} }
+    },
+    {
+      type: 'function',
+      name: 'classify_skill_domain',
+      description: 'Given a free-text query, classify which Jarvis Skills domain should handle it. Returns scores per domain plus a primaryDomain pick. Use this to route Robert\'s question to the right agent before calling query_skill. If primaryDomain is null (no keyword match), ask Robert which domain to use.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Robert\'s question or topic.' }
+        },
+        required: ['query']
+      }
+    },
+    {
+      type: 'function',
+      name: 'query_skill',
+      description: 'Query a specific Jarvis Skills agent domain. Returns matching knowledge-base entries (topic, content, status, partition notes). If topic is omitted, returns the full topic list for that domain. STRICT PARTITION: the recruiting-j1 domain is REFERENCE ONLY — operational J-1 data lives on j1-system-dashboard.html (use read_remote_dashboard for that). The cruise-staffing domain is cruise/maritime only.',
+      parameters: {
+        type: 'object',
+        properties: {
+          domain: {
+            type: 'string',
+            enum: ['tax-compliance','recruiting-j1','cruise-staffing','marketing-bd','operations-process','ghr-platform'],
+            description: 'Agent domain id.'
+          },
+          topic: { type: 'string', description: 'Optional. Free-text topic to match against KB entry topics, ids, and content.' }
+        },
+        required: ['domain']
+      }
+    }
 
   ];
 
@@ -2601,6 +2637,28 @@
       return { ok: true, deleted: removed };
     },
 
+    // ── JARVIS SKILLS LIBRARY impls (2026-05-07) ───────────────────
+    async list_skill_domains() {
+      const ns = window.JarvisSkills;
+      if (!ns) return { ok: false, error: 'JarvisSkills namespace not loaded yet — wait a few seconds and retry, or open the Jarvis Skills page once.' };
+      if (!ns.getCache().index) { try { await ns.loadAll(); } catch (e) { return { ok: false, error: 'loadAll failed: ' + (e && e.message) }; } }
+      return ns.listDomains();
+    },
+
+    async classify_skill_domain({ query }) {
+      const ns = window.JarvisSkills;
+      if (!ns) return { ok: false, error: 'JarvisSkills namespace not loaded yet.' };
+      if (!ns.getCache().index) { try { await ns.loadAll(); } catch (_) {} }
+      return ns.classifyDomain(query);
+    },
+
+    async query_skill({ domain, topic }) {
+      const ns = window.JarvisSkills;
+      if (!ns) return { ok: false, error: 'JarvisSkills namespace not loaded yet.' };
+      if (!ns.getCache().index) { try { await ns.loadAll(); } catch (e) { return { ok: false, error: 'loadAll failed: ' + (e && e.message) }; } }
+      return ns.querySkill(domain, topic);
+    },
+
   };
 
   // ─── Media helpers ────────────────────────────────────────────────
@@ -3314,6 +3372,7 @@
       'J1 DIVISION GROUP — the J1 System Dashboard sidebar groups three pages together under the J1 Division: (a) "J1 Division" (page id j1housing — housing & accommodations management plus the embedded J1 Housing Finder tab), (b) "Partner Onboarding" (page id partneronboarding — top of the page is the CTI Group Onboarding Form launcher embedding https://robert-upchurch.github.io/cti-partner-onboarding/, below it the pipeline view of host companies moving through 5 stages: New Lead → MOU/NDA → Documentation → System Setup → Active, with a stalled-60-day flag and a standard onboarding checklist; the form replaced the prior CIEE Partner Onboarding embed and was relocated here from a sub-tab on the J1 Overview page on 2026-04-27), and (c) "J1 Contract Analysis" (page id j1contractanalysis — side-by-side comparison of Alliance Abroad / CIEE / Green Heart sponsor contracts: fees, terms, insurance, response time, payment terms, plus fill-rate and pipeline-volume charts). For onboarding-pipeline or onboarding-form questions go to partneronboarding; for sponsor-contract questions go to j1contractanalysis. Use go_to_page to navigate. The sidebar\'s remaining utility pages (Home / Tasks / Calendar / Tracker / Settings) are now grouped under "Other".',
       'STRICT J1/CRUISE PARTITION (Robert 2026-04-27) — the two dashboards have a hard rule. POSEIDON MASTER carries everything cruise / maritime: Cruise Line Contracts, cruise lines, ships, sea-based recruiting, Cruise Ship Candidates. CTI GROUP · J1 SYSTEM DASHBOARD carries everything J-1: J-1 recruiting, J1 candidates, J1 housing, J1 sponsor contracts (Alliance Abroad / CIEE / Green Heart), J1 hosting companies, airline tickets, J1 Housing Finder, J1 Contract Analysis. NOTHING J1 lives on Poseidon. NOTHING cruise lives on the J1 dashboard. If a user asks about something on the wrong dashboard, redirect them to the correct one via the cross-dashboard switcher pill in the top-right header. Each dashboard has an "Other" sidebar entry (page id "other") which is a holding area for ambiguous items pending categorization — never confuse "Other" with content that has a clear J1 or cruise home.',
       'POSEIDON SIDEBAR (after 2026-04-27 cleanup) — Master + Forecast · Finance · Recruiting · IT & Technology · Contracts (Cruise Line Contract Negotiation) · Other · then the Workspace group. Removed: Processing (CUK), J1 Division, J1 Housing — all relocated to the J1 System Dashboard. The Recruiting page on Poseidon now has only Recruiting Overview / Cruise Ship Candidates / Recruiting Workflow tabs (no more J-1 Candidates tab — that\'s on the J1 dashboard).',
+      'JARVIS SKILLS LIBRARY — Robert built a multi-agent reference KB at the "Jarvis Skills" sidebar entry (page id jarvisskills). Six agent domains: tax-compliance, recruiting-j1 (REFERENCE ONLY — operational J-1 data lives on the J1 System Dashboard per the strict partition rule), cruise-staffing, marketing-bd, operations-process, ghr-platform. Each has a knowledge base, decision trees, data sources, and escalation rules. ROUTING: when Robert asks a domain-specific question, call classify_skill_domain({query}) first to pick the right agent, then query_skill({domain, topic}) to read the matching KB entries. If unsure or classify returns no match, call list_skill_domains and ask Robert which agent to use. NEVER answer from a "scaffold"-status entry as if it were verified — say it is a placeholder and Robert needs to upload source content. ALWAYS surface partition warnings and escalation rules when relevant.',
       'If the user has popped a division out into a separate tab and you need to read what is in that tab, call list_popped_windows then read_popped_window. You can read the popped tab\'s text, iframes, and embed-mode state without the user having to switch back.',
       'CROSS-DASHBOARD VISIBILITY — you can read every CTI dashboard, including cross-origin ones, without navigating away. PRIMARY TOOL: read_remote_dashboard({dashboard}) — works for "poseidon", "j1-system", AND "upchurch-financial" (cross-origin to Cloudflare Pages). It mounts the target dashboard in a hidden iframe and reads back every page id, title, and the first 5000 chars of each page text. Use this tool by default for "what is on the X dashboard", "tell me about Upchurch", "read the finance page on Poseidon", etc. Cached 5 min — pass force_refresh:true to bypass. SECONDARY TOOLS: read_cross_dashboard({dashboard}) reads the same-origin localStorage snapshot (faster, only "poseidon" + "j1-system"). interact_cross_dashboard sends live commands to another OPEN tab. open_cti_dashboard opens a new tab. list_cti_dashboards lists URLs. Use these tools proactively — never say you cannot see another dashboard.',
       'INTERNET ACCESS — you have working web search. Call web_search whenever Robert asks about current events, news, prices, recent updates, partner intel, or anything outside your training data. Never say "I cannot search" or "I do not have internet access" — you do. Use depth: "advanced" for in-depth research questions, "basic" (default) for quick lookups. For specific URL contents, call fetch_url (CORS-limited; works for raw GitHub, JSON APIs, etc.).',

@@ -1,0 +1,113 @@
+{
+  "_meta": {
+    "domain": "marketing-bd",
+    "displayName": "Marketing & Business Development Agent",
+    "version": "0.1.0",
+    "lastUpdated": "2026-05-07",
+    "owner": "Marketing Lead",
+    "reviewer": "Robert Upchurch (CEO)",
+    "refreshFrequency": "bi-monthly",
+    "confidentiality": "internal",
+    "status": "scaffold"
+  },
+  "knowledgeBase": [
+    {
+      "id": "brand-voice",
+      "topic": "CTI Brand Voice & Messaging Standards",
+      "category": "Brand",
+      "content": "Tone: professional, direct, no chatty preamble. Audience: enterprise hospitality, cruise lines, J-1 host employers, candidates. Avoid: marketing fluff, unsubstantiated claims, approval/timeline guarantees. Always: ground claims in specific operational evidence. Use the Brand Voice plugin (`brand-voice:enforce-voice`) to apply guidelines to drafts.",
+      "status": "draft",
+      "sourceDocs": ["Brand Voice plugin guidelines"],
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "campaign-templates",
+      "topic": "Campaign Templates",
+      "category": "Campaigns",
+      "content": "Three template families: (1) Sub-agent targeting — sourcing partners in source countries; (2) Recruitment — candidate-facing for J-1 / cruise / hospitality; (3) Partnership — host employer / cruise line BD outreach. Each template has its own messaging pillars and channel rules.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "content-calendar",
+      "topic": "Content Calendar & Playbook",
+      "category": "Content",
+      "content": "Channels: video (J-1 recruitment, cruise career), email (sequenced nurture per persona), social (LinkedIn primary; selective IG for candidate audience), podcast. Cadence and topic mix to be defined per quarter — current cadence pending upload from Marketing Lead.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "partnership-positioning",
+      "topic": "Partnership Positioning",
+      "category": "BD",
+      "content": "Sponsor partners (CIEE, Alliance Abroad, Greenheart): position CTI as the highest-volume placement engine with end-to-end housing. Cruise lines: position GHR as the maritime crewing arm with MLC-compliant pipeline. Differentiation must be ground-truth (numbers + named host employers) — no fabricated claims.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "competitive-intel",
+      "topic": "Competitive Intelligence — 154 J-1 Provider Landscape",
+      "category": "BD",
+      "content": "Approximately 154 designated J-1 sponsors and placement agencies operate in the U.S. CTI's competitive position is documented in the BD library. Update at least quarterly. Source: State Department designated sponsor list + private CTI tracker.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "podcast-format",
+      "topic": "Podcast Format & Guest Protocols",
+      "category": "Content",
+      "content": "Format details, guest selection criteria, and release cadence pending upload from Marketing Lead.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "collateral-standards",
+      "topic": "Collateral Standards (PowerPoint palette, branded templates)",
+      "category": "Brand",
+      "content": "Brand palette and PPT templates archived in POSEIDON\\Claude-Workspace. All decks should use the official template — agents that generate decks must apply brand guidelines before delivery.",
+      "status": "draft",
+      "sourceDocs": ["POSEIDON\\Claude-Workspace branded templates"],
+      "lastUpdated": "2026-05-07"
+    }
+  ],
+  "decisionTrees": [
+    {
+      "id": "dt-mkt-001",
+      "trigger": "Customer-facing email drafted by an agent",
+      "rules": [
+        {"if": "Email contains a guarantee, timeline, or pricing", "then": "Halt — Robert review before send"},
+        {"if": "Email is a templated reply matching an approved sequence", "then": "Draft + queue for Robert; never auto-send"}
+      ],
+      "escalateTo": "Robert (CEO)"
+    },
+    {
+      "id": "dt-mkt-002",
+      "trigger": "Public statement / press / social post",
+      "rules": [
+        {"if": "Any public-facing content", "then": "Draft only — Robert sign-off required before publish"}
+      ],
+      "escalateTo": "Robert (CEO)"
+    },
+    {
+      "id": "dt-mkt-003",
+      "trigger": "Competitive comparison claim drafted",
+      "rules": [
+        {"if": "Claim cites specific numbers or named competitors", "then": "Verify ground truth + Robert review"},
+        {"if": "Generic positioning", "then": "Brand-voice review only"}
+      ],
+      "escalateTo": "Robert (CEO) for cited claims"
+    }
+  ],
+  "dataSources": [
+    {"name": "Brand Voice plugin", "type": "skill", "status": "connected", "refresh": "as-needed"},
+    {"name": "POSEIDON\\Claude-Workspace branded templates", "type": "internal", "status": "connected", "refresh": "manual"},
+    {"name": "State Dept designated sponsor list", "type": "external", "status": "manual", "refresh": "annual"},
+    {"name": "Mailchimp (no MCP)", "type": "manual", "status": "manual", "refresh": "manual"},
+    {"name": "LinkedIn Company Page", "type": "external", "status": "manual", "refresh": "weekly"}
+  ],
+  "escalationRules": [
+    {"trigger": "Customer-facing email/post draft", "action": "Robert review before send", "severity": "high"},
+    {"trigger": "Pricing or timeline statement in marketing copy", "action": "Robert review", "severity": "high"},
+    {"trigger": "Competitive claim with named competitor", "action": "Verify + Robert review", "severity": "medium"}
+  ]
+}

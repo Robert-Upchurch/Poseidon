@@ -1,0 +1,121 @@
+{
+  "_meta": {
+    "domain": "operations-process",
+    "displayName": "Operations & Process Agent",
+    "version": "0.1.0",
+    "lastUpdated": "2026-05-07",
+    "owner": "Operations Lead",
+    "reviewer": "Robert Upchurch (CEO)",
+    "refreshFrequency": "monthly",
+    "confidentiality": "internal",
+    "status": "scaffold"
+  },
+  "knowledgeBase": [
+    {
+      "id": "org-structure",
+      "topic": "CTI Organizational Structure & Reporting Lines",
+      "category": "Org",
+      "content": "Parent: CTI Group Worldwide Services Inc. (CEO: Robert Upchurch). Divisions: GHR (cruise/maritime), J-1 Placements (cultural exchange), J-1 Housing, CTI Marine, UNO Division (uniforms), Baron Promotions, Marine Travel. Reporting lines pending upload from Operations Lead.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "sop-recruiting-workflow",
+      "topic": "SOP — Recruiting Workflow",
+      "category": "SOP",
+      "content": "Standard recruiting lifecycle: source → screen → present → interview → offer → onboarding. Per-domain variations: cruise (STCW + ENG-1 gates), J-1 (DS-2019 + sponsor gate), hospitality (host approval gate). Full step-by-step pending upload.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "sop-onboarding",
+      "topic": "SOP — Candidate Onboarding",
+      "category": "SOP",
+      "content": "Onboarding deliverables per program type. Pending upload from Operations Lead.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "sop-offboarding",
+      "topic": "SOP — Candidate Offboarding",
+      "category": "SOP",
+      "content": "Offboarding/repatriation deliverables per program type. Pending upload from Operations Lead.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "zoho-one-config",
+      "topic": "Zoho One Configuration & Data Flow",
+      "category": "Systems",
+      "content": "Zoho stack in use: CRM (operational records), Books (org_id 877439787, USD), Desk (support), Projects, Forms. Data flow: Zoho CRM is the system of record for partner/candidate records; Zoho Books for finance; Poseidon V6 dashboard reads from Zoho via MCP for live KPIs.",
+      "status": "draft",
+      "sourceDocs": ["Zoho admin console"],
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "dashboard-refresh-protocols",
+      "topic": "Dashboard Refresh Protocols",
+      "category": "Systems",
+      "content": "Poseidon V6 M365 refresh cadence (Robert standing order 2026-04-29): M-F 7am-4pm every 10min; weekends only 8/12/4. Skills library refresh: per-agent cadence specified in each domain's _meta.refreshFrequency. System Check button runs invariants on demand.",
+      "status": "verified",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "doc-management",
+      "topic": "Document Management & Naming Conventions",
+      "category": "Systems",
+      "content": "Canonical POSEIDON path: C:\\Users\\ceo\\OneDrive - CTI Group Worldwide Services Inc\\POSEIDON. Repo: C:\\Projects\\Poseidon (moved out of OneDrive 2026-05-07 — git was blocked by OneDrive VFS reparse point). Travel backup mirror: I:\\POSEIDON. Naming conventions pending upload.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "comms-protocols",
+      "topic": "Communication Protocols & Escalation Paths",
+      "category": "Comms",
+      "content": "Standing rule: agents draft, never send. Customer-facing emails always require Robert review. Internal Slack/email: agents may post status updates only after Robert sign-off on the channel + cadence. Escalation paths to be formalized by Operations Lead.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    }
+  ],
+  "decisionTrees": [
+    {
+      "id": "dt-ops-001",
+      "trigger": "Cross-system data sync proposal",
+      "rules": [
+        {"if": "Sync moves data across the strict-partition boundary (cruise ↔ J-1)", "then": "Halt — Robert sign-off"},
+        {"if": "Sync is within-partition", "then": "Operations Lead approval"}
+      ],
+      "escalateTo": "Robert (CEO) for cross-partition; Operations Lead otherwise"
+    },
+    {
+      "id": "dt-ops-002",
+      "trigger": "New tool / vendor / SaaS proposed",
+      "rules": [
+        {"if": "Annual cost > $10K", "then": "Halt — Robert + CFO approval"},
+        {"if": "Touches PII / candidate data", "then": "Halt — Robert + legal review"}
+      ],
+      "escalateTo": "Robert (CEO) + CFO/legal"
+    },
+    {
+      "id": "dt-ops-003",
+      "trigger": "Dashboard regression reported",
+      "rules": [
+        {"if": "System Check banner red", "then": "Run poseidonHealth(); follow standing rules in CLAUDE.md"},
+        {"if": "Functional regression on calendar/UI", "then": "Verify on live URL with chrome MCP before declaring fixed (Robert standing order 2026-04-29)"}
+      ],
+      "escalateTo": "Operations Lead → Robert if unresolved in 1h"
+    }
+  ],
+  "dataSources": [
+    {"name": "Zoho One (CRM, Books, Desk, Projects, Forms)", "type": "MCP", "status": "connected", "refresh": "real-time"},
+    {"name": "Microsoft 365 (Outlook, Calendar, OneDrive, SharePoint, Teams)", "type": "MCP", "status": "connected", "refresh": "10-min cadence"},
+    {"name": "Poseidon V6 dashboard (system of action)", "type": "internal", "status": "connected", "refresh": "live"},
+    {"name": "Box, Egnyte, Fireflies, Apollo, Gamma", "type": "MCP", "status": "connected", "refresh": "as-needed"}
+  ],
+  "escalationRules": [
+    {"trigger": "Cross-partition data movement", "action": "Halt — Robert sign-off", "severity": "critical"},
+    {"trigger": "New SaaS > $10K/yr", "action": "Robert + CFO", "severity": "high"},
+    {"trigger": "PII handling change", "action": "Robert + legal", "severity": "high"},
+    {"trigger": "Dashboard System Check red", "action": "Run poseidonHealth + auto-repair; escalate if 1h unresolved", "severity": "medium"}
+  ]
+}

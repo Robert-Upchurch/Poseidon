@@ -1,0 +1,144 @@
+{
+  "_meta": {
+    "domain": "recruiting-j1",
+    "displayName": "Recruiting & J-1 Agent (Reference)",
+    "version": "0.1.0",
+    "lastUpdated": "2026-05-07",
+    "owner": "GHR J-1 Director",
+    "reviewer": "Robert Upchurch (CEO)",
+    "refreshFrequency": "quarterly",
+    "confidentiality": "private",
+    "status": "scaffold",
+    "partitionWarning": "STRICT PARTITION RULE — non-negotiable. This panel is REFERENCE policy/contract knowledge only. Operational J-1 data (active candidates, active orders, housing matches, sponsor compliance flags) lives EXCLUSIVELY on j1-system-dashboard.html. Do not mirror operational J-1 records here.",
+    "scaffoldNote": "Contract clause text and pricing tiers must be uploaded by GHR J-1 Director before the agent answers from this content."
+  },
+  "knowledgeBase": [
+    {
+      "id": "partner-aag",
+      "topic": "Sponsor Partner — Alliance Abroad (AAG)",
+      "category": "Partner Contracts",
+      "content": "26 contract provisions cataloged. Reference summary: program-management fees, indemnity clauses, payment terms, allocation policies, host-employer obligations, candidate replacement terms. Full clause text on file. Reference only — operational status (active orders, current allocation) lives on the J1 System Dashboard.",
+      "status": "scaffold",
+      "sourceDocs": ["Alliance Abroad master agreement (PDF)"],
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "partner-ciee",
+      "topic": "Sponsor Partner — CIEE",
+      "category": "Partner Contracts",
+      "content": "26 contract provisions cataloged. Reference summary identical structure to AAG. Full clause text on file. Reference only.",
+      "status": "scaffold",
+      "sourceDocs": ["CIEE master agreement (PDF)"],
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "partner-greenheart",
+      "topic": "Sponsor Partner — Greenheart",
+      "category": "Partner Contracts",
+      "content": "26 contract provisions cataloged. Reference summary identical structure. Full clause text on file. Reference only.",
+      "status": "scaffold",
+      "sourceDocs": ["Greenheart master agreement (PDF)"],
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "placement-margins",
+      "topic": "Placement Margins & Pricing Tiers",
+      "category": "Pricing",
+      "content": "Tier structure by program type (WAT vs. Trainee vs. Intern), source country, and host market. Margin targets confidential — agents must NEVER quote a margin number without checking with Robert first.",
+      "status": "scaffold",
+      "confidentialityNote": "Pricing tier values to remain in private storage; only category labels exposed in this panel.",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "source-countries",
+      "topic": "Source Country Sourcing Rules",
+      "category": "Sourcing",
+      "content": "Active source countries: Brazil, China, Thailand, Indonesia, Mexico, South Africa, Uzbekistan. Each has country-specific sponsor approval, embassy interview wait times, fraud-flag history, and recruiter network. Agents MUST verify country-specific requirements before quoting a candidate timeline.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "ds2019-timeline",
+      "topic": "DS-2019 Processing Timeline",
+      "category": "Compliance",
+      "content": "Standard DS-2019 lifecycle: sponsor application → vetting → DS-2019 issuance → SEVIS fee → embassy interview → arrival. Typical 8–14 weeks depending on source country. NEVER guarantee a timeline to a partner or host employer — flag any timeline question to Robert.",
+      "status": "draft",
+      "complianceFlag": "Per the J-1 video voiceover compliance standard (Robert 2026-05-06): no approval guarantees, no coaching to hide facts, DS-2019 placeholders only, training-only disclaimer.",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "housing-miami",
+      "topic": "Housing Requirements — Miami market",
+      "category": "Housing",
+      "content": "Miami J-1 housing requirements: sponsor-approved housing only, occupancy limits per local code, distance-from-worksite rules. Operational housing matching lives on the J1 Housing Finder. This panel is policy reference only.",
+      "status": "draft",
+      "partitionNote": "Operational housing data lives on j1-housing-finder-index.html — do not mirror here.",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "housing-other-markets",
+      "topic": "Housing Requirements — Other Markets",
+      "category": "Housing",
+      "content": "Per-market sponsor housing rules vary. Each new market entry requires sponsor approval workflow before agent quotes feasibility.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "compliance-flags",
+      "topic": "Compliance Flags",
+      "category": "Compliance",
+      "content": "Hard flags: indemnity-clause modifications without legal review, payment-term variances from master agreement, allocation holds (sponsor freezes new placements), host-employer SEVIS noncompliance. Any flag → halt + escalate to Robert.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "active-pipeline-pointer",
+      "topic": "Active Order Status & Candidate Pipeline (POINTER)",
+      "category": "Operational",
+      "content": "Operational order status and candidate pipeline data lives on j1-system-dashboard.html. This Skills agent does NOT cache that data. To read live pipeline: use Jarvis tool read_remote_dashboard({dashboard:'j1-system'}).",
+      "status": "verified",
+      "partitionNote": "Pointer-only entry. No operational data stored here.",
+      "lastUpdated": "2026-05-07"
+    }
+  ],
+  "decisionTrees": [
+    {
+      "id": "dt-j1-001",
+      "trigger": "Sponsor partner contract amendment proposed",
+      "rules": [
+        {"if": "Amendment touches indemnity, payment, or allocation terms", "then": "Halt — Robert + legal approval required"},
+        {"if": "Amendment is administrative (e.g., contact info)", "then": "Draft response, queue for Robert sign-off"}
+      ],
+      "escalateTo": "Robert (CEO) + legal"
+    },
+    {
+      "id": "dt-j1-002",
+      "trigger": "Host employer compliance complaint received",
+      "rules": [
+        {"if": "Sponsor flags SEVIS noncompliance", "then": "Halt all placements with that host — flag to Robert + sponsor liaison"},
+        {"if": "Candidate complaint about wages/housing", "then": "Escalate to GHR J-1 Director within 24h; preserve evidence"}
+      ],
+      "escalateTo": "Robert (CEO) + GHR J-1 Director"
+    },
+    {
+      "id": "dt-j1-003",
+      "trigger": "New source country proposed",
+      "rules": [
+        {"if": "Country not on approved list", "then": "Halt — sponsor pre-approval + risk review required"}
+      ],
+      "escalateTo": "Robert (CEO) + sponsor liaison"
+    }
+  ],
+  "dataSources": [
+    {"name": "Zoho CRM — J1 module", "type": "MCP", "status": "connected", "refresh": "real-time", "scope": "operational (lives on J1 dashboard)"},
+    {"name": "Sponsor partner master agreements (PDFs)", "type": "internal-doc", "status": "scaffold-pending-upload", "refresh": "event-driven"},
+    {"name": "DS-2019 processing logs", "type": "manual", "status": "manual", "refresh": "weekly", "scope": "operational (J1 dashboard)"},
+    {"name": "J1 System Dashboard (cross-origin read)", "type": "Jarvis-tool", "status": "connected", "refresh": "5-min cache"}
+  ],
+  "escalationRules": [
+    {"trigger": "Sponsor allocation hold", "action": "Halt placements + Robert notification", "severity": "high"},
+    {"trigger": "Indemnity clause amendment proposed", "action": "Halt — Robert + legal", "severity": "high"},
+    {"trigger": "DS-2019 timeline guarantee request", "action": "Refuse — per video compliance standard, NO approval guarantees", "severity": "high"},
+    {"trigger": "New host employer onboarding", "action": "Sponsor pre-approval + Robert sign-off", "severity": "medium"}
+  ]
+}

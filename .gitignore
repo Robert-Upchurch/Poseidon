@@ -1,0 +1,9 @@
+# Local-only working files — not part of the deployed site
+Claude-Workspace/
+outputs/
+templates/
+patch_*.py
+fix_*.py
+*.tmp
+.DS_Store
+Thumbs.db

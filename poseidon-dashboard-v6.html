@@ -744,6 +744,9 @@ document.addEventListener('keydown', function(e) {
         <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="contracts">
             <i data-lucide="file-signature" class="w-4 h-4"></i> Contracts
         </a>
+        <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="jarvisskills">
+            <i data-lucide="brain-circuit" class="w-4 h-4"></i> Jarvis Skills
+        </a>
         <a class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60" data-page="other">
             <i data-lucide="inbox" class="w-4 h-4"></i> Other
         </a>
@@ -1327,6 +1330,37 @@ document.addEventListener('keydown', function(e) {
          entry "J1 Contract Analysis".) -->
 </div>
 
+
+
+<!-- ═══════════ PAGE: JARVIS SKILLS LIBRARY ═══════════ -->
+<div id="jarvisskills" class="page hidden">
+    <div class="flex items-start justify-between flex-wrap gap-3 mb-2">
+        <div>
+            <h2 class="text-2xl font-bold text-zinc-100 tracking-tight">Jarvis Skills Library</h2>
+            <p class="text-xs text-zinc-500">Multi-agent framework · 6 domains · Each panel sources from data/jarvis-skills/&lt;domain&gt;.json</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="window.JarvisSkills && window.JarvisSkills.refresh && window.JarvisSkills.refresh()" class="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-lg hover:from-violet-400 hover:to-fuchsia-400 transition-all flex items-center gap-1.5 shadow-[0_0_16px_rgba(139,92,246,0.35)]"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Reload Skills</button>
+            <span id="jarvis-skills-version" class="px-2 py-1 text-[10px] font-mono bg-zinc-800 text-zinc-400 rounded border border-zinc-700">idx ?</span>
+        </div>
+    </div>
+    <div class="text-[11px] text-zinc-500 mb-4" id="jarvis-skills-staleness">Loading skill index…</div>
+
+    <div id="jarvis-skills-summary" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4"></div>
+
+    <div id="jarvis-skills-panels" class="space-y-3">
+        <div class="text-zinc-500 text-sm py-8 text-center" id="jarvis-skills-loading">Loading agent domains…</div>
+    </div>
+
+    <div class="bg-zinc-900/40 border border-amber-700/40 rounded-xl p-4 mt-4">
+        <h3 class="text-sm font-semibold text-amber-300 mb-2 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4"></i>Global Escalation Rules</h3>
+        <div id="jarvis-skills-escalation" class="text-xs text-zinc-400 space-y-1.5"></div>
+    </div>
+
+    <div class="text-[10px] text-zinc-600 mt-4 pt-3 border-t border-zinc-800">
+        Skills library is reference content for Jarvis. Operational data lives on the corresponding division pages and on the J1 System Dashboard. Strict partition rule applies.
+    </div>
+</div>
 
 
 <!-- ═══════════ PAGE: RECRUITING DIVISION ═══════════ -->
@@ -8103,6 +8137,255 @@ async function runSystemCheck(opts) {
 
 
 // ═══════════════════════════════════════════════════
+// JARVIS SKILLS LIBRARY (added 2026-05-07)
+// Multi-agent reference KB. Loads JSON from data/jarvis-skills/.
+// Exposes window.JarvisSkills with: loadAll, render, refresh, getCache,
+// querySkill, classifyDomain. Used by Jarvis tools query_skill,
+// classify_skill_domain, list_skill_domains.
+// ═══════════════════════════════════════════════════
+window.JarvisSkills = (function() {
+    const BASE = 'data/jarvis-skills/';
+    let _index = null;
+    let _domains = {};
+
+    const COLOR_MAP = {
+        amber:   { border: 'border-amber-500/40',   text: 'text-amber-300',   bg: 'bg-amber-500/10' },
+        indigo:  { border: 'border-indigo-500/40',  text: 'text-indigo-300',  bg: 'bg-indigo-500/10' },
+        teal:    { border: 'border-teal-500/40',    text: 'text-teal-300',    bg: 'bg-teal-500/10' },
+        rose:    { border: 'border-rose-500/40',    text: 'text-rose-300',    bg: 'bg-rose-500/10' },
+        zinc:    { border: 'border-zinc-700/60',    text: 'text-zinc-300',    bg: 'bg-zinc-700/10' },
+        violet:  { border: 'border-violet-500/40',  text: 'text-violet-300',  bg: 'bg-violet-500/10' }
+    };
+
+    function he(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function _fetchJson(path) {
+        try {
+            const r = await fetch(BASE + path, { cache: 'no-cache' });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return await r.json();
+        } catch (e) {
+            console.error('[JarvisSkills] fetch failed:', path, e);
+            return null;
+        }
+    }
+
+    async function loadAll() {
+        _index = await _fetchJson('index.json');
+        if (!_index) return null;
+        _domains = {};
+        await Promise.all((_index.domains || []).map(async d => {
+            const data = await _fetchJson(d.file);
+            if (data) _domains[d.id] = data;
+        }));
+        window._jarvisSkillsCache = { index: _index, domains: _domains, loadedAt: Date.now() };
+        return _index;
+    }
+
+    function _summaryCard(d) {
+        const c = COLOR_MAP[d.color] || COLOR_MAP.zinc;
+        return '<div class="' + c.bg + ' border ' + c.border + ' rounded-xl p-3 hover:opacity-90 transition cursor-pointer" onclick="document.getElementById(&quot;skill-panel-' + he(d.id) + '&quot;) && document.getElementById(&quot;skill-panel-' + he(d.id) + '&quot;).setAttribute(&quot;open&quot;,&quot;&quot;), document.getElementById(&quot;skill-panel-' + he(d.id) + '&quot;).scrollIntoView({behavior:&quot;smooth&quot;,block:&quot;start&quot;})">'
+             + '<div class="text-[10px] font-medium ' + c.text + ' uppercase tracking-wider mb-1">' + he((d.displayName||'').replace(/Agent.*$/, '').trim()) + '</div>'
+             + '<div class="text-xs text-zinc-300 line-clamp-3">' + he(d.summary || '') + '</div>'
+             + '<div class="text-[10px] text-zinc-500 mt-2">' + he(d.refreshFrequency) + ' · ' + he(d.owner) + '</div>'
+             + '</div>';
+    }
+
+    function _kbList(kb) {
+        if (!Array.isArray(kb) || !kb.length) return '<p class="text-zinc-500 text-xs">No knowledge entries yet.</p>';
+        const SB = { scaffold: 'bg-amber-500/20 text-amber-300', draft: 'bg-blue-500/20 text-blue-300', verified: 'bg-emerald-500/20 text-emerald-300' };
+        return kb.map(item => {
+            const sb = SB[item.status] || 'bg-zinc-700 text-zinc-300';
+            return '<div class="border-b border-zinc-800/60 last:border-0 py-2">'
+                 + '<div class="flex items-start justify-between gap-2">'
+                 +   '<div class="text-xs font-semibold text-zinc-200">' + he(item.topic) + '</div>'
+                 +   '<span class="text-[9px] px-1.5 py-0.5 rounded ' + sb + ' font-mono uppercase shrink-0">' + he(item.status||'') + '</span>'
+                 + '</div>'
+                 + '<div class="text-[11px] text-zinc-400 mt-1 leading-relaxed whitespace-pre-line">' + he(item.content||'') + '</div>'
+                 + (item.partitionNote ? '<div class="text-[10px] text-amber-400 mt-1 italic">⚠ ' + he(item.partitionNote) + '</div>' : '')
+                 + (item.complianceFlag ? '<div class="text-[10px] text-rose-400 mt-1 italic">⚑ ' + he(item.complianceFlag) + '</div>' : '')
+                 + '</div>';
+        }).join('');
+    }
+
+    function _decisionTrees(dts) {
+        if (!Array.isArray(dts) || !dts.length) return '<p class="text-zinc-500 text-xs">No decision trees yet.</p>';
+        return dts.map(dt => {
+            const rules = (dt.rules || []).map(r => '<li><span class="text-zinc-500">if</span> ' + he(r.if) + ' <span class="text-zinc-500">→</span> ' + he(r.then) + '</li>').join('');
+            return '<div class="border-b border-zinc-800/60 last:border-0 py-2">'
+                 + '<div class="text-xs font-semibold text-zinc-200">' + he(dt.trigger) + '</div>'
+                 + '<ul class="text-[11px] text-zinc-400 mt-1 space-y-0.5 list-disc pl-4">' + rules + '</ul>'
+                 + '<div class="text-[10px] text-amber-400 mt-1">Escalate to: ' + he(dt.escalateTo||'—') + '</div>'
+                 + '</div>';
+        }).join('');
+    }
+
+    function _dataSources(ds) {
+        if (!Array.isArray(ds) || !ds.length) return '<p class="text-zinc-500 text-xs">No data sources yet.</p>';
+        return ds.map(s => {
+            const status = String(s.status||'');
+            const color = status === 'connected' ? 'text-emerald-400' : (status === 'manual' ? 'text-zinc-400' : 'text-amber-400');
+            return '<div class="flex items-center justify-between py-1 border-b border-zinc-800/60 last:border-0 gap-3">'
+                 + '<div class="text-[11px] text-zinc-300 flex-1 min-w-0 truncate">' + he(s.name) + '</div>'
+                 + '<div class="text-[10px] ' + color + ' shrink-0">' + he(s.status) + ' · ' + he(s.type) + ' · ' + he(s.refresh) + '</div>'
+                 + '</div>';
+        }).join('');
+    }
+
+    function _escalation(rules) {
+        if (!Array.isArray(rules) || !rules.length) return '<p class="text-zinc-500 text-xs">No escalation rules yet.</p>';
+        const C = { critical: 'text-red-400', high: 'text-amber-400', medium: 'text-blue-400', low: 'text-zinc-400' };
+        return rules.map(r => {
+            const sev = String(r.severity||'').toUpperCase();
+            const sevColor = C[String(r.severity||'').toLowerCase()] || 'text-zinc-400';
+            return '<div class="border-b border-zinc-800/60 last:border-0 py-1.5">'
+                 + '<div class="text-[11px] text-zinc-300"><span class="' + sevColor + ' font-semibold">[' + he(sev) + ']</span> ' + he(r.trigger) + '</div>'
+                 + '<div class="text-[10px] text-zinc-500 mt-0.5">→ ' + he(r.action) + '</div>'
+                 + '</div>';
+        }).join('');
+    }
+
+    function _panel(domainMeta, domainData) {
+        const c = COLOR_MAP[domainMeta.color] || COLOR_MAP.zinc;
+        const meta = (domainData && domainData._meta) || {};
+        const partitionWarning = meta.partitionWarning || domainMeta.partitionWarning;
+        return '<details id="skill-panel-' + he(domainMeta.id) + '" class="bg-zinc-900/40 border ' + c.border + ' rounded-xl">'
+             + '<summary class="cursor-pointer p-4 hover:bg-zinc-900/60 transition select-none">'
+             +   '<div class="flex items-center justify-between gap-3">'
+             +     '<div class="flex items-center gap-3 min-w-0">'
+             +       '<i data-lucide="' + he(domainMeta.icon||'circle') + '" class="w-5 h-5 ' + c.text + ' shrink-0"></i>'
+             +       '<div class="min-w-0">'
+             +         '<div class="text-sm font-semibold text-zinc-100 truncate">' + he(domainMeta.displayName) + '</div>'
+             +         '<div class="text-[10px] text-zinc-500 line-clamp-2">' + he(domainMeta.summary) + '</div>'
+             +       '</div>'
+             +     '</div>'
+             +     '<div class="text-[10px] text-zinc-500 font-mono shrink-0">v' + he(meta.version||'?') + ' · ' + he(meta.lastUpdated||'?') + '</div>'
+             +   '</div>'
+             + '</summary>'
+             + '<div class="p-4 pt-0 space-y-4">'
+             +   (partitionWarning ? '<div class="bg-amber-500/10 border border-amber-500/40 rounded-lg p-2.5 text-[11px] text-amber-300"><strong>⚠ Partition rule:</strong> ' + he(partitionWarning) + '</div>' : '')
+             +   '<div><h4 class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">Knowledge Base</h4><div>' + _kbList(domainData && domainData.knowledgeBase) + '</div></div>'
+             +   '<div><h4 class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">Decision Trees</h4><div>' + _decisionTrees(domainData && domainData.decisionTrees) + '</div></div>'
+             +   '<div><h4 class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">Data Sources</h4><div>' + _dataSources(domainData && domainData.dataSources) + '</div></div>'
+             +   '<div><h4 class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">Escalation Rules (Domain)</h4><div>' + _escalation(domainData && domainData.escalationRules) + '</div></div>'
+             +   '<div class="text-[10px] text-zinc-600 pt-2 border-t border-zinc-800">'
+             +     'Owner: ' + he(meta.owner||'—') + ' · Reviewer: ' + he(meta.reviewer||'—') + ' · Refresh: ' + he(meta.refreshFrequency||'—') + ' · Confidentiality: ' + he(meta.confidentiality||'—')
+             +   '</div>'
+             + '</div>'
+             + '</details>';
+    }
+
+    async function render() {
+        const summary = document.getElementById('jarvis-skills-summary');
+        const panels = document.getElementById('jarvis-skills-panels');
+        const escEl = document.getElementById('jarvis-skills-escalation');
+        const stale = document.getElementById('jarvis-skills-staleness');
+        const verEl = document.getElementById('jarvis-skills-version');
+        if (!summary || !panels || !escEl) return;
+
+        if (!_index) await loadAll();
+        if (!_index) {
+            panels.innerHTML = '<div class="text-red-400 text-sm py-4">Failed to load skill index. Check console.</div>';
+            return;
+        }
+        if (verEl) verEl.textContent = 'idx ' + (_index._schemaVersion || '?');
+        if (stale) stale.textContent = 'Index updated ' + (_index._lastUpdated || '?') + ' · ' + (_index.domains||[]).length + ' agent domains';
+
+        summary.innerHTML = (_index.domains || []).map(_summaryCard).join('');
+        panels.innerHTML = (_index.domains || []).map(d => {
+            const data = _domains[d.id] || { _meta:{}, knowledgeBase:[], decisionTrees:[], dataSources:[], escalationRules:[] };
+            return _panel(d, data);
+        }).join('');
+        escEl.innerHTML = _escalation(_index.globalEscalationRules || []);
+
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            try { window.lucide.createIcons(); } catch(_){}
+        }
+    }
+
+    async function refresh() {
+        _index = null; _domains = {};
+        await render();
+    }
+
+    function getCache() { return { index: _index, domains: _domains, loadedAt: window._jarvisSkillsCache && window._jarvisSkillsCache.loadedAt }; }
+
+    function querySkill(domainId, topic) {
+        const d = _domains[domainId];
+        if (!d) return { ok:false, error:'Unknown domain "'+domainId+'". Available: '+Object.keys(_domains).join(', ') };
+        const kb = d.knowledgeBase || [];
+        if (!topic) return { ok:true, domain:domainId, allTopics: kb.map(k => ({id:k.id, topic:k.topic, status:k.status})) };
+        const t = String(topic).toLowerCase();
+        const matches = kb.filter(k => (k.topic||'').toLowerCase().includes(t) || (k.id||'').toLowerCase().includes(t) || (k.content||'').toLowerCase().includes(t));
+        return { ok:true, domain:domainId, topic, matches: matches.slice(0, 10) };
+    }
+
+    function listDomains() {
+        if (!_index) return { ok:false, error:'Index not loaded yet — call window.JarvisSkills.loadAll() first.' };
+        return { ok:true, domains: (_index.domains || []).map(d => ({
+            id: d.id, displayName: d.displayName, summary: d.summary,
+            refreshFrequency: d.refreshFrequency, owner: d.owner,
+            partitionScope: d.partitionScope, partitionWarning: d.partitionWarning || null,
+            entryCount: ((_domains[d.id]||{}).knowledgeBase||[]).length
+        })), globalEscalationRules: _index.globalEscalationRules || [] };
+    }
+
+    function classifyDomain(query) {
+        if (!query) return { ok:false, error:'No query provided' };
+        const q = String(query).toLowerCase();
+        const KEYWORDS = {
+            'tax-compliance':     ['tax','obbba','irs','filing','deduction','quarterly','estimated','florida dor','provision','penalty','1120','f-1120','depreciation','contractor classification','w-2'],
+            'recruiting-j1':      ['j1','j-1','ds-2019','sponsor','ciee','alliance abroad','greenheart','source country','allocation','wat','exchange visitor','sevis','host employer','ds2019'],
+            'cruise-staffing':    ['cruise','mlc','seafarer','stcw','eng-1','sea-based','crew','embark','maritime','ship','hotel staff','cabin','f&b','galley'],
+            'marketing-bd':       ['brand','campaign','content','marketing','social','linkedin','podcast','collateral','press','pitch','newsletter','email blast','website copy'],
+            'operations-process': ['sop','process','zoho','dashboard refresh','org structure','reporting line','workflow','onboarding','offboarding','document management','naming convention','escalation path'],
+            'ghr-platform':       ['platform','avatar','linkedin-style','matching algorithm','marcus maven','max mind','eli gpt','julian claude','bruce lee','gabrielle paige','alex lynne','southeast asia']
+        };
+        const scores = {};
+        for (const dom in KEYWORDS) {
+            scores[dom] = KEYWORDS[dom].reduce((acc,w) => acc + (q.indexOf(w) >= 0 ? 1 : 0), 0);
+        }
+        const sorted = Object.entries(scores).sort((a,b) => b[1]-a[1]);
+        const top = sorted[0];
+        return {
+            ok: true, query,
+            primaryDomain: top[1] > 0 ? top[0] : null,
+            scores,
+            note: top[1] === 0 ? 'No keyword match — Jarvis should ask Robert which agent should handle this query, or call list_skill_domains to see all available domains.' : null
+        };
+    }
+
+    return { loadAll: loadAll, render: render, refresh: refresh, getCache: getCache, querySkill: querySkill, classifyDomain: classifyDomain, listDomains: listDomains };
+})();
+
+// Hook switchPage so navigating to "jarvisskills" triggers a render.
+(function() {
+    const _orig = window.switchPage;
+    if (typeof _orig === 'function' && !window._jarvisSkillsHooked) {
+        window.switchPage = function(page) {
+            const r = _orig.apply(this, arguments);
+            if (page === 'jarvisskills') {
+                try { window.JarvisSkills && window.JarvisSkills.render(); } catch (e) { console.error(e); }
+            }
+            return r;
+        };
+        window._jarvisSkillsHooked = true;
+    }
+})();
+
+// Pre-warm the cache so Jarvis can answer queries even without the page open.
+(function() {
+    function go() {
+        try { setTimeout(() => { if (window.JarvisSkills && !window._jarvisSkillsCache) window.JarvisSkills.loadAll(); }, 4000); } catch(_) {}
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+    else go();
+})();
+
+// ═══════════════════════════════════════════════════
 // STARTUP HEALTH CHECK (added 2026-04-28)
 // Verifies every recent fix is in place. Runs 3s after DOMContentLoaded.
 // Call window.poseidonHealth() to re-run anytime.
@@ -8134,7 +8417,13 @@ window.poseidonHealth = function poseidonHealth(opts) {
         ['Jarvis: read_open_email registered',     () => !!(window.PoseidonJarvis?.toolImpl?.read_open_email)],
         ['Jarvis: list_email_attachments',         () => !!(window.PoseidonJarvis?.toolImpl?.list_email_attachments)],
         ['Jarvis: read_email_attachment',          () => !!(window.PoseidonJarvis?.toolImpl?.read_email_attachment)],
-        ['Jarvis: open_email_attachment',          () => !!(window.PoseidonJarvis?.toolImpl?.open_email_attachment)]
+        ['Jarvis: open_email_attachment',          () => !!(window.PoseidonJarvis?.toolImpl?.open_email_attachment)],
+        ['Skills library: namespace loaded',       () => typeof window.JarvisSkills === 'object' && typeof window.JarvisSkills.render === 'function'],
+        ['Skills library: page in DOM',            () => !!document.getElementById('jarvisskills')],
+        ['Skills library: nav link in DOM',        () => !!document.querySelector('.nav-link[data-page="jarvisskills"]')],
+        ['Jarvis: query_skill registered',         () => !!(window.PoseidonJarvis?.toolImpl?.query_skill)],
+        ['Jarvis: classify_skill_domain',          () => !!(window.PoseidonJarvis?.toolImpl?.classify_skill_domain)],
+        ['Jarvis: list_skill_domains',             () => !!(window.PoseidonJarvis?.toolImpl?.list_skill_domains)]
     ];
     const results = checks.map(([name, fn]) => {
         let ok = false, err = null;

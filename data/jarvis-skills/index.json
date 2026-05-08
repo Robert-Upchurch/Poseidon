@@ -1,0 +1,114 @@
+{
+  "_schemaVersion": "1.0.0",
+  "_lastUpdated": "2026-05-07",
+  "_owner": "Robert Upchurch (CEO)",
+  "description": "Jarvis Skills Library index — multi-agent framework for Poseidon V6. Each agent file lives at data/jarvis-skills/<domain>.json.",
+  "domains": [
+    {
+      "id": "tax-compliance",
+      "file": "tax-compliance.json",
+      "displayName": "Tax & Compliance Agent",
+      "icon": "scale",
+      "color": "amber",
+      "summary": "OBBBA provisions, federal/state tax, filing calendar, entity tax treatments, deductions.",
+      "refreshFrequency": "quarterly",
+      "owner": "CFO / Tax Counsel",
+      "confidentiality": "internal",
+      "partitionScope": "company-wide"
+    },
+    {
+      "id": "recruiting-j1",
+      "file": "recruiting-j1.json",
+      "displayName": "Recruiting & J-1 Agent (Reference)",
+      "icon": "users",
+      "color": "indigo",
+      "summary": "J-1 partner contract terms, placement margins, source country rules, DS-2019 timeline, housing requirements. REFERENCE ONLY — operational J-1 data lives on the J1 System Dashboard per the strict partition rule.",
+      "refreshFrequency": "quarterly",
+      "owner": "GHR J-1 Director",
+      "confidentiality": "private",
+      "partitionScope": "reference-knowledge-only",
+      "partitionWarning": "Operational J-1 data (active candidates, orders, housing matches) lives on j1-system-dashboard.html. This panel is reference contract/policy knowledge for Jarvis."
+    },
+    {
+      "id": "cruise-staffing",
+      "file": "cruise-staffing.json",
+      "displayName": "Cruise Ship Staffing Agent",
+      "icon": "ship",
+      "color": "teal",
+      "summary": "MLC/cruise line regulations, position categories, wage scales, daily pulse rules, crew placement timeline.",
+      "refreshFrequency": "monthly",
+      "owner": "GHR Cruise Operations",
+      "confidentiality": "internal",
+      "partitionScope": "cruise-only",
+      "partitionWarning": "Strict partition: no J-1 cross-contamination. Cruise candidates/contracts only."
+    },
+    {
+      "id": "marketing-bd",
+      "file": "marketing-bd.json",
+      "displayName": "Marketing & Business Development Agent",
+      "icon": "megaphone",
+      "color": "rose",
+      "summary": "CTI brand voice, campaign templates, content calendar, partnership positioning, competitive intel, podcast format.",
+      "refreshFrequency": "bi-monthly",
+      "owner": "Marketing Lead",
+      "confidentiality": "internal",
+      "partitionScope": "company-wide"
+    },
+    {
+      "id": "operations-process",
+      "file": "operations-process.json",
+      "displayName": "Operations & Process Agent",
+      "icon": "settings-2",
+      "color": "zinc",
+      "summary": "Org structure, SOPs, Zoho One config, dashboard refresh protocols, document conventions, escalation paths.",
+      "refreshFrequency": "monthly",
+      "owner": "Operations Lead",
+      "confidentiality": "internal",
+      "partitionScope": "company-wide"
+    },
+    {
+      "id": "ghr-platform",
+      "file": "ghr-platform.json",
+      "displayName": "GHR Platform Agent (Strategic)",
+      "icon": "globe",
+      "color": "violet",
+      "summary": "LinkedIn-style platform architecture, AI avatar standards, job matching algorithm, geographic focus, profile standards.",
+      "refreshFrequency": "event-driven",
+      "owner": "GHR Platform Strategy",
+      "confidentiality": "internal",
+      "partitionScope": "company-wide"
+    }
+  ],
+  "globalEscalationRules": [
+    {
+      "id": "esc-001",
+      "trigger": "Decision involves committed spend > $25,000",
+      "action": "Halt — flag for Robert (CEO) approval before any agent commits.",
+      "channel": "dashboard banner + email"
+    },
+    {
+      "id": "esc-002",
+      "trigger": "Partner contract amendment, renewal, or termination",
+      "action": "Halt — flag for Robert (CEO) approval. Agents may draft, never sign.",
+      "channel": "dashboard banner"
+    },
+    {
+      "id": "esc-003",
+      "trigger": "Compliance flag (sanctions, OFAC, immigration violation, MLC breach)",
+      "action": "Halt immediately — flag for legal review. Do not proceed.",
+      "channel": "red banner + email + Robert direct"
+    },
+    {
+      "id": "esc-004",
+      "trigger": "Cross-partition data movement (J-1 ↔ cruise)",
+      "action": "Halt — strict partition rule violation. Confirm with Robert before any cross-data action.",
+      "channel": "dashboard banner"
+    },
+    {
+      "id": "esc-005",
+      "trigger": "Customer-facing communication (email, post, message) sent on Robert's behalf",
+      "action": "Draft only — never send. Surface draft for Robert's review.",
+      "channel": "Jarvis confirmation prompt"
+    }
+  ]
+}

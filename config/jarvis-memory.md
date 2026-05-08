@@ -449,3 +449,84 @@ If you build a new dashboard without doing this work, expect Robert
 to push back with: "I want the same Jarvis [features] on this
 dashboard too" (verbatim phrasing he has used 3+ times in May 2026).
 Pre-empt that by shipping parity in the initial dashboard PR.
+
+
+## Jarvis Skills Library (added 2026-05-07)
+
+A multi-agent reference knowledge base lives at the **Jarvis Skills**
+sidebar entry on Poseidon V6 (page id ``jarvisskills``, between Contracts
+and Other in the primary nav).
+
+**Six agent domains** — each backed by a JSON file at
+``data/jarvis-skills/<domain>.json``, indexed by ``data/jarvis-skills/index.json``:
+
+1. ``tax-compliance`` — OBBBA provisions (P.L. 119-21), federal/state tax,
+   2026 filing calendar, entity tax treatments (CTI Group, GHR J-1, CTI
+   Marine, Baron, UNO), quarterly thresholds, deduction categories.
+2. ``recruiting-j1`` — **REFERENCE ONLY**. Sponsor partner contracts (AAG,
+   CIEE, Greenheart — 26 provisions each), placement margins, source country
+   rules, DS-2019 timeline, housing requirements, compliance flags.
+   Operational J-1 data lives EXCLUSIVELY on ``j1-system-dashboard.html``
+   per the strict partition rule. Use ``read_remote_dashboard({dashboard:"j1-system"})``
+   for live operational data.
+3. ``cruise-staffing`` — MLC 2006 regulations, position categories, wage
+   scales, daily pulse rules, crew placement timeline, cruise line partner
+   requirements, contract provisioning. Strict cruise-only — no J-1
+   cross-contamination.
+4. ``marketing-bd`` — CTI brand voice, campaign templates, content
+   calendar, partnership positioning, competitive intel (154-provider J-1
+   landscape), podcast format, collateral standards.
+5. ``operations-process`` — Org structure, SOPs (recruiting/onboarding/
+   offboarding), Zoho One config, dashboard refresh protocols, document
+   conventions, communication and escalation paths.
+6. ``ghr-platform`` — Strategic/future. LinkedIn-style platform
+   architecture, AI avatar personas (Marcus Maven, Max Mind, Eli GPT,
+   Julian Claude, Bruce Lee, Gabrielle Paige, Alex Lynne), job matching
+   algorithm, geographic focus (Southeast Asia + traditional source
+   countries), profile standards.
+
+**Each domain JSON has the same shape:**
+- ``_meta`` — domain, displayName, version, lastUpdated, owner, reviewer,
+  refreshFrequency, confidentiality, status (``scaffold`` / ``draft`` /
+  ``verified``), partitionWarning (when applicable).
+- ``knowledgeBase`` — array of entries (id, topic, category, content,
+  status, sourceDocs, lastUpdated). ``status: scaffold`` means placeholder
+  — Robert must upload source content before Jarvis answers from it.
+- ``decisionTrees`` — array of triggers + rules + escalateTo.
+- ``dataSources`` — array of named sources with status (connected /
+  manual / scaffold-pending-upload).
+- ``escalationRules`` — domain-level severity-tagged rules.
+
+The ``index.json`` also carries ``globalEscalationRules`` — five rules that
+apply across every agent (committed spend > $25K, partner contract
+amendments, sanctions/OFAC/MLC compliance flags, cross-partition data
+movement, customer-facing communications).
+
+**Three Jarvis tools were added (2026-05-07):**
+- ``list_skill_domains()`` — returns all 6 agents with metadata.
+- ``classify_skill_domain({query})`` — keyword classifier; returns scores
+  per domain + a primary pick. Use this to ROUTE before answering.
+- ``query_skill({domain, topic})`` — searches a specific agent's KB.
+
+**System-prompt rule (in grok.js):** when Robert asks a domain question,
+classify_skill_domain first, then query_skill. NEVER answer from a
+``scaffold``-status entry as if it were verified. ALWAYS surface partition
+warnings and escalation rules when relevant.
+
+**Health-check invariants (2026-05-07):**
+- ``Skills library: namespace loaded`` (window.JarvisSkills is an object
+  with .render)
+- ``Skills library: page in DOM`` (#jarvisskills)
+- ``Skills library: nav link in DOM`` (.nav-link[data-page="jarvisskills"])
+- ``Jarvis: query_skill registered``
+- ``Jarvis: classify_skill_domain``
+- ``Jarvis: list_skill_domains``
+
+**Privacy / confidentiality note:** the JSONs are committed to the
+GitHub Pages repo and therefore PUBLIC. The ``recruiting-j1`` domain is
+flagged ``confidentiality: private`` and intentionally contains no actual
+contract clause text or pricing values — only structural references and
+status:scaffold placeholders. Before uploading actual contract text,
+sponsor pricing, or OBBBA provision detail, content must move to a
+private storage layer (separate private repo + Cloudflare Worker proxy,
+mirroring the Upchurch dashboard pattern).

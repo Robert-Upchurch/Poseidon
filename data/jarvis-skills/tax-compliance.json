@@ -1,0 +1,211 @@
+{
+  "_meta": {
+    "domain": "tax-compliance",
+    "displayName": "Tax & Compliance Agent",
+    "version": "0.1.0",
+    "lastUpdated": "2026-05-07",
+    "owner": "CFO / Tax Counsel",
+    "reviewer": "Robert Upchurch (CEO)",
+    "refreshFrequency": "quarterly",
+    "confidentiality": "internal",
+    "status": "scaffold",
+    "scaffoldNote": "Structure is final. Content slots marked status:scaffold need source documents (OBBBA full text, FL DOR rules, entity organizational charts) before they go live."
+  },
+  "knowledgeBase": [
+    {
+      "id": "obbba-overview",
+      "topic": "OBBBA (P.L. 119-21) — Overview",
+      "category": "Federal Tax",
+      "content": "One Big Beautiful Bill Act. 9 CTI-relevant provisions identified. Each provision has its own KB entry below.",
+      "status": "scaffold",
+      "sourceDocs": ["OBBBA full text PDF (TBD)", "CTI tax-impact memo Q2 2026 (TBD)"],
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "obbba-provision-1",
+      "topic": "OBBBA Provision 1 — [needs content]",
+      "category": "Federal Tax",
+      "content": "Placeholder. Robert / tax counsel to provide provision name, code section, effective date, and CTI impact.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "obbba-provision-2",
+      "topic": "OBBBA Provision 2 — [needs content]",
+      "category": "Federal Tax",
+      "content": "Placeholder.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "obbba-provision-3",
+      "topic": "OBBBA Provision 3 — [needs content]",
+      "category": "Federal Tax",
+      "content": "Placeholder.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "obbba-provision-4",
+      "topic": "OBBBA Provision 4 — [needs content]",
+      "category": "Federal Tax",
+      "content": "Placeholder.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "obbba-provision-5",
+      "topic": "OBBBA Provision 5 — [needs content]",
+      "category": "Federal Tax",
+      "content": "Placeholder.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "obbba-provision-6",
+      "topic": "OBBBA Provision 6 — [needs content]",
+      "category": "Federal Tax",
+      "content": "Placeholder.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "obbba-provision-7",
+      "topic": "OBBBA Provision 7 — [needs content]",
+      "category": "Federal Tax",
+      "content": "Placeholder.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "obbba-provision-8",
+      "topic": "OBBBA Provision 8 — [needs content]",
+      "category": "Federal Tax",
+      "content": "Placeholder.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "obbba-provision-9",
+      "topic": "OBBBA Provision 9 — [needs content]",
+      "category": "Federal Tax",
+      "content": "Placeholder.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "filing-calendar-2026",
+      "topic": "2026 Filing Calendar & Deadlines",
+      "category": "Federal Tax",
+      "content": "Quarterly estimated tax due dates: Q1 Apr 15, Q2 Jun 15, Q3 Sep 15, Q4 Jan 15 (following year). Form 1120 corporate return: Apr 15. Florida F-1120 corporate income/franchise: May 1 (for calendar-year filers). Verify against current IRS Pub 509 and FL DOR before agent acts on a deadline.",
+      "status": "draft",
+      "sourceDocs": ["IRS Pub 509", "FL DOR website"],
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "fl-state-tax",
+      "topic": "Florida State Tax Rules",
+      "category": "State Tax",
+      "content": "FL has no state personal income tax. FL corporate income/franchise tax: 5.5% (subject to revisions). FL sales tax: 6% statewide + county surtax. Verify current rates against FL DOR before quoting a number to a partner or candidate.",
+      "status": "draft",
+      "sourceDocs": ["FL DOR rates page"],
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "entity-cti-group",
+      "topic": "Entity Tax Treatment — CTI Group Worldwide Services Inc.",
+      "category": "Entity",
+      "content": "Parent entity. C-corp, FL-domiciled. Books org_id 877439787 in Zoho Books, USD currency. Branches: Head Office, Marine Travel, Sea Based.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "entity-ghr-j1",
+      "topic": "Entity Tax Treatment — GHR / J-1 Operations",
+      "category": "Entity",
+      "content": "GHR is the cruise/maritime crewing arm; J-1 placements operate through CTI Group with sponsor partnerships (CIEE, Alliance Abroad, Greenheart). Confirm exact legal structure with tax counsel before any agent makes a tax classification decision.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "entity-cti-marine",
+      "topic": "Entity Tax Treatment — CTI Marine",
+      "category": "Entity",
+      "content": "Placeholder. Tax classification, state nexus, and consolidated-return treatment to be confirmed.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "entity-baron",
+      "topic": "Entity Tax Treatment — Baron Promotions",
+      "category": "Entity",
+      "content": "Placeholder.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "entity-uno",
+      "topic": "Entity Tax Treatment — UNO Division",
+      "category": "Entity",
+      "content": "Placeholder.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "deductions-categories",
+      "topic": "Deduction Categories",
+      "category": "Federal Tax",
+      "content": "Standard CTI deduction categories: travel (per IRS per-diem), equipment (Sec 179 / bonus depreciation), contractor vs. W-2 classification (DOL test + IRS 20-factor). Contractor mis-classification is a red flag — escalate any reclassification to Robert + legal.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "qet-thresholds",
+      "topic": "Quarterly Estimated Tax Thresholds",
+      "category": "Federal Tax",
+      "content": "Safe harbor: 100% of prior-year liability (110% if prior-year AGI > $150K). Pay by Apr 15 / Jun 15 / Sep 15 / Jan 15. Underpayment penalty applies if shortfall exceeds $1,000 and no safe harbor met.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    }
+  ],
+  "decisionTrees": [
+    {
+      "id": "dt-tax-001",
+      "trigger": "Tax filing deadline approaching (within 14 days)",
+      "rules": [
+        {"if": "All required forms drafted and reviewed", "then": "Notify Robert + CFO; queue for filing"},
+        {"if": "Forms drafted but not reviewed", "then": "Escalate to CFO for review"},
+        {"if": "Forms not drafted", "then": "RED — escalate to Robert immediately"}
+      ],
+      "escalateTo": "Robert (CEO) + CFO"
+    },
+    {
+      "id": "dt-tax-002",
+      "trigger": "Audit notice received (IRS or FL DOR)",
+      "rules": [
+        {"if": "Any audit notice", "then": "Halt — flag to Robert + tax counsel within 24 hours. Do not respond on Robert's behalf."}
+      ],
+      "escalateTo": "Robert (CEO) + tax counsel — IMMEDIATE"
+    },
+    {
+      "id": "dt-tax-003",
+      "trigger": "Contractor/W-2 classification question raised",
+      "rules": [
+        {"if": "DOL economic-reality test or IRS 20-factor analysis ambiguous", "then": "Escalate to Robert + employment counsel"}
+      ],
+      "escalateTo": "Robert (CEO) + employment counsel"
+    }
+  ],
+  "dataSources": [
+    {"name": "Zoho Books (org 877439787)", "type": "MCP", "status": "connected", "refresh": "real-time"},
+    {"name": "QuickBooks (legacy / archive)", "type": "manual", "status": "manual", "refresh": "as-needed"},
+    {"name": "IRS Pub 509 + Pub 17", "type": "external-doc", "status": "manual", "refresh": "annual"},
+    {"name": "FL DOR website", "type": "external-doc", "status": "manual", "refresh": "annual"},
+    {"name": "OBBBA full text + CTI tax-impact memo", "type": "internal-doc", "status": "scaffold-pending-upload", "refresh": "event-driven"}
+  ],
+  "escalationRules": [
+    {"trigger": "Tax liability change > $50K", "action": "Halt — Robert + CFO approval", "severity": "high"},
+    {"trigger": "Penalty notice received", "action": "Halt — Robert + tax counsel within 24h", "severity": "high"},
+    {"trigger": "New entity structure proposal", "action": "Robert approval before any filing or agent action", "severity": "high"}
+  ]
+}

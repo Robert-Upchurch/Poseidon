@@ -1,0 +1,85 @@
+{
+  "_meta": {
+    "domain": "ghr-platform",
+    "displayName": "GHR Platform Agent (Strategic / Future)",
+    "version": "0.1.0",
+    "lastUpdated": "2026-05-07",
+    "owner": "GHR Platform Strategy",
+    "reviewer": "Robert Upchurch (CEO)",
+    "refreshFrequency": "event-driven",
+    "confidentiality": "internal",
+    "status": "scaffold",
+    "scaffoldNote": "Forward-looking strategic domain. Architecture, algorithm, and avatar persona spec to be uploaded once initial product brief is approved."
+  },
+  "knowledgeBase": [
+    {
+      "id": "platform-architecture",
+      "topic": "LinkedIn-Style Platform Architecture",
+      "category": "Architecture",
+      "content": "Strategic vision: LinkedIn-style platform for global hospitality / cruise / J-1 / labor-import workforce. Core: continuous candidate-host matching, AI-avatar concierge, geographic focus on Southeast Asia + traditional source countries. Technical architecture pending product brief approval.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "ai-avatar-personas",
+      "topic": "AI Avatar Standards & Personas",
+      "category": "AI",
+      "content": "Seven avatar personas defined: Marcus Maven, Max Mind, Eli GPT, Julian Claude, Bruce Lee, Gabrielle Paige, Alex Lynne. Each persona has a defined voice, role, and use case. Detailed persona spec, voice profile, and visual standard to be uploaded.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "job-matching-algorithm",
+      "topic": "Job Matching Algorithm & Continuous Placement Logic",
+      "category": "AI",
+      "content": "Continuous-placement model: candidates remain in pool post-placement; algorithm re-matches as new opportunities arise. Algorithm design pending product brief.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "geographic-focus",
+      "topic": "Geographic Focus",
+      "category": "Strategy",
+      "content": "Primary: Southeast Asia (hospitality, cruise crew, labor import). Secondary: existing source countries (Brazil, China, Thailand, Indonesia, Mexico, South Africa, Uzbekistan). Expansion criteria pending strategic review.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "resume-format",
+      "topic": "Resume Format & Profile Standardization",
+      "category": "Standards",
+      "content": "Standardized profile schema (work history, certifications, language proficiency, MLC/J-1 eligibility flags) pending design review.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    }
+  ],
+  "decisionTrees": [
+    {
+      "id": "dt-ghr-001",
+      "trigger": "Strategic platform decision (architecture, vendor, partnership)",
+      "rules": [
+        {"if": "Decision commits resources or partner relationships", "then": "Halt — Robert (CEO) sign-off required"},
+        {"if": "Exploratory research or vendor scan", "then": "Document findings; queue for Robert review"}
+      ],
+      "escalateTo": "Robert (CEO)"
+    },
+    {
+      "id": "dt-ghr-002",
+      "trigger": "AI avatar / persona content generated for external use",
+      "rules": [
+        {"if": "Avatar produces customer-facing content", "then": "Brand voice review + Robert sign-off"}
+      ],
+      "escalateTo": "Robert (CEO) + Marketing Lead"
+    }
+  ],
+  "dataSources": [
+    {"name": "Strategic product brief (TBD)", "type": "internal-doc", "status": "scaffold-pending-upload", "refresh": "event-driven"},
+    {"name": "Avatar persona library (Synthesia / HeyGen / Aragon — no MCP)", "type": "external", "status": "manual", "refresh": "manual"},
+    {"name": "Strategic competitive scan", "type": "internal", "status": "scaffold", "refresh": "annual"}
+  ],
+  "escalationRules": [
+    {"trigger": "Vendor commitment > $10K/yr", "action": "Robert + CFO", "severity": "high"},
+    {"trigger": "Avatar persona public-facing launch", "action": "Robert + Marketing + legal", "severity": "high"},
+    {"trigger": "Strategic partnership proposal", "action": "Robert sign-off", "severity": "high"}
+  ]
+}

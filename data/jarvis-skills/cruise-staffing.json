@@ -1,0 +1,124 @@
+{
+  "_meta": {
+    "domain": "cruise-staffing",
+    "displayName": "Cruise Ship Staffing Agent",
+    "version": "0.1.0",
+    "lastUpdated": "2026-05-07",
+    "owner": "GHR Cruise Operations",
+    "reviewer": "Robert Upchurch (CEO)",
+    "refreshFrequency": "monthly",
+    "confidentiality": "internal",
+    "status": "scaffold",
+    "partitionWarning": "STRICT PARTITION — cruise/maritime ONLY. No J-1 cross-contamination in this domain.",
+    "scaffoldNote": "Wage scales, daily-pulse rules, and cruise-line-specific contract clauses to be uploaded by GHR Cruise Operations."
+  },
+  "knowledgeBase": [
+    {
+      "id": "mlc-overview",
+      "topic": "MLC 2006 — Maritime Labour Convention",
+      "category": "Regulation",
+      "content": "MLC 2006 (ILO) governs minimum standards for seafarer working conditions: hours of rest, accommodation, wages, food, medical care, repatriation. Every CTI cruise placement must pre-screen against MLC compliance. Violation flags go directly to Robert + legal.",
+      "status": "draft",
+      "sourceDocs": ["ILO MLC 2006 consolidated text"],
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "cruise-lines-tracked",
+      "topic": "Cruise Lines Tracked",
+      "category": "Partners",
+      "content": "8 cruise lines side-by-side comparable in the Contracts Dashboard (March 2026 source). See Contracts page for full clause-by-clause comparison: Overview · Fees · Obligations · Legal · Insurance · Positions · Compliance · Pros/Cons.",
+      "status": "verified",
+      "pointerToOperational": "/poseidon-dashboard-v6.html → Contracts page",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "position-categories",
+      "topic": "Position Categories & Wage Scales",
+      "category": "Operations",
+      "content": "Position categories: Hotel/Hospitality (housekeeping, F&B, bar, galley), Marine (deck, engine), Entertainment, Spa/Salon, Retail, Casino. Wage scales vary per cruise line and per MLC minimum. Confidential — agents NEVER quote a wage to a candidate without manager confirmation.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "daily-pulse-rules",
+      "topic": "Daily Pulse Automation Rules",
+      "category": "Operations",
+      "content": "Daily Pulse = automated cruise-recruitment status report. Rules pending upload — to be defined by GHR Cruise Operations. Reference only.",
+      "status": "scaffold",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "crew-placement-timeline",
+      "topic": "Crew Placement Timeline",
+      "category": "Operations",
+      "content": "Standard placement lifecycle: candidate sourcing → screening → STCW certification check → medical (ENG-1 or equivalent) → cruise-line approval → embarkation. Typical 4–10 weeks. STCW and medical are hard gates — no embarkation without both.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "cruise-partner-requirements",
+      "topic": "Cruise Line Partner Requirements",
+      "category": "Compliance",
+      "content": "Per-cruise-line requirements (medical, STCW, language, contract length) cataloged in the Contracts Dashboard. Daily Pulse and the Contracts page are the single sources of truth — do not duplicate values here; reference them.",
+      "status": "draft",
+      "pointerToOperational": "/poseidon-dashboard-v6.html → Contracts page",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "contract-provisioning",
+      "topic": "Contract Provisioning & Documentation",
+      "category": "Compliance",
+      "content": "Crew contract documents required pre-embarkation: signed seafarer employment agreement (SEA), MLC-compliant wage statement, repatriation guarantee, grievance procedure acknowledgement. Missing any one = no embarkation.",
+      "status": "draft",
+      "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "j1-separation-rule",
+      "topic": "Strict Partition: No J-1 Cross-Contamination",
+      "category": "Compliance",
+      "content": "Cruise candidates and J-1 candidates are separate populations with separate sponsor frameworks, separate dashboards, and separate compliance regimes. Under no circumstances should an agent move data, candidates, or contract terms across this boundary without Robert's explicit sign-off.",
+      "status": "verified",
+      "lastUpdated": "2026-05-07"
+    }
+  ],
+  "decisionTrees": [
+    {
+      "id": "dt-cruise-001",
+      "trigger": "Candidate proposed for embarkation",
+      "rules": [
+        {"if": "STCW + ENG-1 medical + signed SEA all present", "then": "Approve queue for cruise-line review"},
+        {"if": "Any one missing", "then": "Halt — block embarkation, notify recruiter"}
+      ],
+      "escalateTo": "GHR Cruise Operations"
+    },
+    {
+      "id": "dt-cruise-002",
+      "trigger": "Cruise line contract amendment proposed",
+      "rules": [
+        {"if": "Amendment touches fees, indemnity, or termination", "then": "Halt — Robert + legal"},
+        {"if": "Administrative", "then": "Draft + queue for Robert sign-off"}
+      ],
+      "escalateTo": "Robert (CEO) + legal"
+    },
+    {
+      "id": "dt-cruise-003",
+      "trigger": "MLC compliance flag",
+      "rules": [
+        {"if": "Hours-of-rest violation, wage shortfall, or repatriation breach reported", "then": "Halt placements + Robert + legal IMMEDIATELY"}
+      ],
+      "escalateTo": "Robert (CEO) + legal — IMMEDIATE"
+    }
+  ],
+  "dataSources": [
+    {"name": "Contracts Dashboard (XLSX-backed)", "type": "internal", "status": "connected", "refresh": "manual update via Reload"},
+    {"name": "Zoho CRM — Cruise module", "type": "MCP", "status": "connected", "refresh": "real-time"},
+    {"name": "Daily Pulse automation", "type": "internal", "status": "scaffold", "refresh": "daily"},
+    {"name": "Cruise line master agreements (PDFs)", "type": "internal-doc", "status": "scaffold-pending-upload", "refresh": "event-driven"}
+  ],
+  "escalationRules": [
+    {"trigger": "MLC violation reported", "action": "Halt + Robert + legal IMMEDIATELY", "severity": "critical"},
+    {"trigger": "Cruise line contract amendment", "action": "Halt — Robert + legal", "severity": "high"},
+    {"trigger": "Wage scale change request", "action": "GHR Cruise Operations approval", "severity": "medium"},
+    {"trigger": "Cross-partition data movement (J-1 ↔ cruise)", "action": "Halt — Robert sign-off", "severity": "critical"}
+  ]
+}
