@@ -1,7 +1,36 @@
 {
-  "currentVersion": "6.2.0",
-  "currentCodename": "J1 System Dashboard + Housing Finder",
+  "currentVersion": "6.5.0",
+  "currentCodename": "Skills Library + Eastern Time + Search Migration",
   "releases": [
+    {
+      "version": "6.5.0",
+      "codename": "Skills Library + Eastern Time + Search Migration",
+      "date": "2026-05-08",
+      "summary": "Multi-agent Jarvis Skills Library with 6 reference domains and routing tools. Outlook calendar sync fixed and locked to Eastern Time across all dashboards. Jarvis web search migrated from xAI's deprecated Live Search to the new Agent Tools API on grok-4.3, with automatic Tavily fallback. Three-layer cache-bust pattern locked in. Cross-origin Jarvis Bridge and Jarvis Document Reader (shipped as v6.3 and v6.4) consolidated under this release.",
+      "highlights": [
+        "NEW: Jarvis Skills Library — 6 agent domains (tax, recruiting/J-1, cruise, marketing/BD, ops, GHR platform) with classify_skill_domain → query_skill / read_skill_domain routing",
+        "NEW: Eastern Time defaults — POSEIDON_TZ + fmtET/fmtETDate/fmtETTime helpers; Graph 'Prefer: outlook.timezone=Eastern Standard Time'; Jarvis save_event always writes ET",
+        "NEW: Tavily web-search fallback — automatic on Grok 4xx/5xx, Settings UI panel for the Tavily key",
+        "NEW: Cross-Origin Jarvis Bridge — Jarvis reads any CTI dashboard, including across origins (was v6.3 codename)",
+        "NEW: Jarvis Document Reader (read_document) — PDF/Word/Excel/PowerPoint/text (was v6.4 codename)",
+        "FIX: Outlook calendar sync — Graph 1825-day cap was being violated and silently swallowing 400s; now 365 back + 1460 forward exactly at the cap",
+        "FIX: xAI deprecated Grok Live Search (HTTP 410) — migrated to Agent Tools API on grok-4.3 with new citation parsing"
+      ],
+      "changes": [
+        { "category": "feature",     "text": "Jarvis Skills Library: data/jarvis-skills/{index,tax-compliance,recruiting-j1,cruise-staffing,marketing-bd,operations-process,ghr-platform}.json + sidebar nav + routing tools" },
+        { "category": "feature",     "text": "list_skill_domains, classify_skill_domain (keyword classifier), query_skill (full-content), read_skill_domain (everything in one call) — 4 new Jarvis tools" },
+        { "category": "feature",     "text": "Eastern Time helpers (fmtET / fmtETDate / fmtETTime) on every dashboard; all email arrival timestamps and calendar events route through them; Jarvis save_event locked to America/New_York" },
+        { "category": "feature",     "text": "Tavily web-search fallback (independent of xAI) with Settings UI key panel — recovers automatically when Grok rate-limits or deprecates" },
+        { "category": "fix",         "text": "Microsoft Graph /me/calendarView 1825-day cap — fixed silent 400 swallow; new range 365 back + 1460 forward" },
+        { "category": "fix",         "text": "xAI Live Search → Agent Tools API migration (POST /v1/responses with tools:[{type:'web_search'}] on grok-4.3) — citations parsed from BOTH top-level d.citations[] and inline annotations[]" },
+        { "category": "perf",        "text": "Three-layer cache-bust pattern locked in: MODULES_VERSION (loader) + CACHE_NAME (SW) + integration loader ?v= (HTML). Bump all three on any module change." },
+        { "category": "integration", "text": "Cross-Origin Jarvis Bridge — read_remote_dashboard (hidden iframe + postMessage + 5-min cache) works for poseidon, j1-system, upchurch-financial" },
+        { "category": "integration", "text": "Jarvis Document Reader — read_document({url}) handles PDF, DOCX, XLSX, PPTX, text/markdown/csv/json with lazy-loaded parsers" },
+        { "category": "docs",        "text": "Operations skill (data/jarvis-skills/operations-process.json) now contains 25 verified KB entries promoted from Claude auto-memory: MSAL config, calendar 1825 cap, ET defaults, MODULES_VERSION pattern, SW rules, partition rule, voice catalog, barge-in 3-step, Edit-vs-Python rule, push process, and more" },
+        { "category": "ui",          "text": "Jarvis Skills sidebar entry between Contracts and Other; 6 collapsible agent panels with KB/decision-trees/data-sources/escalation rendering + global escalation card" },
+        { "category": "security",    "text": "System-prompt rule: Jarvis never answers from scaffold-status entries as if verified; always surfaces partition warnings; agents draft customer-facing content but never send" }
+      ]
+    },
     {
       "version": "6.2.0",
       "codename": "J1 System Dashboard + Housing Finder",

@@ -2,20 +2,21 @@
   "_meta": {
     "domain": "operations-process",
     "displayName": "Operations & Process Agent",
-    "version": "0.1.0",
-    "lastUpdated": "2026-05-07",
+    "version": "0.2.0",
+    "lastUpdated": "2026-05-08",
     "owner": "Operations Lead",
     "reviewer": "Robert Upchurch (CEO)",
     "refreshFrequency": "monthly",
     "confidentiality": "internal",
-    "status": "scaffold"
+    "status": "draft",
+    "scaffoldNote": "v0.2.0 (2026-05-08): infrastructure / architecture entries promoted from auto-memory after end-of-day verification — these are now Jarvis ground-truth and locked in the v6.5.0 baseline. Org structure / SOPs / comms protocols still need owner upload."
   },
   "knowledgeBase": [
     {
       "id": "org-structure",
       "topic": "CTI Organizational Structure & Reporting Lines",
       "category": "Org",
-      "content": "Parent: CTI Group Worldwide Services Inc. (CEO: Robert Upchurch). Divisions: GHR (cruise/maritime), J-1 Placements (cultural exchange), J-1 Housing, CTI Marine, UNO Division (uniforms), Baron Promotions, Marine Travel. Reporting lines pending upload from Operations Lead.",
+      "content": "Parent: CTI Group Worldwide Services Inc. (CEO: Robert Upchurch). Divisions: GHR (cruise/maritime), J-1 Placements (cultural exchange), J-1 Housing, CTI Marine, UNO Division (uniforms), Baron Promotions, Marine Travel. Detailed reporting lines pending upload from Operations Lead.",
       "status": "draft",
       "lastUpdated": "2026-05-07"
     },
@@ -47,26 +48,26 @@
       "id": "zoho-one-config",
       "topic": "Zoho One Configuration & Data Flow",
       "category": "Systems",
-      "content": "Zoho stack in use: CRM (operational records), Books (org_id 877439787, USD), Desk (support), Projects, Forms. Data flow: Zoho CRM is the system of record for partner/candidate records; Zoho Books for finance; Poseidon V6 dashboard reads from Zoho via MCP for live KPIs.",
-      "status": "draft",
+      "content": "Zoho stack in use: CRM (operational records), Books (org_id 877439787, USD), Desk (support), Projects, Forms. Data flow: Zoho CRM is system of record for partner/candidate records; Zoho Books for finance; Poseidon V6 dashboard reads from Zoho via MCP for live KPIs.",
+      "status": "verified",
       "sourceDocs": ["Zoho admin console"],
-      "lastUpdated": "2026-05-07"
+      "lastUpdated": "2026-05-08"
     },
     {
       "id": "dashboard-refresh-protocols",
-      "topic": "Dashboard Refresh Protocols",
+      "topic": "Dashboard Refresh Protocols (M365 cadence)",
       "category": "Systems",
-      "content": "Poseidon V6 M365 refresh cadence (Robert standing order 2026-04-29): M-F 7am-4pm every 10min; weekends only 8/12/4. Skills library refresh: per-agent cadence specified in each domain's _meta.refreshFrequency. System Check button runs invariants on demand.",
+      "content": "Robert standing order (2026-04-29): M-F 7am-4pm every 10min; weekends only at 8am, 12pm, 4pm. Do NOT revert to a flat 5-min interval — that was rate-limit risky and caused unnecessary token churn. Skills Library refresh cadence is per-agent (see each domain's _meta.refreshFrequency). System Check button runs all health invariants on demand.",
       "status": "verified",
-      "lastUpdated": "2026-05-07"
+      "lastUpdated": "2026-05-08"
     },
     {
       "id": "doc-management",
-      "topic": "Document Management & Naming Conventions",
+      "topic": "Document Management & Canonical Paths",
       "category": "Systems",
-      "content": "Canonical POSEIDON path: C:\\Users\\ceo\\OneDrive - CTI Group Worldwide Services Inc\\POSEIDON. Repo: C:\\Projects\\Poseidon (moved out of OneDrive 2026-05-07 — git was blocked by OneDrive VFS reparse point). Travel backup mirror: I:\\POSEIDON. Naming conventions pending upload.",
-      "status": "draft",
-      "lastUpdated": "2026-05-07"
+      "content": "Canonical Poseidon folder: 'C:\\Users\\ceo\\OneDrive - CTI Group Worldwide Services Inc\\POSEIDON' (single source of truth). Travel backup mirror (auto-synced daily 5:30pm + on idle): 'I:\\POSEIDON'. iPhone/iPad backups (NEVER touch): 'I:\\Backups\\Apple', 'I:\\Backups\\Archive_from_C'. Cowork app data (NEVER touch): 'C:\\Users\\ceo\\AppData\\Roaming\\Claude'. If user mentions 'Poseidon' without a path, default to the canonical OneDrive path.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
     },
     {
       "id": "comms-protocols",
@@ -75,6 +76,142 @@
       "content": "Standing rule: agents draft, never send. Customer-facing emails always require Robert review. Internal Slack/email: agents may post status updates only after Robert sign-off on the channel + cadence. Escalation paths to be formalized by Operations Lead.",
       "status": "draft",
       "lastUpdated": "2026-05-07"
+    },
+    {
+      "id": "j1-cruise-partition",
+      "topic": "Strict J1/Cruise Partition Rule",
+      "category": "Architecture",
+      "content": "Robert standing rule (2026-04-27, NON-NEGOTIABLE). POSEIDON MASTER (poseidon-dashboard-v6.html) carries cruise/maritime ONLY: cruise contracts, cruise lines, ships, sea-based recruiting, Cruise Ship Candidates. CTI GROUP · J1 SYSTEM DASHBOARD (j1-system-dashboard.html) carries J-1 ONLY: J-1 recruiting, J1 candidates, J1 housing, J1 sponsor contracts (Alliance Abroad/CIEE/Greenheart), J1 hosting companies, airline tickets, J1 Housing Finder, J1 Contract Analysis. Each dashboard has an 'Other' sidebar (page id 'other') as ambiguous-item holding area only. Cross-partition data movement → halt + Robert sign-off.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "msal-tenant-config",
+      "topic": "Microsoft 365 / MSAL Configuration",
+      "category": "Architecture",
+      "content": "CTI tenant id: ef421d3f-5736-4cca-a38f-e6a4d8607e7e (single-tenant). Application/client id: aff2df6d-cd54-48f3-bd24-3584fd9ea3de. MSAL authority MUST be tenant-specific ('https://login.microsoftonline.com/<tenant-id>') — single-tenant app rejects /common with AADSTS50194. NEVER use loginPopup or acquireTokenPopup — browsers silently block them. Use loginRedirect with a sessionStorage 'poseidon_resume_*' flag and a '_resumeAfterRedirect' IIFE that auto-navigates back. Scopes consented: openid profile email user.read mail.read mail.readwrite mail.send calendars.read calendars.readwrite tasks.read tasks.readwrite files.read.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "calendar-graph-1825-cap",
+      "topic": "Microsoft Graph /me/calendarView 1825-day cap",
+      "category": "Architecture",
+      "content": "Microsoft Graph hard-caps the date range on /me/calendarView at 1825 days. Asking for more returns ErrorInvalidRequest (HTTP 400). Production code MUST stay at or below 1825. Current Poseidon split (Robert 2026-05-08): 365 days back + 1460 forward = 1825 days exactly — biased forward because CEO calendars schedule months ahead. Always handle 4xx/5xx visibly; never silent-break.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "eastern-time-defaults",
+      "topic": "Eastern Time defaults (events / calendar / tasks / email arrival)",
+      "category": "Architecture",
+      "content": "Robert standing order (2026-05-08): ALL displayed timestamps and Graph fetches resolve to Eastern Time. Constants per dashboard: POSEIDON_TZ='America/New_York' (IANA, for client-side Intl); POSEIDON_TZ_WINDOWS='Eastern Standard Time' (Microsoft Graph 'Prefer: outlook.timezone'). The Windows zone name auto-observes DST, switching between EST (UTC-5) and EDT (UTC-4). Helpers fmtET() / fmtETDate() / fmtETTime() are defined globally; every email/calendar display site uses them. Jarvis save_event always writes Outlook events with timeZone:'America/New_York' regardless of device.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "modules-version-cache-bust",
+      "topic": "MODULES_VERSION cache-bust pattern",
+      "category": "Architecture",
+      "content": "When ANY js/poseidon-modules/*.js file changes: bump MODULES_VERSION constant in poseidon-integration.js (loader appends ?v= to every dynamic module URL), bump CACHE_NAME in service-worker.js (so SW activate evicts old cache), and bump the ?v= on the integration loader's <script> tag in poseidon-dashboard-v6.html (so the LOADER itself loads fresh, not cached). Format: YYYY-MM-DD-tag. Without all three bumps, the user's browser may serve a stale module on next reload and System Check fails with 'tool not registered' errors.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "service-worker-rules",
+      "topic": "Service Worker rules (do NOT cache HTML)",
+      "category": "Architecture",
+      "content": "v3+ service-worker.js rule: HTML and navigation requests bypass SW cache (fetch with cache:'no-cache') so a fresh deploy is picked up immediately. Static assets (svg/css/js/images/json) only are network-first with cache fallback for offline. CACHE_NAME must be bumped on every release (any module change) — activate handler deletes every cache that doesn't match. Past failures came from caching HTML aggressively (stale dashboards persist after deploy) — DO NOT add HTML caching back.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "verify-on-live-rule",
+      "topic": "Verify-on-live standing rule (Robert 2026-04-29)",
+      "category": "Process",
+      "content": "When a PR touches calendar / event detail / modal / form / button — actually load the live URL in Chrome (via chrome MCP), click the button, fill the form, watch the result. Run a sweep of related functions, not only the one you changed. Use BOTH the System Check banner AND an interactive sanity pass. The reason this rule exists: in PR #42 the calendar AM/PM change shipped clean syntax but showEventDetail was already broken (looking for #event-detail-content that never existed) and Robert lost a day to clicking empty modals. DO NOT ship calendar/UI changes without clicking through them on live.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "push-process",
+      "topic": "Push process — repo location + push.bat",
+      "category": "Process",
+      "content": "Repo at C:\\Projects\\Poseidon (moved out of OneDrive 2026-05-07 — git was blocked by OneDrive VFS reparse point 0x9000e01a). push.bat at repo root: cd, clean .git/HEAD.lock + index.lock, git status, git add -A, git commit, git push origin main. Repo: Robert-Upchurch/Poseidon, branch main. Live URLs: V6 https://robert-upchurch.github.io/Poseidon/poseidon-dashboard-v6.html · J1 System https://robert-upchurch.github.io/Poseidon/j1-system-dashboard.html. Pages rebuilds in ~60s. Standing computer-use permission granted by Robert.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "edit-vs-python-rule",
+      "topic": "Edit tool truncation rule on large dashboards",
+      "category": "Process",
+      "content": "Never use Edit on poseidon-dashboard-v6.html or j1-system-dashboard.html (each ~7700+ lines, ~500KB). Edit silently truncates near 1000-byte boundaries. Use Python via Claude-Workspace/Code-Projects/ scripts: read full file, do exact-string surgery, write back with sanity check that file still ends with </html>. Same rule applies to any dashboard >5000 lines.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "global-mirror-rule",
+      "topic": "let/const NOT on window — mirror cross-file globals",
+      "category": "Architecture",
+      "content": "let/const declarations at the top of an inline <script> in the dashboard do NOT attach to window. External scripts (Jarvis modules, anything in js/poseidon-modules/) cannot reach those names. When you add globals you want cross-file, mirror them: window.X = X. Currently mirrored: msalInstance, o365Account, _emailsCache, ALL_LISTINGS, filteredListings. Add to that list when you add new state.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "jarvis-voice-catalog",
+      "topic": "Jarvis 2.0 voice catalog (5 canonical voices)",
+      "category": "Architecture",
+      "content": "xAI Realtime has exactly 5 voices (per https://docs.x.ai/developers/model-capabilities/audio/voice): leo (male, authoritative), rex (male, confident), sal (neutral), ara (female, warm), eve (female, energetic — xAI default). If you set a voice name not in this list, xAI silently substitutes the default — no error event. The session.updated handler in poseidon-jarvis-grok.js logs 'Voice confirmed' or 'xAI substituted'. Never invent voice names.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "jarvis-bargein-3-step",
+      "topic": "Jarvis barge-in (3-step turn-taking)",
+      "category": "Architecture",
+      "content": "On 'input_audio_buffer.speech_started' from xAI Realtime, the handler does three things in order: (1) sendWs response.cancel — cancels the in-flight LLM response. (2) sendWs output_audio_buffer.clear — clears server-side buffered audio. (3) flushPlayback() — locally .stop() + .disconnect() every tracked AudioBufferSourceNode. All three together = silent immediately. response.cancel alone leaves prebuffered audio playing; output_audio_buffer.clear alone leaves locally-queued PCM playing; flushPlayback alone leaves xAI streaming new audio. Every enqueuePcm() call MUST push the source into state.playbackSources and remove it in src.onended so flushPlayback works.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "jarvis-web-search-architecture",
+      "topic": "Jarvis web search — Agent Tools API + Tavily fallback",
+      "category": "Architecture",
+      "content": "PRIMARY: xAI Agent Tools API. POST https://api.x.ai/v1/responses with model:'grok-4.3' and tools:[{type:'web_search'}]. Citations parsed from BOTH top-level d.citations[] AND inline output[].content[].annotations[] of type:'url_citation'. (xAI deprecated the prior /v1/responses search_parameters shape on 2026-05-08 with HTTP 410 'Live search is deprecated. Please switch to the Agent Tools API.') FALLBACK: Tavily. POST https://api.tavily.com/search with api_key, query, search_depth, max_results, include_answer:true. Key in localStorage('poseidon_tavily_api_key'); Settings UI panel under Poseidon Enhancements. web_search({provider:'auto'|'grok'|'tavily'}) — auto tries Grok first, falls through to Tavily on 4xx/5xx. STANDING RULE: every single-vendor Jarvis capability gets a fallback in code.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "jarvis-document-reader",
+      "topic": "Jarvis Document Reader",
+      "category": "Architecture",
+      "content": "read_document({url}) tool handles PDF, Word (.docx), Excel (.xlsx), PowerPoint (.pptx), text/markdown/csv/json. Lazy-loads parsers (PDF.js, mammoth, SheetJS, JSZip) from CDN on first call. Available on both Poseidon V6 Jarvis and Upchurch Financial Jarvis. Companion rule: every dashboard 'status' indicator that says 'Draft ready' / 'Pending' MUST link to the source file in documents/<package>/. Tag: v6.4.0-document-reader.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "cross-origin-jarvis-bridge",
+      "topic": "Cross-Origin Jarvis Bridge",
+      "category": "Architecture",
+      "content": "Jarvis on any CTI dashboard can read content from every other CTI dashboard, including across origins (GitHub Pages ↔ Cloudflare Pages). Architecture: snapshot publisher (?cti-snapshot=1 URL handler postMessages to parent) + read_remote_dashboard Jarvis tool (hidden iframe + postMessage listener, 5-min cache). Verified working both directions Poseidon V6 ↔ J1 System ↔ Upchurch Financial. Tag: v6.3.0-cross-origin-jarvis.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "jarvis-skills-library-meta",
+      "topic": "Jarvis Skills Library (meta — this very system)",
+      "category": "Architecture",
+      "content": "Multi-agent reference KB at the 'Jarvis Skills' sidebar entry on Poseidon V6 (page id jarvisskills). 6 agent domains: tax-compliance, recruiting-j1 (REFERENCE-only per partition), cruise-staffing, marketing-bd, operations-process (this domain), ghr-platform. Each domain JSON at data/jarvis-skills/<domain>.json with: _meta + knowledgeBase[] + decisionTrees[] + dataSources[] + escalationRules[]. Index at data/jarvis-skills/index.json + globalEscalationRules. Jarvis tools: list_skill_domains, classify_skill_domain (keyword classifier), query_skill (full-content search), read_skill_domain (everything in one call). Pre-renders into DOM after loadAll so read_page_content works without navigation. Tag: v6.5.0.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
+    },
+    {
+      "id": "github-pages-build-rule",
+      "topic": "GitHub Pages build cadence + verification",
+      "category": "Process",
+      "content": "Pages rebuilds typically in 30-90s after push. Verify with: gh api repos/Robert-Upchurch/Poseidon/pages/builds | python -c 'import json,sys; print(json.load(sys.stdin)[0][\\\"status\\\"], json.load(sys.stdin)[0][\\\"commit\\\"][:7])'. Status 'building' → wait. Status 'built' AND commit matches HEAD → live. Browser HTTP cache may still serve old js/ files for ~10min — bump MODULES_VERSION + CACHE_NAME for instant invalidation.",
+      "status": "verified",
+      "lastUpdated": "2026-05-08"
     }
   ],
   "decisionTrees": [
@@ -100,22 +237,34 @@
       "id": "dt-ops-003",
       "trigger": "Dashboard regression reported",
       "rules": [
-        {"if": "System Check banner red", "then": "Run poseidonHealth(); follow standing rules in CLAUDE.md"},
-        {"if": "Functional regression on calendar/UI", "then": "Verify on live URL with chrome MCP before declaring fixed (Robert standing order 2026-04-29)"}
+        {"if": "System Check banner red", "then": "Run poseidonHealth(); follow the verify-on-live rule"},
+        {"if": "Functional regression on calendar/UI", "then": "Verify on live URL with chrome MCP before declaring fixed (Robert 2026-04-29)"}
       ],
       "escalateTo": "Operations Lead → Robert if unresolved in 1h"
+    },
+    {
+      "id": "dt-ops-004",
+      "trigger": "Module change to js/poseidon-modules/*.js",
+      "rules": [
+        {"if": "Any module file modified", "then": "Bump MODULES_VERSION in poseidon-integration.js + CACHE_NAME in service-worker.js + integration loader ?v= in v6.html — all three"},
+        {"if": "System prompt or Jarvis behavior changed", "then": "Also update jarvis-memory.md in the same commit"}
+      ],
+      "escalateTo": "self-enforcing — verify by checking the live URL after deploy"
     }
   ],
   "dataSources": [
     {"name": "Zoho One (CRM, Books, Desk, Projects, Forms)", "type": "MCP", "status": "connected", "refresh": "real-time"},
-    {"name": "Microsoft 365 (Outlook, Calendar, OneDrive, SharePoint, Teams)", "type": "MCP", "status": "connected", "refresh": "10-min cadence"},
+    {"name": "Microsoft 365 (Outlook, Calendar, OneDrive, SharePoint, Teams)", "type": "MCP", "status": "connected", "refresh": "10-min cadence M-F 7am-4pm; weekends 8/12/4"},
     {"name": "Poseidon V6 dashboard (system of action)", "type": "internal", "status": "connected", "refresh": "live"},
+    {"name": "J1 System Dashboard", "type": "internal", "status": "connected", "refresh": "live"},
+    {"name": "Upchurch Financial Command Center (Cloudflare Pages, separate origin)", "type": "internal", "status": "connected", "refresh": "live (cross-origin via Jarvis bridge)"},
     {"name": "Box, Egnyte, Fireflies, Apollo, Gamma", "type": "MCP", "status": "connected", "refresh": "as-needed"}
   ],
   "escalationRules": [
     {"trigger": "Cross-partition data movement", "action": "Halt — Robert sign-off", "severity": "critical"},
     {"trigger": "New SaaS > $10K/yr", "action": "Robert + CFO", "severity": "high"},
     {"trigger": "PII handling change", "action": "Robert + legal", "severity": "high"},
-    {"trigger": "Dashboard System Check red", "action": "Run poseidonHealth + auto-repair; escalate if 1h unresolved", "severity": "medium"}
+    {"trigger": "Dashboard System Check red", "action": "Run poseidonHealth + auto-repair; escalate if 1h unresolved", "severity": "medium"},
+    {"trigger": "Module change without MODULES_VERSION bump", "action": "PR rejected — caches will serve stale code", "severity": "medium"}
   ]
 }
