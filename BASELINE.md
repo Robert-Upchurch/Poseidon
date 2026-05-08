@@ -1,9 +1,16 @@
-# LOCKED BASELINE — v6.2.0 (2026-05-08)
+# LOCKED BASELINE — v6.3.0 (2026-05-08)
 
 **This commit is the stable baseline. Do not modify any dashboard file
 without an explicit feature request or bug report from Robert.**
 
-Git tag: `v6.2.0-baseline` (commit `3b73769`)
+Latest tag: `v6.3.0-cross-origin-jarvis` — adds cross-origin Jarvis reading
+Previous tag: `v6.2.0-baseline` (commit `3b73769`) — initial lockdown
+
+## v6.3.0 changes from v6.2.0
+
+- Snapshot publisher injected into all 3 dashboards (`?cti-snapshot=1`)
+- `read_remote_dashboard` Jarvis tool added to PoseidonJarvis + UpchurchJarvis
+- Cross-origin verified working both directions (16 + 31 pages readable)
 
 ## Verified working
 
