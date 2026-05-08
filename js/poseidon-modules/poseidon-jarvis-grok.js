@@ -1007,6 +1007,19 @@
     },
     {
       type: 'function',
+      name: 'read_document',
+      description: 'Fetch any document by URL and extract its text content. Supports: PDF, Microsoft Word (.docx), Microsoft Excel (.xlsx, .xls), Microsoft PowerPoint (.pptx), plain text, Markdown, CSV, JSON, HTML, XML, YAML, log files. Use this whenever the user asks "read the engagement letter", "open the demand letter", "summarize the case summary memo", "what does the evidence index say", "read the document at <url>", or any other document review request. Works on dashboard-hosted files (e.g. /documents/...), public URLs, and any CORS-permissive endpoint. Falls back to a clear error message if the file format is unsupported or if CORS blocks the fetch.',
+      parameters: {
+        type: 'object',
+        properties: {
+          url:       { type: 'string', description: 'Full URL of the document. Relative URLs work too (e.g. "documents/citi-attorney-package/01-engagement-letter.md").' },
+          max_chars: { type: 'number', description: 'Cap on returned text length (default 8000).' }
+        },
+        required: ['url']
+      }
+    },
+    {
+      type: 'function',
       name: 'open_email_attachment',
       description: 'Open an email attachment in a new browser tab (download/preview). Use when the user says "open the attachment", "show me the PDF", "let me see it". Works for any content type.',
       parameters: {
@@ -2308,6 +2321,128 @@
       }
     },
 
+    // ── Generic file reader (PDF / DOCX / XLSX / PPTX / TXT / MD / CSV / JSON) ──
+    // Used by read_document and read_email_attachment.
+    async _extractTextFromBytes({ bytes, contentType, name, max_chars = 8000 }) {
+      const ctype = (contentType || '').toLowerCase();
+      const lname = (name || '').toLowerCase();
+
+      // Plain text family
+      if (ctype.startsWith('text/') || ctype === 'application/json' || ctype === 'application/csv' ||
+          /\.(txt|md|markdown|csv|json|xml|html|htm|log|yml|yaml)$/i.test(lname)) {
+        const text = new TextDecoder('utf-8').decode(bytes);
+        return { ok: true, name, contentType: ctype, format: 'text', text: text.slice(0, max_chars), truncated: text.length > max_chars };
+      }
+
+      // PDF
+      if (ctype === 'application/pdf' || /\.pdf$/i.test(lname)) {
+        if (!window.pdfjsLib) {
+          await new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+            s.onload = res; s.onerror = rej;
+            document.head.appendChild(s);
+          }).catch(() => {});
+          if (window.pdfjsLib) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          }
+        }
+        if (!window.pdfjsLib) return { ok: false, error: 'PDF.js failed to load from CDN.' };
+        const pdf = await window.pdfjsLib.getDocument({ data: bytes }).promise;
+        let text = '';
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+          text += content.items.map(it => it.str).join(' ') + '\n\n';
+          if (text.length > max_chars * 2) break;
+        }
+        return { ok: true, name, contentType: ctype, format: 'pdf', pages: pdf.numPages, text: text.slice(0, max_chars), truncated: text.length > max_chars };
+      }
+
+      // DOCX (Microsoft Word)
+      if (ctype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || /\.docx$/i.test(lname)) {
+        if (!window.mammoth) {
+          await new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+            s.onload = res; s.onerror = rej;
+            document.head.appendChild(s);
+          }).catch(() => {});
+        }
+        if (!window.mammoth) return { ok: false, error: 'mammoth.js failed to load from CDN.' };
+        const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+        const result = await window.mammoth.extractRawText({ arrayBuffer: buf });
+        const text = result.value || '';
+        return { ok: true, name, contentType: ctype, format: 'docx', text: text.slice(0, max_chars), truncated: text.length > max_chars };
+      }
+
+      // XLSX / XLS (Microsoft Excel)
+      if (ctype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+          ctype === 'application/vnd.ms-excel' || /\.xlsx?$/i.test(lname)) {
+        if (!window.XLSX) {
+          await new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            s.onload = res; s.onerror = rej;
+            document.head.appendChild(s);
+          }).catch(() => {});
+        }
+        if (!window.XLSX) return { ok: false, error: 'SheetJS (xlsx) failed to load from CDN.' };
+        const wb = window.XLSX.read(bytes, { type: 'array' });
+        let text = '';
+        wb.SheetNames.forEach(sn => {
+          text += `### Sheet: ${sn}\n`;
+          text += window.XLSX.utils.sheet_to_csv(wb.Sheets[sn]) + '\n\n';
+        });
+        return { ok: true, name, contentType: ctype, format: 'xlsx', sheets: wb.SheetNames, text: text.slice(0, max_chars), truncated: text.length > max_chars };
+      }
+
+      // PPTX (Microsoft PowerPoint) — via JSZip + slide XML parsing
+      if (ctype === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || /\.pptx$/i.test(lname)) {
+        if (!window.JSZip) {
+          await new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+            s.onload = res; s.onerror = rej;
+            document.head.appendChild(s);
+          }).catch(() => {});
+        }
+        if (!window.JSZip) return { ok: false, error: 'JSZip failed to load from CDN.' };
+        const zip = await window.JSZip.loadAsync(bytes);
+        const slidePaths = Object.keys(zip.files).filter(p => /^ppt\/slides\/slide\d+\.xml$/.test(p))
+          .sort((a, b) => parseInt(a.match(/slide(\d+)/)[1]) - parseInt(b.match(/slide(\d+)/)[1]));
+        let text = '';
+        for (const path of slidePaths) {
+          const xml = await zip.files[path].async('text');
+          const matches = xml.match(/<a:t[^>]*>([^<]*)<\/a:t>/g) || [];
+          const slideText = matches.map(m => m.replace(/<[^>]+>/g, '')).join(' ');
+          text += `### Slide ${path.match(/slide(\d+)/)[1]}\n${slideText}\n\n`;
+          if (text.length > max_chars * 2) break;
+        }
+        return { ok: true, name, contentType: ctype, format: 'pptx', slides: slidePaths.length, text: text.slice(0, max_chars), truncated: text.length > max_chars };
+      }
+
+      return { ok: false, error: `Unsupported format: ${ctype || 'unknown'} (${name})` };
+    },
+
+    // Read any document by URL — PDF, Word (.docx), Excel (.xlsx), PowerPoint (.pptx), text/markdown/csv/json.
+    // For email attachments use read_email_attachment instead (uses Graph API).
+    async read_document({ url, max_chars = 8000 } = {}) {
+      if (!url) return { ok: false, error: 'url is required' };
+      try {
+        const r = await fetch(url, { mode: 'cors' });
+        if (!r.ok) return { ok: false, error: `HTTP ${r.status} fetching ${url}`, url };
+        const buf = await r.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        const contentType = r.headers.get('content-type') || '';
+        const name = url.split('/').pop().split('?')[0] || 'document';
+        const result = await this._extractTextFromBytes({ bytes, contentType, name, max_chars });
+        return Object.assign({ url, sizeBytes: buf.byteLength }, result);
+      } catch (e) {
+        return { ok: false, error: 'fetch failed (often CORS): ' + e.message + '. If this is a SharePoint/OneDrive file, ask the user to download it and use the email attachment flow instead.' };
+      }
+    },
+
     async open_email_attachment({ id, attachment_id }) {
       if (!id || !attachment_id) return { ok: false, error: 'id and attachment_id are required' };
       try {
@@ -3164,6 +3299,7 @@
       'You have full tool access to the dashboard DOM: reading state, navigating pages, saving tasks/events, running simulations, opening the Directory, reading the changelog, generating briefings, and producing video briefs.',
       'When the user asks "what\'s on my day", "brief me", or similar, call morning_briefing, then deliver the returned script naturally.',
       'For ANY email-related question — "do I have any emails", "anything from X", "what does that email say", "open the attachment", "summarize the contract attachment", "read me the PDF", "urgent emails", "unread emails" — call read_emails first to find candidates and grab the email id, then read_email for the full body, list_email_attachments for attachments, read_email_attachment to extract attachment text (PDFs supported via PDF.js), and open_email_attachment to open in a new tab. ALWAYS read_email or read_email_attachment before summarizing — do NOT speculate from the preview alone. If Microsoft 365 is not signed in, tell the user to click "Sign in to M365" on the dashboard.',
+      'DOCUMENT READING (any format) — call read_document({url}) for ANY document Robert asks you to read, summarize, or review. Supports PDF, Microsoft Word (.docx), Microsoft Excel (.xlsx), Microsoft PowerPoint (.pptx), plain text, Markdown, CSV, JSON, and more. For dashboard-hosted documents (e.g. "Engagement Letter", "Case Summary Memo", "Pre-Suit Demand Letter", "Evidence Index" in the Citi attorney package on the Upchurch dashboard), use the relative path: read_document({url: "documents/citi-attorney-package/01-engagement-letter.md"}). When Robert says "read the demand letter" or "what does the case memo say" or "summarize the engagement letter", ALWAYS call this tool and report the actual content — do not say you cannot read documents.',
       'When the user asks about a KPI on a specific division, call read_kpi with that division.',
       'When the user asks you to navigate ("take me to finance", "open J1 housing"), call go_to_page.',
       'When the user asks to add a task or event, call save_task / save_event. save_task saves to the dashboard AND to Microsoft To Do (syncs to phone, iPad, Teams, and Outlook on every device — requires Tasks.ReadWrite). save_event saves to the dashboard AND to Outlook Calendar (requires Calendars.ReadWrite). If either todo/outlook field in the result shows a permissions error, tell Robert to click "Force Re-consent" on the Emails page. To DELETE a task, call delete_task with the task id or a title_match substring — always confirm the task title out loud before executing.',
