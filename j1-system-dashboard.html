@@ -584,8 +584,8 @@ document.addEventListener('keydown', function(e) {
   var gate = document.getElementById('poseidon-gate');
   if (!gate) return;
   try {
-    if (sessionStorage.getItem(GATE_KEY) === '1') {
-      window.poseidonRole = sessionStorage.getItem(ROLE_KEY) || 'staff';
+    if (localStorage.getItem(GATE_KEY) === '1') {
+      window.poseidonRole = localStorage.getItem(ROLE_KEY) || 'staff';
       window.poseidonRolePages = ROLE_PAGES[window.poseidonRole] || null;
       gate.remove(); return;
     }
@@ -607,8 +607,8 @@ document.addEventListener('keydown', function(e) {
     var _role = ROLES[input.value];
     if (_role !== undefined) {
       try {
-        sessionStorage.setItem(GATE_KEY, '1');
-        sessionStorage.setItem(ROLE_KEY, _role);
+        localStorage.setItem(GATE_KEY, '1');
+        localStorage.setItem(ROLE_KEY, _role);
       } catch (_) {}
       window.poseidonRole = _role;
       window.poseidonRolePages = ROLE_PAGES[_role] || null;
@@ -6494,6 +6494,9 @@ function o365Init() {
                 window.o365Account = o365Account;
                 o365UpdateUI(true);
                 o365LoadAll();
+            } else {
+                // Auto sign-in if master password gate already passed (SSO: one login unlocks all tabs)
+                try { if (localStorage.getItem('poseidon_auth_v1') === '1') o365SignIn(); } catch (_) {}
             }
         }
     }).catch(e => console.error('MSAL init error:', e));
