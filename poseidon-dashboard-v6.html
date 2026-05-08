@@ -8317,10 +8317,34 @@ window.JarvisSkills = (function() {
         const d = _domains[domainId];
         if (!d) return { ok:false, error:'Unknown domain "'+domainId+'". Available: '+Object.keys(_domains).join(', ') };
         const kb = d.knowledgeBase || [];
-        if (!topic) return { ok:true, domain:domainId, allTopics: kb.map(k => ({id:k.id, topic:k.topic, status:k.status})) };
+        if (!topic) {
+            // No topic -> return ALL entries with full content so Jarvis
+            // can summarize / explain the domain in depth.
+            return { ok:true, domain:domainId, count: kb.length, entries: kb };
+        }
         const t = String(topic).toLowerCase();
         const matches = kb.filter(k => (k.topic||'').toLowerCase().includes(t) || (k.id||'').toLowerCase().includes(t) || (k.content||'').toLowerCase().includes(t));
-        return { ok:true, domain:domainId, topic, matches: matches.slice(0, 10) };
+        return { ok:true, domain:domainId, topic, count: matches.length, entries: matches.slice(0, 25) };
+    }
+
+    // Return the COMPLETE domain (meta + KB + decision trees + data
+    // sources + escalation rules + index metadata) in one call. Used
+    // by the read_skill_domain Jarvis tool for in-depth explanations.
+    function readDomain(domainId) {
+        const d = _domains[domainId];
+        if (!d) return { ok:false, error:'Unknown domain "'+domainId+'". Available: '+Object.keys(_domains).join(', ') };
+        const indexEntry = (_index && (_index.domains||[]).find(x => x.id === domainId)) || {};
+        return {
+            ok: true,
+            id: domainId,
+            indexMeta: indexEntry,
+            domainMeta: d._meta || {},
+            knowledgeBase: d.knowledgeBase || [],
+            decisionTrees: d.decisionTrees || [],
+            dataSources: d.dataSources || [],
+            escalationRules: d.escalationRules || [],
+            globalEscalationRules: (_index && _index.globalEscalationRules) || []
+        };
     }
 
     function listDomains() {
@@ -8358,7 +8382,7 @@ window.JarvisSkills = (function() {
         };
     }
 
-    return { loadAll: loadAll, render: render, refresh: refresh, getCache: getCache, querySkill: querySkill, classifyDomain: classifyDomain, listDomains: listDomains };
+    return { loadAll: loadAll, render: render, refresh: refresh, getCache: getCache, querySkill: querySkill, classifyDomain: classifyDomain, listDomains: listDomains, readDomain: readDomain };
 })();
 
 // Hook switchPage so navigating to "jarvisskills" triggers a render.
@@ -8376,13 +8400,23 @@ window.JarvisSkills = (function() {
     }
 })();
 
-// Pre-warm the cache so Jarvis can answer queries even without the page open.
+// Pre-warm the cache AND pre-render into the DOM so read_page_content,
+// read_dashboard_state, and read_full_dashboard can read every skill
+// even if Robert never navigates to the Jarvis Skills page.
 (function() {
-    function go() {
-        try { setTimeout(() => { if (window.JarvisSkills && !window._jarvisSkillsCache) window.JarvisSkills.loadAll(); }, 4000); } catch(_) {}
+    async function go() {
+        try {
+            if (!window.JarvisSkills) return;
+            if (!window._jarvisSkillsCache) await window.JarvisSkills.loadAll();
+            // Render into the (hidden) #jarvisskills page. innerHTML is
+            // populated regardless of .hidden class — readers walking the
+            // DOM by id will pick up every panel + KB entry.
+            try { await window.JarvisSkills.render(); } catch(_) {}
+        } catch(_) {}
     }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
-    else go();
+    function schedule() { setTimeout(go, 3500); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedule);
+    else schedule();
 })();
 
 // ═══════════════════════════════════════════════════
@@ -8423,7 +8457,8 @@ window.poseidonHealth = function poseidonHealth(opts) {
         ['Skills library: nav link in DOM',        () => !!document.querySelector('.nav-link[data-page="jarvisskills"]')],
         ['Jarvis: query_skill registered',         () => !!(window.PoseidonJarvis?.toolImpl?.query_skill)],
         ['Jarvis: classify_skill_domain',          () => !!(window.PoseidonJarvis?.toolImpl?.classify_skill_domain)],
-        ['Jarvis: list_skill_domains',             () => !!(window.PoseidonJarvis?.toolImpl?.list_skill_domains)]
+        ['Jarvis: list_skill_domains',             () => !!(window.PoseidonJarvis?.toolImpl?.list_skill_domains)],
+        ['Jarvis: read_skill_domain',              () => !!(window.PoseidonJarvis?.toolImpl?.read_skill_domain)]
     ];
     const results = checks.map(([name, fn]) => {
         let ok = false, err = null;
@@ -8474,7 +8509,7 @@ window.poseidonHealth = function poseidonHealth(opts) {
      Loads: training · directory · version+changelog · LLM layer
      · Grok voice assistant. Non-destructive — existing code untouched.
      ═══════════════════════════════════════════════════════════════ -->
-<script src="js/poseidon-modules/poseidon-integration.js?v=2026-05-07-skills" defer></script>
+<script src="js/poseidon-modules/poseidon-integration.js?v=2026-05-07-skills-readable" defer></script>
 
 <script>
 // Service Worker registration — always runs the latest deploy and falls

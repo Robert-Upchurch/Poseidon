@@ -11,7 +11,7 @@
    Bumping CACHE_NAME on every release invalidates ALL prior caches.
 */
 
-const CACHE_NAME = 'poseidon-cache-v5-2026-05-07-skills';
+const CACHE_NAME = 'poseidon-cache-v6-2026-05-07-skills-readable';
 
 self.addEventListener('install', event => {
     self.skipWaiting();
