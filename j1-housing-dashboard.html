@@ -1387,7 +1387,8 @@ function populateCityDropdown(stateAbbr) {
     sel.innerHTML = '<option value="">All Cities</option>';
     const cities = stateAbbr
         ? TOP_CITIES.filter(c => c.name.endsWith(', ' + stateAbbr))
-        : TOP_CITIES;
+        : [...TOP_CITIES];
+    cities.sort((a, b) => a.name.localeCompare(b.name));
     cities.forEach(c => {
         const opt = document.createElement('option');
         opt.value = c.name;
