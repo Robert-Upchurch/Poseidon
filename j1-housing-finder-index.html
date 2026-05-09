@@ -1307,7 +1307,7 @@ function updateMapMarkers() {
         markers.push(marker);
     });
 
-    if (filteredListings.length > 0 && !document.getElementById('filter-city').value) {
+    if (filteredListings.length > 0 && !document.getElementById('filter-city').value && !window.workCoords) {
         const group = L.featureGroup(markers);
         if (markers.length > 1) map.fitBounds(group.getBounds().pad(0.1));
     }
@@ -1574,10 +1574,6 @@ async function findHousing() {
             .bindPopup(`<b>\ud83d\udccd Work</b><br>${query}`)
             .openPopup();
 
-        // Zoom map to work location (city / neighborhood scale)
-        try { map.flyTo([workCoords.lat, workCoords.lng], 11, { duration: 1.0 }); }
-        catch(_) { map.setView([workCoords.lat, workCoords.lng], 11); }
-
         // Auto-sort listings by distance so the closest are at the top
         const sortSel = document.getElementById('sort-select');
         if (sortSel) sortSel.value = 'distance';
@@ -1588,6 +1584,12 @@ async function findHousing() {
         if (legacy) legacy.value = query;
 
         applyFilters();
+
+        // Zoom AFTER applyFilters — applyFilters→renderMap calls fitBounds on
+        // all listing markers, which would otherwise clobber our flyTo. Run
+        // flyTo last so the city-level zoom is the final state.
+        try { map.flyTo([workCoords.lat, workCoords.lng], 11, { duration: 1.0 }); }
+        catch(_) { map.setView([workCoords.lat, workCoords.lng], 11); }
     } catch (e) {
         console.error('[findHousing] failed:', e);
         alert('Geocoding service is unreachable. Try again in a moment.');
