@@ -797,6 +797,52 @@
             #poseidon-topbar .ptb-brand-sub { display: none; }
         }
 
+
+        /* ═══ Path A enrichment: amenity / walkability / short-term CTA ═══ */
+        .enrich-btn {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; margin-top: 6px;
+            font-size: 0.72rem; font-weight: 600;
+            color: var(--accent); background: transparent;
+            border: 1px dashed var(--accent); border-radius: 6px;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .enrich-btn:hover { background: var(--accent-bg); border-style: solid; }
+        .enrich-btn:disabled { opacity: 0.6; cursor: wait; }
+        .enrich-panel {
+            margin-top: 8px; padding: 10px;
+            background: var(--accent-bg); border-radius: 8px;
+            font-size: 0.78rem; line-height: 1.5;
+            border: 1px solid var(--border);
+        }
+        .enrich-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px;
+            margin-bottom: 6px;
+        }
+        .enrich-row { display: flex; align-items: center; gap: 6px; }
+        .walk-score {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 10px; border-radius: 999px;
+            font-weight: 700; font-size: 0.78rem;
+        }
+        .walk-score.s90 { background: rgba(16,185,129,0.18); color: #10b981; }
+        .walk-score.s70 { background: rgba(20,184,166,0.18); color: #14b8a6; }
+        .walk-score.s50 { background: rgba(245,158,11,0.18); color: #f59e0b; }
+        .walk-score.s30 { background: rgba(249,115,22,0.18); color: #f97316; }
+        .walk-score.s00 { background: rgba(239,68,68,0.18); color: #ef4444; }
+        .short-term-cta {
+            margin-bottom: 12px; padding: 10px 14px;
+            background: linear-gradient(135deg, rgba(20,184,166,0.10), rgba(13,148,136,0.05));
+            border: 1px solid rgba(20,184,166,0.35); border-radius: 10px;
+            font-size: 0.82rem; display: flex; gap: 10px; align-items: center;
+            flex-wrap: wrap;
+        }
+        .short-term-cta a {
+            background: var(--accent); color: #fff; text-decoration: none;
+            padding: 5px 11px; border-radius: 6px; font-weight: 600; font-size: 0.74rem;
+            transition: opacity 0.15s;
+        }
+        .short-term-cta a:hover { opacity: 0.9; }
 </style>
     <!-- MSAL for staff M365 sign-in (same client_id + tenant as V6) -->
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.6.0/lib/msal-browser.min.js"></script>
@@ -1089,6 +1135,7 @@
             </div>
         </div>
         <div class="listings-panel" id="listings-panel">
+            <div id="short-term-cta-slot"></div>
             <div class="listings-header">
                 <div>
                     <h3>Available Rentals</h3>
@@ -1606,9 +1653,11 @@ function renderListings() {
             ${l.note ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.4rem;">💡 ${l.note}</div>` : ''}
             ${(l.contact_name || l.contact_phone) ? `<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.4rem;">${l.contact_name?'👤 '+l.contact_name:''}${(l.contact_name && l.contact_phone)?' &middot; ':''}${l.contact_phone?'<a href=\"tel:'+l.contact_phone.replace(/[^0-9+]/g,'')+'\" onclick=\"event.stopPropagation()\" style=\"color:var(--accent);text-decoration:none;\">📞 '+l.contact_phone+'</a>':''}</div>` : ''}
             ${distHtml}
+            <button class="enrich-btn" onclick="event.stopPropagation(); showNeighborhoodData(${l.id}, this)">\ud83d\udd0d Show neighborhood data</button>
             <div class="card-actions">${links}</div>
         </div>`;
     }).join('');
+    try { _refreshShortTermCta(); } catch(_){}
 }
 
 // ===== DEEP LINKS =====
@@ -1856,6 +1905,190 @@ function updateTimestamp() {
 function refreshData() {
     updateTimestamp();
     applyFilters();
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// PATH A ENRICHMENT — autonomous, no keys
+// (Robert 2026-05-09)
+//
+// OpenStreetMap Overpass API — free, no auth, CORS-friendly.
+// Returns POIs (grocery, transit, pharmacy, school) within 1 mi of a
+// listing's lat/lng. Walkability score = weighted POI density.
+// ═══════════════════════════════════════════════════════════════════
+
+// Cache keyed by `${lat.toFixed(4)},${lng.toFixed(4)}` so repeated
+// clicks on the same listing or two listings on the same block don't
+// hammer Overpass.
+const _enrichCache = new Map();
+
+const OVERPASS_ENDPOINTS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.openstreetmap.ru/api/interpreter'
+];
+
+// 1 mile in degrees ≈ 0.0145 lat, 0.018 lng (longitude varies by latitude
+// but at US latitudes this is close enough for a bounding box).
+async function _overpassNearby(lat, lng) {
+    const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+    if (_enrichCache.has(key)) return _enrichCache.get(key);
+
+    const radiusMeters = 1609; // 1 mile
+    const query = `
+[out:json][timeout:15];
+(
+  node(around:${radiusMeters},${lat},${lng})["shop"~"^(supermarket|grocery|convenience)$"];
+  node(around:${radiusMeters},${lat},${lng})["amenity"="pharmacy"];
+  node(around:${radiusMeters},${lat},${lng})["amenity"~"^(school|college|university|kindergarten)$"];
+  node(around:${radiusMeters},${lat},${lng})["amenity"="hospital"];
+  node(around:${radiusMeters},${lat},${lng})["public_transport"="stop_position"];
+  node(around:${radiusMeters},${lat},${lng})["highway"="bus_stop"];
+  node(around:${radiusMeters},${lat},${lng})["railway"="station"];
+  node(around:${radiusMeters},${lat},${lng})["amenity"~"^(restaurant|cafe|fast_food)$"];
+  node(around:${radiusMeters},${lat},${lng})["leisure"~"^(park|playground|fitness_centre)$"];
+);
+out body;`;
+
+    let lastErr = null;
+    for (const endpoint of OVERPASS_ENDPOINTS) {
+        try {
+            const r = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                body: query
+            });
+            if (!r.ok) { lastErr = new Error(`HTTP ${r.status}`); continue; }
+            const json = await r.json();
+            const result = _summarizeOverpass(json.elements || [], lat, lng);
+            _enrichCache.set(key, result);
+            return result;
+        } catch (e) { lastErr = e; continue; }
+    }
+    throw lastErr || new Error('All Overpass endpoints failed');
+}
+
+function _summarizeOverpass(elements, lat, lng) {
+    const counts = {
+        grocery: 0, pharmacy: 0, school: 0, hospital: 0,
+        transit: 0, food: 0, parks: 0
+    };
+    let nearestGrocery = Infinity, nearestTransit = Infinity;
+    for (const el of elements) {
+        if (!el.lat || !el.lon || !el.tags) continue;
+        const t = el.tags;
+        const d = _haversineMi(lat, lng, el.lat, el.lon);
+        if (t.shop && /^(supermarket|grocery|convenience)$/.test(t.shop)) {
+            counts.grocery++; if (d < nearestGrocery) nearestGrocery = d;
+        }
+        if (t.amenity === 'pharmacy') counts.pharmacy++;
+        if (t.amenity && /^(school|college|university|kindergarten)$/.test(t.amenity)) counts.school++;
+        if (t.amenity === 'hospital') counts.hospital++;
+        if (t.public_transport === 'stop_position' || t.highway === 'bus_stop' || t.railway === 'station') {
+            counts.transit++; if (d < nearestTransit) nearestTransit = d;
+        }
+        if (t.amenity && /^(restaurant|cafe|fast_food)$/.test(t.amenity)) counts.food++;
+        if (t.leisure && /^(park|playground|fitness_centre)$/.test(t.leisure)) counts.parks++;
+    }
+    const score = _computeWalkability(counts);
+    return {
+        counts,
+        nearestGrocery: isFinite(nearestGrocery) ? nearestGrocery : null,
+        nearestTransit: isFinite(nearestTransit) ? nearestTransit : null,
+        walkScore: score.score,
+        walkLabel: score.label
+    };
+}
+
+function _haversineMi(lat1, lng1, lat2, lng2) {
+    const R = 3958.8;
+    const toRad = x => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// Walkability heuristic: weighted POI counts mapped to 0-100.
+// Calibrated so a typical urban neighborhood scores ~70-90 and a
+// rural area ~10-30. Not a substitute for Walk Score, but free.
+function _computeWalkability(c) {
+    const raw = (c.grocery * 12) + (c.transit * 4) + (c.pharmacy * 6)
+              + (c.school * 4) + (c.food * 1.5) + (c.parks * 5)
+              + (c.hospital * 8);
+    const score = Math.max(0, Math.min(100, Math.round(raw)));
+    let label, cls;
+    if (score >= 90)      { label = 'Walker\u2019s Paradise'; cls = 's90'; }
+    else if (score >= 70) { label = 'Very Walkable';           cls = 's70'; }
+    else if (score >= 50) { label = 'Somewhat Walkable';       cls = 's50'; }
+    else if (score >= 30) { label = 'Car-Dependent';           cls = 's30'; }
+    else                  { label = 'Mostly Car-Required';     cls = 's00'; }
+    return { score, label, cls };
+}
+
+async function showNeighborhoodData(listingId, btn) {
+    const l = ALL_LISTINGS.find(x => x.id === listingId);
+    if (!l) return;
+    btn.disabled = true; btn.textContent = '\u23F3 Loading\u2026';
+    try {
+        const data = await _overpassNearby(l.lat, l.lng);
+        const cls = (data.walkScore >= 90) ? 's90'
+                  : (data.walkScore >= 70) ? 's70'
+                  : (data.walkScore >= 50) ? 's50'
+                  : (data.walkScore >= 30) ? 's30' : 's00';
+        const fmt = (v, unit) => v == null ? '\u2014' : v.toFixed(2) + ' ' + unit;
+        const nearestG = data.nearestGrocery == null ? '' :
+            ` <span style="color:var(--text-muted);">(closest ${fmt(data.nearestGrocery, 'mi')})</span>`;
+        const nearestT = data.nearestTransit == null ? '' :
+            ` <span style="color:var(--text-muted);">(closest ${fmt(data.nearestTransit, 'mi')})</span>`;
+        const html = `<div class="enrich-panel">
+            <div style="margin-bottom:8px;">
+              <span class="walk-score ${cls}">\ud83d\udeb6 Walkability ${data.walkScore} / 100 \u00b7 ${data.walkLabel}</span>
+            </div>
+            <div class="enrich-grid">
+              <div class="enrich-row">\ud83d\udecd\ufe0f <b>${data.counts.grocery}</b> grocery${nearestG}</div>
+              <div class="enrich-row">\ud83d\ude8c <b>${data.counts.transit}</b> transit${nearestT}</div>
+              <div class="enrich-row">\ud83d\udc8a <b>${data.counts.pharmacy}</b> pharmacy</div>
+              <div class="enrich-row">\ud83c\udfe5 <b>${data.counts.hospital}</b> hospital</div>
+              <div class="enrich-row">\ud83c\udfeb <b>${data.counts.school}</b> school</div>
+              <div class="enrich-row">\ud83c\udf74 <b>${data.counts.food}</b> restaurant/cafe</div>
+              <div class="enrich-row">\ud83c\udf33 <b>${data.counts.parks}</b> parks/gym</div>
+            </div>
+            <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">
+              Within 1 mile \u00b7 source: OpenStreetMap (free, no key)
+            </div>
+          </div>`;
+        btn.outerHTML = html;
+    } catch (e) {
+        console.error('[enrich] failed:', e);
+        btn.disabled = false; btn.textContent = '\u26A0 Try again';
+    }
+}
+
+// ──────────── Booking.com short-term CTA in listings header ────────────
+// Builds a Booking.com URL for monthly stays around the work address (or
+// the first filtered listing's city as fallback) so J-1 staff have an
+// instant temporary-housing option while they search. No API key needed.
+function _refreshShortTermCta() {
+    const host = document.getElementById('short-term-cta-slot');
+    if (!host) return;
+    let label = '', url = '';
+    const addrEl = document.getElementById('filter-work-address');
+    const zipEl = document.getElementById('filter-zip');
+    const work = (addrEl?.value || '').trim();
+    const zip  = (zipEl?.value || '').trim();
+    if (work || zip) {
+        const q = [work, zip, 'USA'].filter(Boolean).join(', ');
+        label = work || zip;
+        url = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(q)}&group_adults=1&no_rooms=1&group_children=0`;
+    } else if (filteredListings && filteredListings[0]) {
+        const c = filteredListings[0].city;
+        label = c;
+        url = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(c)}&group_adults=1&no_rooms=1&group_children=0`;
+    } else { host.innerHTML = ''; return; }
+    host.innerHTML = `<div class="short-term-cta">
+        <span>\ud83c\udfe8 <b>Need temporary housing while searching?</b> Monthly stays near ${label}.</span>
+        <a href="${url}" target="_blank" rel="noopener">Booking.com \u2192</a>
+    </div>`;
 }
 
 // ===== LAUNCH =====
