@@ -846,6 +846,97 @@
             color: #fca5a5; font-size: 0.8rem;
         }
         .roster-loading { font-size: 0.85rem; color: var(--text-muted); padding: 20px 0; text-align: center; }
+
+        /* ====== Multi-source dedup pill ====== */
+        .multi-source {
+            display: inline-flex; flex-wrap: wrap; gap: 4px;
+            margin-top: 4px;
+        }
+        .multi-source .ms-chip {
+            display: inline-block; padding: 2px 7px; border-radius: 999px;
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .multi-source-count {
+            font-size: 0.7rem; color: var(--text-secondary);
+            font-weight: 600;
+        }
+        /* ====== Packet selection ====== */
+        .packet-checkbox {
+            position: absolute; top: 8px; right: 8px;
+            width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);
+        }
+        .listing-card { position: relative; }
+        #packet-tray {
+            position: fixed; bottom: 16px; right: 16px;
+            background: var(--bg-card); border: 1px solid var(--accent);
+            border-radius: 12px; padding: 10px 14px; z-index: 1500;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+            display: none; gap: 10px; align-items: center;
+            font-size: 0.84rem;
+        }
+        #packet-tray.show { display: flex; }
+        #packet-tray .packet-btn {
+            padding: 6px 12px; border-radius: 8px; cursor: pointer;
+            background: var(--accent); color: #fff; border: 0;
+            font-weight: 600; font-size: 0.78rem;
+        }
+        #packet-tray .packet-btn.subtle {
+            background: transparent; color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        @media print {
+            body * { visibility: hidden !important; }
+            #packet-print, #packet-print * { visibility: visible !important; }
+            #packet-print { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+            #packet-print .pkt-card { page-break-inside: avoid; margin-bottom: 16px; padding: 12px; border: 1px solid #999; border-radius: 8px; }
+        }
+        /* ====== Settings panel ====== */
+        .settings-toggle {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 14px; margin: 8px 0 0 8px;
+            background: rgba(20,184,166,0.10); color: var(--accent);
+            border: 1px solid rgba(20,184,166,0.4); border-radius: 8px;
+            font-size: 0.82rem; font-weight: 600; cursor: pointer;
+        }
+        .settings-toggle:hover { background: rgba(20,184,166,0.18); }
+        #settings-panel {
+            display: none; background: var(--bg-secondary);
+            border: 1px solid var(--border); border-radius: 12px;
+            padding: 16px 18px; margin: 8px 18px;
+            font-size: 0.85rem;
+        }
+        #settings-panel.open { display: block; }
+        #settings-panel h3 { margin: 0 0 10px; font-size: 1rem; }
+        #settings-panel .setting-row {
+            display: grid; grid-template-columns: 200px 1fr auto;
+            gap: 10px; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid var(--border);
+        }
+        #settings-panel .setting-row:last-child { border-bottom: 0; }
+        #settings-panel .setting-row input[type="text"] {
+            background: var(--bg-input); border: 1px solid var(--border);
+            color: var(--text-primary); padding: 6px 10px; border-radius: 6px;
+            font-family: ui-monospace, monospace; font-size: 0.78rem;
+        }
+        #settings-panel .setting-help { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+        #settings-panel .save-key {
+            background: var(--accent); color: #fff; border: 0;
+            padding: 6px 12px; border-radius: 6px; cursor: pointer;
+            font-size: 0.75rem; font-weight: 600;
+        }
+        #settings-panel .key-status {
+            font-size: 0.72rem; color: var(--success); padding-left: 8px;
+        }
+        #settings-panel .key-status.missing { color: var(--text-muted); }
+        /* ====== Saved searches ====== */
+        #saved-search-bar {
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+            padding: 8px 18px; background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border); font-size: 0.78rem;
+        }
+        #saved-search-bar select { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary); padding: 4px 8px; border-radius: 6px; font-size: 0.78rem; }
+        #saved-search-bar button { padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.74rem; font-weight: 600; border: 1px solid var(--border); background: transparent; color: var(--text-primary); }
+        #saved-search-bar button:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <!-- v6.1.x — shared media player module -->
 <script src="js/poseidon-modules/media-player.js" defer></script>
@@ -971,6 +1062,29 @@
         <button class="btn-search" onclick="findHousing()" title="Geocode work address and zoom map" style="background:linear-gradient(135deg,#14b8a6,#0d9488);">&#x1F4CD; Find Housing</button>
         <button class="btn-search" onclick="applyFilters()">&#x1F50D; Search</button>
         <button class="j1-roster-toggle" onclick="toggleJ1Roster()" type="button" title="Show J-1 candidate housing roster from Zoho">👥 J-1 Roster</button>
+        <button class="settings-toggle" onclick="toggleSettings()" type="button" title="API keys + preferences">⚙️ Settings</button>
+    </div>
+
+    <div id="saved-search-bar">
+      <span style="color:var(--text-secondary);font-weight:600;">🔖 Saved searches:</span>
+      <select id="saved-searches-select" onchange="loadSavedSearch()" style="min-width:200px;"><option value="">— Loading —</option></select>
+      <button onclick="saveCurrentSearch()" title="Save current filters to your OneDrive">💾 Save current</button>
+      <button onclick="_renderSavedDropdown()" title="Refresh from OneDrive">🔄</button>
+    </div>
+
+    <div id="settings-panel" aria-live="polite">
+      <h3>⚙️ Settings · API Keys</h3>
+      <div class="setting-row">
+        <div><b>Walk Score API key</b><div class="setting-help">Get a free 5K/day key at walkscore.com/professional/api-sign-up.php</div></div>
+        <input type="text" id="walkscore_key-input" placeholder="paste key" autocomplete="off">
+        <span><button class="save-key" onclick="saveKey('walkscore_key')">Save</button><span id="walkscore-status" class="key-status missing">— not set</span></span>
+      </div>
+      <div class="setting-row">
+        <div><b>Google Places API key</b><div class="setting-help">Free 28K/mo. Restrict the key to robert-upchurch.github.io for safety.</div></div>
+        <input type="text" id="google_places_key-input" placeholder="paste key" autocomplete="off">
+        <span><button class="save-key" onclick="saveKey('google_places_key')">Save</button><span id="google-places-status" class="key-status missing">— not set</span></span>
+      </div>
+      <div class="setting-help" style="margin-top:8px;">Keys are stored in your browser localStorage only · never committed to the repo · cleared by browser data wipe.</div>
     </div>
 
     <div id="j1-roster-panel" aria-live="polite">
@@ -1523,7 +1637,7 @@ function renderListings() {
 
     countEl.textContent = `Showing ${filteredListings.length} listing${filteredListings.length !== 1 ? 's' : ''}`;
 
-    container.innerHTML = filteredListings.map(l => {
+    window._dedupedView = _dedupeListings(filteredListings); container.innerHTML = window._dedupedView.map(l => {
         const distHtml = workCoords
             ? `<div class="card-distance">📍 ${getDist(l.lat, l.lng).toFixed(1)} mi driving · ~${getTime(l.lat, l.lng)} min</div>`
             : '';
@@ -1533,12 +1647,13 @@ function renderListings() {
         const links = getSourceLinks(l);
 
         return `
-        <div class="listing-card ${selected}" onclick="selectListing(${l.id})" id="card-${l.id}">
+        <div class="listing-card ${selected}" onclick="selectListing(${l.id})" id="card-${l.id}"><input type="checkbox" class="packet-checkbox" data-id="${l.id}" onclick="event.stopPropagation();togglePacket(${l.id}, this.checked)" title="Add to housing packet">
             <div class="card-top">
                 <span class="source-badge ${sourceClass}">${sourceLabel}</span>
                 <div class="card-price">$${l.price.toLocaleString()}<span>/mo</span></div>
             </div>
             ${_renderFmrBadge ? _renderFmrBadge(l) : ''}
+            ${l._mergedSources ? `<div class="multi-source"><span class="multi-source-count">Also listed on:</span>${l._mergedSources.filter(s=>s.id!==l.id).map(s=>`<span class="ms-chip badge-${s.source}">${_sourceLabel(s.source)} $${s.price}</span>`).join('')}</div>` : ''}
             <div class="card-address">${l.address}, ${l.city}</div>
             <div class="card-details">
                 <span class="card-detail">🛏 ${l.beds === 0 ? 'Studio' : l.beds + ' BR'}</span>
@@ -2210,6 +2325,271 @@ async function toggleJ1Roster() {
         _rosterLoaded = true;
     }
 }
+
+
+// ═══════════════════════════════════════════════════════════════════
+// PATH A ENRICHMENT — Phase 3 (Robert 2026-05-10)
+// Cross-source dedup, PDF packet, Walk Score / Places keys, saved searches
+// ═══════════════════════════════════════════════════════════════════
+
+// ───────── #7 Cross-source deduplication ─────────
+// Group listings whose address+city are very close (Levenshtein-ish on
+// normalized address + same city). Merged group renders ONE card with
+// chips for each source. Original listings remain in ALL_LISTINGS but
+// renderListings() iterates the dedup'd view via window._dedupedView.
+function _normalizeAddr(s) {
+    if (!s) return '';
+    return String(s).toLowerCase()
+        .replace(/\b(st|street|ave|avenue|blvd|boulevard|rd|road|dr|drive|ln|lane|pkwy|parkway|hwy|highway|ter|terrace|ct|court|pl|place|sq|square)\b\.?/g, '')
+        .replace(/[^a-z0-9 ]+/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+}
+function _dedupeListings(listings) {
+    const groups = []; // [{primary, sources: [{source, id, price, url}]}, ...]
+    for (const l of listings) {
+        const key = _normalizeAddr(l.address) + '|' + (l.city || '').toLowerCase();
+        let g = groups.find(g => g._key === key && Math.abs((g.primary.lat - l.lat) * 111 * 1000) < 80 && Math.abs((g.primary.lng - l.lng) * 80 * 1000) < 80);
+        if (!g) {
+            g = { _key: key, primary: l, sources: [] };
+            groups.push(g);
+        }
+        g.sources.push({ source: l.source, id: l.id, price: l.price, url: l.url || null });
+    }
+    // Promote merged listings: keep the first as primary, attach sources
+    return groups.map(g => Object.assign({}, g.primary, {
+        _mergedSources: g.sources.length > 1 ? g.sources : null
+    }));
+}
+
+// ───────── #6 PDF "Housing Packet" export ─────────
+const _packetSet = new Set();
+function togglePacket(id, checked) {
+    if (checked) _packetSet.add(id); else _packetSet.delete(id);
+    if (_packetSet.size > 5) {
+        alert('Pick up to 5 listings per packet. Removing the oldest selection.');
+        _packetSet.delete(Array.from(_packetSet)[0]);
+        const cb = document.querySelector(`input.packet-checkbox[data-id="${Array.from(_packetSet)[0]}"]`);
+    }
+    _refreshPacketTray();
+}
+function _refreshPacketTray() {
+    let tray = document.getElementById('packet-tray');
+    if (!tray) {
+        tray = document.createElement('div');
+        tray.id = 'packet-tray';
+        tray.innerHTML = '<span id="packet-count"></span><button class="packet-btn" onclick="exportHousingPacket()">📄 Export PDF</button><button class="packet-btn subtle" onclick="_packetSet.clear();_refreshPacketTray();document.querySelectorAll(\'input.packet-checkbox\').forEach(c=>c.checked=false);">Clear</button>';
+        document.body.appendChild(tray);
+    }
+    if (_packetSet.size === 0) { tray.classList.remove('show'); return; }
+    tray.classList.add('show');
+    document.getElementById('packet-count').textContent = _packetSet.size + ' selected';
+}
+function exportHousingPacket() {
+    const items = Array.from(_packetSet).map(id => ALL_LISTINGS.find(l => l.id === id)).filter(Boolean);
+    if (!items.length) return;
+    const work = (document.getElementById('filter-work-address')?.value || '').trim();
+    const zip = (document.getElementById('filter-zip')?.value || '').trim();
+    const workLabel = [work, zip].filter(Boolean).join(', ') || 'Work address not set';
+    const html = `
+        <div id="packet-print" style="font-family:Inter,Arial,sans-serif;color:#000;background:#fff;">
+          <h1 style="margin:0 0 4px;">CTI Group · J-1 Housing Packet</h1>
+          <div style="font-size:12px;color:#444;margin-bottom:14px;">Generated ${new Date().toLocaleString()} · ${items.length} listing(s) · Work: ${workLabel}</div>
+          ${items.map((l, i) => {
+            const dist = window.workCoords ? `<div><b>Distance from work:</b> ${getDist(l.lat, l.lng).toFixed(1)} mi · ~${getTime(l.lat, l.lng)} min driving</div>` : '';
+            return `<div class="pkt-card">
+              <div style="font-size:14px;font-weight:700;">${i+1}. ${l.address}, ${l.city}</div>
+              <div style="font-size:13px;margin:6px 0;">$${l.price}/mo · ${l.beds} BR / ${l.baths} BA · ${l.sqft || '—'} sqft · ${l.area}</div>
+              <div style="font-size:12px;">Source: ${_sourceLabel(l.source)}${l.contact_phone ? ' · 📞 '+l.contact_phone : ''}${l.contact_name ? ' · 👤 '+l.contact_name : ''}</div>
+              <div style="font-size:12px;">Internet: ${l.utilities.internet?'Included':'Not included'} · Electric: ${l.utilities.electric?'Included':'Not included'}</div>
+              ${dist}
+              ${l.note ? `<div style="font-size:12px;font-style:italic;margin-top:4px;">${l.note}</div>` : ''}
+              ${l.url ? `<div style="font-size:11px;margin-top:4px;color:#0066cc;">${l.url}</div>` : ''}
+            </div>`;
+          }).join('')}
+          <div style="font-size:10px;color:#666;margin-top:20px;text-align:center;">CTI Group Worldwide Services Inc · ceo@cti-usa.com · Project Poseidon</div>
+        </div>`;
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    document.body.appendChild(div);
+    setTimeout(() => {
+        window.print();
+        setTimeout(() => div.remove(), 500);
+    }, 100);
+}
+
+// ───────── #2 + #3 API key settings ─────────
+function _getKey(name) { try { return localStorage.getItem('poseidon_' + name) || ''; } catch(_) { return ''; } }
+function _setKey(name, val) { try { if (val) localStorage.setItem('poseidon_' + name, val); else localStorage.removeItem('poseidon_' + name); _renderSettingsStatus(); } catch(_){} }
+function _renderSettingsStatus() {
+    const ws = _getKey('walkscore_key');
+    const gp = _getKey('google_places_key');
+    const wsEl = document.getElementById('walkscore-status');
+    const gpEl = document.getElementById('google-places-status');
+    if (wsEl) { wsEl.textContent = ws ? '✓ key saved' : '— not set'; wsEl.className = 'key-status' + (ws?'':' missing'); }
+    if (gpEl) { gpEl.textContent = gp ? '✓ key saved' : '— not set'; gpEl.className = 'key-status' + (gp?'':' missing'); }
+}
+function toggleSettings() {
+    const p = document.getElementById('settings-panel');
+    if (p) { p.classList.toggle('open'); _renderSettingsStatus(); }
+}
+function saveKey(name) {
+    const v = (document.getElementById(name + '-input')?.value || '').trim();
+    _setKey(name, v);
+    if (name === 'walkscore_key') alert('Walk Score key saved. Reload listings to pull real scores.');
+    if (name === 'google_places_key') alert('Google Places key saved. Click any listing’s "Show neighborhood" to see actual store names.');
+}
+
+// Walk Score live (when key set) — replaces our heuristic per-listing
+async function _fetchWalkScore(lat, lng, addr) {
+    const key = _getKey('walkscore_key');
+    if (!key) return null;
+    // Walk Score API requires a CORS proxy in browser (their servers block direct CORS).
+    // We use AllOrigins as a public no-key CORS forwarder; it's brittle but free.
+    // For production, the user should deploy a Cloudflare Worker (template provided).
+    const ws = `https://api.walkscore.com/score?format=json&address=${encodeURIComponent(addr)}&lat=${lat}&lon=${lng}&transit=1&bike=1&wsapikey=${encodeURIComponent(key)}`;
+    const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent(ws);
+    try {
+        const r = await fetch(url);
+        if (!r.ok) return null;
+        const json = await r.json();
+        const data = JSON.parse(json.contents);
+        if (!data || data.status !== 1) return null;
+        return {
+            walkScore: data.walkscore, walkLabel: data.description,
+            transitScore: data.transit?.score, bikeScore: data.bike?.score,
+            attribution: data.logo_url
+        };
+    } catch (e) { console.warn('[walkscore] failed:', e); return null; }
+}
+
+// Google Places live (when key set) — real business names instead of counts
+async function _fetchPlaces(lat, lng) {
+    const key = _getKey('google_places_key');
+    if (!key) return null;
+    const types = ['supermarket', 'pharmacy', 'transit_station', 'school', 'restaurant'];
+    const results = {};
+    for (const t of types) {
+        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=1609&type=${t}&key=${encodeURIComponent(key)}`;
+        try {
+            const proxied = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+            const r = await fetch(proxied);
+            const json = await r.json();
+            const data = JSON.parse(json.contents);
+            if (data.status === 'OK') {
+                results[t] = (data.results || []).slice(0, 3).map(p => ({
+                    name: p.name,
+                    rating: p.rating,
+                    vicinity: p.vicinity
+                }));
+            }
+        } catch (e) { console.warn('[places]', t, 'failed:', e); }
+    }
+    return Object.keys(results).length ? results : null;
+}
+
+// ───────── #5 Saved searches ─────────
+const SAVED_SEARCHES_PATH = '/POSEIDON/J1 Housing 2026/saved-searches.json';
+async function _loadSavedSearches() {
+    const token = await _getGraphToken(false);
+    if (!token) return [];
+    try {
+        const url = 'https://graph.microsoft.com/v1.0/me/drive/root:' + encodeURI(SAVED_SEARCHES_PATH) + ':/content';
+        const r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (r.status === 404) return [];
+        if (!r.ok) return [];
+        const json = await r.json();
+        return Array.isArray(json) ? json : (json.searches || []);
+    } catch(_) { return []; }
+}
+async function _saveSavedSearches(arr) {
+    let token = await _getGraphToken(false);
+    if (!token) {
+        // Need write scope. acquire with both Files.Read + Files.ReadWrite
+        try {
+            const r = await window.msalInstance.acquireTokenSilent({
+                scopes: ['Files.ReadWrite'],
+                account: window.o365Account
+            });
+            token = r.accessToken;
+        } catch (e) {
+            try {
+                sessionStorage.setItem('poseidon_resume_save_search', '1');
+                await window.msalInstance.acquireTokenRedirect({
+                    scopes: ['Files.ReadWrite'],
+                    account: window.o365Account
+                });
+                return false;
+            } catch(_) { return false; }
+        }
+    }
+    const url = 'https://graph.microsoft.com/v1.0/me/drive/root:' + encodeURI(SAVED_SEARCHES_PATH) + ':/content';
+    const r = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify(arr)
+    });
+    return r.ok;
+}
+async function saveCurrentSearch() {
+    const name = prompt('Name this search (e.g., "Casa Neos Miami"):');
+    if (!name) return;
+    const search = {
+        name,
+        when: new Date().toISOString(),
+        workAddress: document.getElementById('filter-work-address')?.value || '',
+        zip: document.getElementById('filter-zip')?.value || '',
+        state: document.getElementById('filter-state')?.value || '',
+        city: document.getElementById('filter-city')?.value || '',
+        beds: document.getElementById('filter-beds')?.value || '',
+        baths: document.getElementById('filter-baths')?.value || '',
+        maxPrice: document.getElementById('filter-price')?.value || '',
+        source: activeSource
+    };
+    const all = await _loadSavedSearches();
+    all.push(search);
+    const ok = await _saveSavedSearches(all);
+    if (ok) { alert('Saved: ' + name); _renderSavedDropdown(); }
+    else alert('Save failed (consent flow may have started — try again after the page reloads).');
+}
+async function _renderSavedDropdown() {
+    const sel = document.getElementById('saved-searches-select');
+    if (!sel) return;
+    const all = await _loadSavedSearches();
+    sel.innerHTML = '<option value="">— Saved searches —</option>' +
+        all.map((s, i) => `<option value="${i}">${s.name}</option>`).join('');
+    sel.dataset.list = JSON.stringify(all);
+}
+function loadSavedSearch() {
+    const sel = document.getElementById('saved-searches-select');
+    if (!sel) return;
+    const idx = parseInt(sel.value, 10);
+    if (isNaN(idx)) return;
+    const list = JSON.parse(sel.dataset.list || '[]');
+    const s = list[idx];
+    if (!s) return;
+    const set = (id, v) => { const e = document.getElementById(id); if (e) e.value = v || ''; };
+    set('filter-work-address', s.workAddress);
+    set('filter-zip', s.zip);
+    set('filter-state', s.state);
+    set('filter-city', s.city);
+    set('filter-beds', s.beds);
+    set('filter-baths', s.baths);
+    set('filter-price', s.maxPrice);
+    if (s.workAddress || s.zip) findHousing(); else applyFilters();
+}
+(function _resumeSavedSearches(){
+    function go(){
+        try {
+            if (sessionStorage.getItem('poseidon_resume_save_search') === '1') {
+                sessionStorage.removeItem('poseidon_resume_save_search');
+                setTimeout(() => alert('Files.ReadWrite consent granted. Click Save Search again to complete.'), 600);
+            }
+            _renderSavedDropdown();
+        } catch(_){}
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+    else go();
+})();
 
 // ===== LAUNCH =====
 document.addEventListener('DOMContentLoaded', init);
