@@ -773,6 +773,79 @@
             transition: opacity 0.15s;
         }
         .short-term-cta a:hover { opacity: 0.9; }
+
+        /* ===== FMR badge per listing card ===== */
+        .fmr-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 9px; border-radius: 999px;
+            font-size: 0.7rem; font-weight: 700;
+            margin-top: 6px; margin-right: 6px;
+            border: 1px solid transparent;
+        }
+        .fmr-under  { background: rgba(16,185,129,0.15); color: #10b981; border-color: rgba(16,185,129,0.4); }
+        .fmr-at     { background: rgba(245,158,11,0.15); color: #f59e0b; border-color: rgba(245,158,11,0.4); }
+        .fmr-over   { background: rgba(239,68,68,0.15);  color: #ef4444; border-color: rgba(239,68,68,0.4); }
+        .fmr-na     { background: rgba(148,163,184,0.12); color: #94a3b8; border-color: rgba(148,163,184,0.3); }
+
+        /* ===== J-1 Roster toggle + panel ===== */
+        .j1-roster-toggle {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 14px; margin: 8px 0 0 8px;
+            background: linear-gradient(135deg, #14b8a6, #0d9488);
+            color: #fff; border: 0; border-radius: 8px;
+            font-size: 0.82rem; font-weight: 600; cursor: pointer;
+            box-shadow: 0 2px 8px rgba(13,148,136,0.3);
+            transition: all 0.15s;
+        }
+        .j1-roster-toggle:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(13,148,136,0.45); }
+        #j1-roster-panel {
+            display: none;
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 12px; padding: 16px 18px;
+            margin: 8px 18px;
+        }
+        #j1-roster-panel.open { display: block; }
+        #j1-roster-panel h3 {
+            margin: 0 0 6px; font-size: 1rem; display: flex; align-items: center; gap: 8px;
+        }
+        #j1-roster-panel .roster-meta {
+            font-size: 0.72rem; color: var(--text-muted); margin-bottom: 10px;
+        }
+        #j1-roster-table {
+            width: 100%; border-collapse: collapse; font-size: 0.78rem;
+        }
+        #j1-roster-table th {
+            text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border);
+            color: var(--text-secondary); font-weight: 600;
+            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+            position: sticky; top: 0; background: var(--bg-secondary);
+        }
+        #j1-roster-table td {
+            padding: 6px 8px; border-bottom: 1px solid var(--border);
+            color: var(--text-primary); vertical-align: top;
+        }
+        #j1-roster-table tr:hover td { background: var(--accent-bg); }
+        #j1-roster-table .status-pill {
+            display: inline-block; padding: 2px 8px; border-radius: 999px;
+            font-size: 0.68rem; font-weight: 600;
+            background: rgba(20,184,166,0.15); color: #14b8a6;
+        }
+        #j1-roster-table .row-actions a, #j1-roster-table .row-actions button {
+            display: inline-block; padding: 3px 8px; margin-right: 4px;
+            font-size: 0.68rem; font-weight: 600; cursor: pointer;
+            border-radius: 5px; text-decoration: none;
+            border: 1px solid var(--border); color: var(--text-primary); background: transparent;
+            transition: all 0.15s;
+        }
+        #j1-roster-table .row-actions a:hover, #j1-roster-table .row-actions button:hover {
+            background: var(--accent-bg); border-color: var(--accent); color: var(--accent);
+        }
+        .roster-error {
+            padding: 10px 12px; border-radius: 8px;
+            background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3);
+            color: #fca5a5; font-size: 0.8rem;
+        }
+        .roster-loading { font-size: 0.85rem; color: var(--text-muted); padding: 20px 0; text-align: center; }
 </style>
 <!-- v6.1.x — shared media player module -->
 <script src="js/poseidon-modules/media-player.js" defer></script>
@@ -897,6 +970,13 @@
         </div>
         <button class="btn-search" onclick="findHousing()" title="Geocode work address and zoom map" style="background:linear-gradient(135deg,#14b8a6,#0d9488);">&#x1F4CD; Find Housing</button>
         <button class="btn-search" onclick="applyFilters()">&#x1F50D; Search</button>
+        <button class="j1-roster-toggle" onclick="toggleJ1Roster()" type="button" title="Show J-1 candidate housing roster from Zoho">👥 J-1 Roster</button>
+    </div>
+
+    <div id="j1-roster-panel" aria-live="polite">
+      <h3>👥 J-1 Housing Roster <span class="roster-meta" id="roster-meta-inline"></span></h3>
+      <div class="roster-meta" id="roster-meta">Loading from your OneDrive…</div>
+      <div id="roster-body"><div class="roster-loading">Loading…</div></div>
     </div>
 
     <!-- SOURCE TABS -->
@@ -1458,6 +1538,7 @@ function renderListings() {
                 <span class="source-badge ${sourceClass}">${sourceLabel}</span>
                 <div class="card-price">$${l.price.toLocaleString()}<span>/mo</span></div>
             </div>
+            ${_renderFmrBadge ? _renderFmrBadge(l) : ''}
             <div class="card-address">${l.address}, ${l.city}</div>
             <div class="card-details">
                 <span class="card-detail">🛏 ${l.beds === 0 ? 'Studio' : l.beds + ' BR'}</span>
@@ -1909,6 +1990,196 @@ function _refreshShortTermCta() {
         <span>\ud83c\udfe8 <b>Need temporary housing while searching?</b> Monthly stays near ${label}.</span>
         <a href="${url}" target="_blank" rel="noopener">Booking.com \u2192</a>
     </div>`;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// PATH A ENRICHMENT — Phase 2
+// FMR badge + J-1 Housing Roster (Robert 2026-05-10)
+// ═══════════════════════════════════════════════════════════════════
+
+let _fmrData = null;
+let _fmrLoadPromise = null;
+async function _loadFmr() {
+    if (_fmrData) return _fmrData;
+    if (_fmrLoadPromise) return _fmrLoadPromise;
+    _fmrLoadPromise = (async () => {
+        try {
+            const r = await fetch('data/fmr-hud.json', { cache: 'force-cache' });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            _fmrData = await r.json();
+            return _fmrData;
+        } catch (e) {
+            console.warn('[FMR] load failed:', e);
+            _fmrData = { areas: {}, nameIndex: {} };
+            return _fmrData;
+        }
+    })();
+    return _fmrLoadPromise;
+}
+
+// Match a listing's "City, ST" to the best FMR area.
+// FMR area names look like:
+//   "Miami-Miami Beach-Kendall, FL HUD Metro FMR Area"
+//   "Orlando-Kissimmee-Sanford, FL MSA"
+// Strategy: extract city + state from listing.city, search for an FMR area
+// whose name contains both the city token AND ", ST" somewhere.
+function _findFmrArea(listingCity) {
+    if (!_fmrData || !listingCity) return null;
+    const parts = listingCity.split(',').map(s => s.trim());
+    if (parts.length < 2) return null;
+    const city = parts[0].toLowerCase();
+    const st = parts[1].toUpperCase().slice(0, 2);
+    const stMarker = ', ' + st;
+    let best = null;
+    for (const [nameLc, code] of Object.entries(_fmrData.nameIndex)) {
+        const area = _fmrData.areas[code];
+        if (!area) continue;
+        const fullName = area.area || '';
+        if (!fullName.includes(stMarker)) continue;
+        if (nameLc.includes(city)) {
+            // Prefer the shortest match (more specific)
+            if (!best || fullName.length < best.area.length) best = area;
+        }
+    }
+    return best;
+}
+
+function _renderFmrBadge(listing) {
+    if (!_fmrData) return '';
+    const area = _findFmrArea(listing.city);
+    if (!area) return `<span class="fmr-badge fmr-na" title="No FMR area match">FMR n/a</span>`;
+    const beds = String(Math.max(0, Math.min(4, listing.beds || 0)));
+    const fmr = (area.rents || {})[beds];
+    if (!fmr || !listing.price) return `<span class="fmr-badge fmr-na">FMR n/a</span>`;
+    const pct = ((listing.price - fmr) / fmr) * 100;
+    let cls, label;
+    if (pct < -7)       { cls = 'fmr-under'; label = `\ud83d\udfe2 ${Math.abs(Math.round(pct))}% under FMR`; }
+    else if (pct > 7)   { cls = 'fmr-over';  label = `\ud83d\udd34 ${Math.round(pct)}% over FMR`; }
+    else                { cls = 'fmr-at';    label = `\ud83d\udfe1 At FMR`; }
+    return `<span class="fmr-badge ${cls}" title="HUD ${beds}BR FMR for ${area.area}: $${fmr}/mo">${label}</span>`;
+}
+
+// Kick off FMR load on page ready (non-blocking, then re-render listings
+// once available so the badges appear).
+(function _kickFmr(){
+    function go(){ _loadFmr().then(() => { try { renderListings(); } catch(_){} }); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+    else go();
+})();
+
+// ═══════════ J-1 Housing Roster (OneDrive via Graph) ═══════════
+// Reads /POSEIDON/J1 Housing 2026/zoho-j1-roster.json from the signed-in
+// user's OneDrive using the existing MSAL token. Data never leaves the
+// M365 tenant; only authenticated CTI staff can fetch it.
+const ROSTER_FILE_PATH = '/POSEIDON/J1 Housing 2026/zoho-j1-roster.json';
+
+async function _getGraphToken() {
+    if (!window.msalInstance || !window.o365Account) return null;
+    try {
+        const r = await window.msalInstance.acquireTokenSilent({
+            scopes: ['Files.Read'],
+            account: window.o365Account
+        });
+        return r.accessToken;
+    } catch (e) {
+        console.warn('[roster] silent token failed:', e);
+        return null;
+    }
+}
+
+async function _fetchRoster() {
+    const token = await _getGraphToken();
+    if (!token) {
+        return { error: 'not-signed-in', message: 'Click \"Connect 365\" in the top bar to sign in, then try again.' };
+    }
+    const url = 'https://graph.microsoft.com/v1.0/me/drive/root:' + encodeURI(ROSTER_FILE_PATH) + ':/content';
+    try {
+        const r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (r.status === 404) {
+            return { error: 'not-found', message: 'Roster file not yet synced to OneDrive. Run the snapshot from Claude Code.' };
+        }
+        if (!r.ok) {
+            return { error: 'graph-error', message: 'Graph API returned ' + r.status };
+        }
+        return await r.json();
+    } catch (e) {
+        console.error('[roster] fetch failed:', e);
+        return { error: 'network', message: 'Network error: ' + e.message };
+    }
+}
+
+function _renderRoster(payload) {
+    const body = document.getElementById('roster-body');
+    const meta = document.getElementById('roster-meta');
+    const inlineMeta = document.getElementById('roster-meta-inline');
+    if (!body || !meta) return;
+
+    if (payload.error) {
+        meta.textContent = '';
+        if (inlineMeta) inlineMeta.textContent = '';
+        let actionHtml = '';
+        if (payload.error === 'not-signed-in') {
+            actionHtml = '<button class="row-actions" onclick="document.getElementById(\'ptb-connect-365\').click()" style="margin-top:8px;padding:5px 10px;font-size:0.78rem;">Connect 365</button>';
+        }
+        body.innerHTML = `<div class="roster-error"><b>${payload.error}</b><br>${payload.message}${actionHtml}</div>`;
+        return;
+    }
+    const recs = payload.records || [];
+    const synced = payload.synced_utc ? new Date(payload.synced_utc).toLocaleString() : 'unknown';
+    meta.textContent = `Source: ${payload.source || 'Zoho'} \u00b7 ${recs.length} records \u00b7 synced ${synced} \u00b7 file: OneDrive ${ROSTER_FILE_PATH}`;
+    if (inlineMeta) inlineMeta.textContent = `(${recs.length} candidates)`;
+
+    if (!recs.length) {
+        body.innerHTML = '<div class="roster-error">Roster file is empty.</div>';
+        return;
+    }
+    const editTpl = payload.zoho_record_url_template || 'https://crm.zoho.com/crm/org877448763/tab/CustomModule13/{id}';
+    const rows = recs.map(r => {
+        const fullName = [(r.First_Name || '').trim(), (r.Name || '').trim()].filter(Boolean).join(' ') || '(unknown)';
+        const status = r.J1_Application_Status || '\u2014';
+        const country = r.Country || '\u2014';
+        const phone = r.Phone_Number || '\u2014';
+        const sponsor = r.Processing_Sponsor || '\u2014';
+        const host = r.Hosting_Company || '\u2014';
+        const docs = r.Documents_Status || '\u2014';
+        const housing = r.Housing_Address || (r.Housing_Landlord ? r.Housing_Landlord : '<span style="color:var(--text-muted);">TBD</span>');
+        const editUrl = editTpl.replace('{id}', r.id);
+        const phoneTel = phone.replace(/[^0-9+]/g, '');
+        return `<tr>
+            <td><b>${fullName}</b><div style="color:var(--text-muted);font-size:0.7rem;">${r.Position_Applied || ''}</div></td>
+            <td>${country}</td>
+            <td><span class="status-pill">${status}</span></td>
+            <td>${sponsor}</td>
+            <td>${host}</td>
+            <td>${phone !== '\u2014' ? `<a href="tel:${phoneTel}" style="color:var(--accent);text-decoration:none;">${phone}</a>` : '\u2014'}</td>
+            <td>${docs}</td>
+            <td>${housing}</td>
+            <td class="row-actions" style="white-space:nowrap;">
+              <a href="${editUrl}" target="_blank" rel="noopener" title="Open record in Zoho CRM">\u270F\ufe0f Edit in Zoho</a>
+              <button onclick="window.scrollTo({top:0,behavior:'smooth'});document.getElementById('filter-work-address')?.focus();" title="Jump to housing search">\ud83c\udfe0 Find Housing</button>
+            </td>
+        </tr>`;
+    }).join('');
+    body.innerHTML = `<div style="overflow-x:auto;max-height:62vh;overflow-y:auto;"><table id="j1-roster-table">
+        <thead><tr>
+          <th>Candidate</th><th>Country</th><th>Status</th><th>Sponsor</th>
+          <th>Hosting</th><th>Phone</th><th>Docs</th><th>Housing</th><th>Actions</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+    </table></div>`;
+}
+
+let _rosterLoaded = false;
+async function toggleJ1Roster() {
+    const panel = document.getElementById('j1-roster-panel');
+    if (!panel) return;
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open') && !_rosterLoaded) {
+        const data = await _fetchRoster();
+        _renderRoster(data);
+        _rosterLoaded = true;
+    }
 }
 
 // ===== LAUNCH =====
