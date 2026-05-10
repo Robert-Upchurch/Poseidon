@@ -2118,7 +2118,7 @@ async function _getGraphToken(allowRedirect) {
 })();
 
 async function _fetchRoster() {
-    const token = await _getGraphToken();
+    const token = await _getGraphToken(true);
     if (!token) {
         return { error: 'not-signed-in', message: 'Click \"Connect 365\" in the top bar to sign in, then try again.' };
     }
