@@ -2074,7 +2074,7 @@ function _renderFmrBadge(listing) {
 // M365 tenant; only authenticated CTI staff can fetch it.
 const ROSTER_FILE_PATH = '/POSEIDON/J1 Housing 2026/zoho-j1-roster.json';
 
-async function _getGraphToken() {
+async function _getGraphToken(allowRedirect) {
     if (!window.msalInstance || !window.o365Account) return null;
     try {
         const r = await window.msalInstance.acquireTokenSilent({
@@ -2083,10 +2083,39 @@ async function _getGraphToken() {
         });
         return r.accessToken;
     } catch (e) {
-        console.warn('[roster] silent token failed:', e);
+        console.warn('[roster] silent token failed:', e && e.message);
+        // Cross-redirect-uri cache miss is expected the first time this dashboard
+        // is opened by a user who only signed in on V6/J1 System. Fall back to
+        // redirect (per BASELINE: never popup-based). Returns null because the
+        // page will navigate away.
+        if (allowRedirect) {
+            try {
+                sessionStorage.setItem('poseidon_resume_j1_roster', '1');
+                await window.msalInstance.acquireTokenRedirect({
+                    scopes: ['Files.Read'],
+                    account: window.o365Account
+                });
+            } catch (e2) {
+                console.error('[roster] redirect token also failed:', e2);
+            }
+        }
         return null;
     }
 }
+
+// On returning from the redirect, auto-open the roster panel.
+(function _resumeRoster(){
+    function go(){
+        try {
+            if (sessionStorage.getItem('poseidon_resume_j1_roster') === '1') {
+                sessionStorage.removeItem('poseidon_resume_j1_roster');
+                setTimeout(() => { try { toggleJ1Roster(); } catch(_){} }, 600);
+            }
+        } catch(_){}
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+    else go();
+})();
 
 async function _fetchRoster() {
     const token = await _getGraphToken();
