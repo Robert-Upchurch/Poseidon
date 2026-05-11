@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "description": "Cloudflare Worker (poseidon-proxy) connection config consumed by every Poseidon dashboard. The X-Dashboard-Token value is NOT stored here — it lives per-device in localStorage poseidon-dashboard-token, configured via each dashboard's Settings panel.",
+    "schema_version": "1.0",
+    "spec": "docs/INTEGRATION-CONTRACT.md"
+  },
+  "worker_url": "https://poseidon-proxy.robertupchurch6121.workers.dev",
+  "routes": {
+    "kpi_summary": "/api/kpi-summary?scope={master|finance|marketing|portals}",
+    "portal_intake": "/api/portal-intake/{cruise|ghr}",
+    "portal_status": "/api/portal-status/{token}",
+    "health": "/health"
+  },
+  "auth_header": "X-Dashboard-Token",
+  "deployed_at": "2026-05-11T22:17:00Z"
+}
