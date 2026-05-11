@@ -1007,6 +1007,36 @@
         #saved-search-bar select { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary); padding: 4px 8px; border-radius: 6px; font-size: 0.78rem; }
         #saved-search-bar button { padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.74rem; font-weight: 600; border: 1px solid var(--border); background: transparent; color: var(--text-primary); }
         #saved-search-bar button:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Roster: data-gap banner + needs-recruit + actions header */
+        #j1-roster-panel .data-gap-banner {
+            background: rgba(255, 167, 38, 0.10);
+            border-left: 3px solid #f57c00;
+            padding: 10px 14px; margin-bottom: 12px;
+            font-size: 0.82rem; border-radius: 6px;
+        }
+        #j1-roster-panel .data-gap-banner b { color: #f57c00; }
+        #j1-roster-panel .roster-actions-header {
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        #j1-roster-panel .roster-actions-header button,
+        #j1-roster-panel .roster-actions-header a {
+            background: rgba(20,184,166,0.10); color: var(--accent);
+            border: 1px solid rgba(20,184,166,0.4); border-radius: 6px;
+            padding: 5px 12px; cursor: pointer; font-size: 0.78rem; font-weight: 600;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+        }
+        #j1-roster-panel .roster-actions-header button:hover,
+        #j1-roster-panel .roster-actions-header a:hover { background: rgba(20,184,166,0.18); }
+        #j1-roster-panel .needs-recruit {
+            background: rgba(255, 167, 38, 0.15); color: #f57c00;
+            padding: 1px 6px; border-radius: 4px;
+            font-size: 0.68rem; font-style: italic; white-space: nowrap;
+        }
+        #j1-roster-table td { white-space: nowrap; font-size: 0.78rem; padding: 6px 8px; }
+        #j1-roster-table td.col-wrap { white-space: normal; max-width: 240px; min-width: 180px; }
+        #j1-roster-table th { font-size: 0.72rem; padding: 8px 8px; position: sticky; top: 0; background: var(--bg-card); z-index: 2; }
 </style>
     <!-- MSAL for staff M365 sign-in (same client_id + tenant as V6) -->
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.6.0/lib/msal-browser.min.js"></script>
@@ -2451,7 +2481,7 @@ function _renderRoster(payload) {
     }
     const recs = payload.records || [];
     const synced = payload.synced_utc ? new Date(payload.synced_utc).toLocaleString() : 'unknown';
-    meta.textContent = `Source: ${payload.source || 'Zoho'} \u00b7 ${recs.length} records \u00b7 synced ${synced} \u00b7 file: OneDrive ${ROSTER_FILE_PATH}`;
+    meta.textContent = `Source: ${payload.source || 'Zoho'} \u00b7 ${recs.length} records \u00b7 synced ${synced}`;
     if (inlineMeta) inlineMeta.textContent = `(${recs.length} candidates)`;
 
     if (!recs.length) {
@@ -2459,40 +2489,88 @@ function _renderRoster(payload) {
         return;
     }
     const editTpl = payload.zoho_record_url_template || 'https://crm.zoho.com/crm/org877448763/tab/CustomModule13/{id}';
+    const moduleUrl = editTpl.replace('/{id}', '');
+
+    // Data-gap banner
+    const fieldsNotInModule = payload.fields_not_in_module || [];
+    const fieldsEmpty = payload.fields_in_module_but_empty_all_records || [];
+    let gapsBanner = '';
+    if (fieldsNotInModule.length || fieldsEmpty.length || payload.data_layer_note) {
+        gapsBanner = `<div class="data-gap-banner">
+            <b>\u26A0 Data layer note</b> \u2014 ${payload.data_layer_note || ''}
+            ${fieldsNotInModule.length ? '<div style="margin-top:4px;font-size:0.75rem;"><b>Fields not in CRM module:</b> ' + fieldsNotInModule.join(', ') + ' \u2014 these will appear as <span class=\"needs-recruit\">needs Recruit</span> below until Zoho Recruit OAuth is wired via the Cloudflare Worker.</div>' : ''}
+            ${fieldsEmpty.length ? '<div style="margin-top:4px;font-size:0.75rem;"><b>Empty for all records:</b> ' + fieldsEmpty.join(', ') + ' \u2014 these fields exist in CRM but no record has them populated.</div>' : ''}
+          </div>`;
+    }
+
+    // Actions header
+    const actionsHeader = `<div class="roster-actions-header">
+        <button onclick="refreshRoster()" title="Re-fetch the snapshot from OneDrive">\ud83d\udd04 Refresh from OneDrive</button>
+        <a href="${moduleUrl}" target="_blank" rel="noopener" title="Open the J1 Participants module in Zoho CRM in a new tab">\u2197 Open module in Zoho CRM</a>
+        <span style="color:var(--text-muted);font-size:0.72rem;margin-left:4px;">Click any "Edit in Zoho" to open the record. Click any phone/email to call/email.</span>
+    </div>`;
+
+    const RECRUIT_MARK = '<span class="needs-recruit" title="Not in Zoho CRM J1_Participants1 module \u2014 likely tracked in Zoho Recruit CustomModule2; will auto-populate once Recruit OAuth is wired">needs Recruit</span>';
+    const EMPTY = '<span style="color:var(--text-muted);">\u2014</span>';
+    const cell = (val) => val ? String(val) : EMPTY;
+
     const rows = recs.map(r => {
         const fullName = [(r.First_Name || '').trim(), (r.Name || '').trim()].filter(Boolean).join(' ') || '(unknown)';
-        const status = r.J1_Application_Status || '\u2014';
-        const country = r.Country || '\u2014';
-        const phone = r.Phone_Number || '\u2014';
-        const sponsor = r.Processing_Sponsor || '\u2014';
-        const host = r.Hosting_Company || '\u2014';
-        const docs = r.Documents_Status || '\u2014';
-        const housing = r.Housing_Address || (r.Housing_Landlord ? r.Housing_Landlord : '<span style="color:var(--text-muted);">TBD</span>');
-        const editUrl = editTpl.replace('{id}', r.id);
+        const phone = r.Phone_Number || '';
         const phoneTel = phone.replace(/[^0-9+]/g, '');
+        const editUrl = editTpl.replace('{id}', r.id);
         return `<tr>
-            <td><b>${fullName}</b><div style="color:var(--text-muted);font-size:0.7rem;">${r.Position_Applied || ''}</div></td>
-            <td>${country}</td>
-            <td><span class="status-pill">${status}</span></td>
-            <td>${sponsor}</td>
-            <td>${host}</td>
-            <td>${phone !== '\u2014' ? `<a href="tel:${phoneTel}" style="color:var(--accent);text-decoration:none;">${phone}</a>` : '\u2014'}</td>
-            <td>${docs}</td>
-            <td>${housing}</td>
-            <td class="row-actions" style="white-space:nowrap;">
-              <a href="${editUrl}" target="_blank" rel="noopener" title="Open record in Zoho CRM">\u270F\ufe0f Edit in Zoho</a>
-              <button onclick="window.scrollTo({top:0,behavior:'smooth'});document.getElementById('filter-work-address')?.focus();" title="Jump to housing search">\ud83c\udfe0 Find Housing</button>
+            <td style="white-space:nowrap;">
+              <a href="${editUrl}" target="_blank" rel="noopener" class="row-actions" style="padding:3px 8px;font-size:0.72rem;">\u270F\ufe0f Edit in Zoho</a>
             </td>
+            <td><b>${fullName}</b><div style="color:var(--text-muted);font-size:0.66rem;">${r.Position_Applied || ''}</div></td>
+            <td>${cell(r.First_Name)}</td>
+            <td>${cell(r.Name)}</td>
+            <td>${phoneTel ? `<a href="tel:${phoneTel}" style="color:var(--accent);text-decoration:none;">${phone}</a>` : EMPTY}</td>
+            <td>${r.Email ? `<a href="mailto:${r.Email}" style="color:var(--accent);text-decoration:none;">${r.Email}</a>` : EMPTY}</td>
+            <td>${cell(r.Country)}</td>
+            <td>${cell(r.Processing_Sponsor)}</td>
+            <td>${r.J1_Application_Status ? `<span class="status-pill">${r.J1_Application_Status}</span>` : EMPTY}</td>
+            <td>${cell(r.Hosting_Company)}</td>
+            <td class="col-wrap">${cell(r.Housing_Address)}</td>
+            <td>${RECRUIT_MARK}</td>
+            <td>${RECRUIT_MARK}</td>
+            <td>${cell(r.Housing_Landlord)}</td>
+            <td>${RECRUIT_MARK}</td>
+            <td>${RECRUIT_MARK}</td>
+            <td>${RECRUIT_MARK}</td>
+            <td>${RECRUIT_MARK}</td>
+            <td>${RECRUIT_MARK}</td>
+            <td>${cell(r.Documents_Status)}</td>
         </tr>`;
     }).join('');
-    body.innerHTML = `<div style="overflow-x:auto;max-height:62vh;overflow-y:auto;"><table id="j1-roster-table">
+    body.innerHTML = gapsBanner + actionsHeader + `<div style="overflow-x:auto;overflow-y:auto;max-height:62vh;border:1px solid var(--border);border-radius:8px;"><table id="j1-roster-table">
         <thead><tr>
-          <th>Candidate</th><th>Country</th><th>Status</th><th>Sponsor</th>
-          <th>Hosting</th><th>Phone</th><th>Docs</th><th>Housing</th><th>Actions</th>
+          <th>Action</th>
+          <th>Name + Position</th>
+          <th>First</th><th>Last</th>
+          <th>Phone</th><th>Email</th>
+          <th>Country</th><th>Sponsor</th><th>App Status</th>
+          <th>Hosting Company</th>
+          <th>Housing Address</th><th>City (USA)</th><th>State (USA)</th>
+          <th>Housing Landlord</th>
+          <th>Trip From</th><th>Trip To</th>
+          <th>Visa Status</th><th>Program Start</th><th>Program End</th>
+          <th>Docs Status</th>
         </tr></thead>
         <tbody>${rows}</tbody>
     </table></div>`;
 }
+
+async function refreshRoster() {
+    const body = document.getElementById('roster-body');
+    if (body) body.innerHTML = '<div class="roster-error">\u23F3 Reloading from OneDrive...</div>';
+    _rosterLoaded = false;
+    const data = await _fetchRoster();
+    _renderRoster(data);
+    _rosterLoaded = true;
+}
+window.refreshRoster = refreshRoster;
 
 let _rosterLoaded = false;
 async function toggleJ1Roster() {
