@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poseidon — Org Hierarchy</title>
+<script>(function(){try{var t=localStorage.getItem('poseidon-theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){}})();</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cti-teal:#14b8a6;--cti-teal-hover:#0d9488;--cti-teal-soft:#2dd4bf;
+    --cti-navy:#0a1628;--cti-navy-panel:#0f1e2e;--cti-navy-card:#122336;
+  }
+  html,body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;}
+  /* Dark (default) */
+  html.dark body{background:var(--cti-navy);color:#fafafa;}
+  html.dark .panel{background:var(--cti-navy-panel);border-color:#1e293b;}
+  html.dark .card{background:var(--cti-navy-card);}
+  html.dark .muted{color:#93c5fd;}
+  html.dark .btn{background:var(--cti-teal);color:#0a1628;}
+  html.dark .btn:hover{background:var(--cti-teal-hover);color:#fff;}
+  /* Light */
+  html:not(.dark) body{background:#f8fafc;color:#0f172a;}
+  html:not(.dark) .panel{background:#fff;border-color:#e2e8f0;}
+  html:not(.dark) .card{background:#f1f5f9;}
+  html:not(.dark) .muted{color:#1e40af;}
+  html:not(.dark) .btn{background:var(--cti-teal);color:#fff;}
+  html:not(.dark) .btn:hover{background:var(--cti-teal-hover);color:#fff;}
+
+  /* Layout */
+  .wrap{max-width:1440px;margin:0 auto;padding:24px;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;}
+  h1{font-size:24px;font-weight:700;margin:0;letter-spacing:-0.01em;}
+  .sub{font-size:13px;}
+  .panel{border-radius:16px;border:1px solid;padding:24px;}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px;font-size:12px;}
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .sw{width:14px;height:14px;border-radius:3px;}
+  .ctrl{display:flex;gap:8px;align-items:center;}
+  .btn{border:none;cursor:pointer;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;transition:background .15s,color .15s;}
+  .toggle{background:transparent;border:1px solid currentColor;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:inherit;}
+  /* SVG nodes */
+  svg.tree{width:100%;height:auto;display:block;}
+  svg.tree text{font-family:'Inter',sans-serif;pointer-events:none;}
+  svg.tree .node{cursor:pointer;transition:filter .15s,transform .15s;transform-origin:center;transform-box:fill-box;}
+  svg.tree .node:hover{filter:brightness(1.15);}
+  svg.tree .node:hover rect{stroke-width:2.5;}
+  svg.tree .label{font-size:13px;font-weight:600;}
+  svg.tree .sublabel{font-size:10.5px;font-weight:500;}
+  svg.tree .link{fill:none;stroke-width:1.5;}
+
+  /* Node + link colors keyed off the dark/light root */
+  html.dark .nm-parent rect{fill:#14b8a6;stroke:#5eead4;}
+  html.dark .nm-parent text{fill:#0a1628;}
+  html.dark .nm-group rect{fill:#1e293b;stroke:#334155;}
+  html.dark .nm-group text{fill:#e0e7ff;}
+  html.dark .nm-div rect{fill:#122336;stroke:#1e40af;}
+  html.dark .nm-div text{fill:#bfdbfe;}
+  html.dark .nm-cf rect{fill:#0f1e2e;stroke:#14b8a6;}
+  html.dark .nm-cf text{fill:#5eead4;}
+  html.dark .nm-reserved rect{fill:#0a1628;stroke:#475569;stroke-dasharray:4 3;}
+  html.dark .nm-reserved text{fill:#94a3b8;}
+  html.dark svg.tree .link{stroke:#334155;}
+
+  html:not(.dark) .nm-parent rect{fill:#14b8a6;stroke:#0d9488;}
+  html:not(.dark) .nm-parent text{fill:#ffffff;}
+  html:not(.dark) .nm-group rect{fill:#e2e8f0;stroke:#94a3b8;}
+  html:not(.dark) .nm-group text{fill:#1e293b;}
+  html:not(.dark) .nm-div rect{fill:#dbeafe;stroke:#3b82f6;}
+  html:not(.dark) .nm-div text{fill:#0c1e3e;}
+  html:not(.dark) .nm-cf rect{fill:#ccfbf1;stroke:#0d9488;}
+  html:not(.dark) .nm-cf text{fill:#134e4a;}
+  html:not(.dark) .nm-reserved rect{fill:#f1f5f9;stroke:#94a3b8;stroke-dasharray:4 3;}
+  html:not(.dark) .nm-reserved text{fill:#64748b;}
+  html:not(.dark) svg.tree .link{stroke:#cbd5e1;}
+
+  @media (max-width:640px){
+    .wrap{padding:12px;}
+    h1{font-size:18px;}
+    .legend{font-size:11px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Poseidon — CTI Group Hierarchy</h1>
+      <div class="sub muted">Click a node to open its dashboard · Updated 2026-05-11</div>
+    </div>
+    <div class="ctrl">
+      <button class="toggle" id="theme-btn" aria-label="Toggle theme">☼ / ☾</button>
+    </div>
+  </header>
+
+  <div class="panel">
+    <!--
+      Hand-drawn SVG hierarchy.
+      Coordinate system: viewBox 0 0 1440 720.
+      Layout (top-down):
+        Row 0  (y=40):   Parent (CTI Group), 1 node centered at x=720
+        Row 1  (y=150):  Two group nodes (DIVISIONS, CORPORATE FUNCTIONS)
+        Row 2a (y=290):  8 division cards in two rows
+        Row 2b (y=430):  8 corporate-function cards in two rows
+      All link paths are simple polylines drawn before the nodes.
+    -->
+    <svg class="tree" viewBox="0 0 1440 720" preserveAspectRatio="xMidYMid meet" role="img" aria-label="CTI Group hierarchy">
+      <title>CTI Group hierarchy: parent, two groupings (Divisions + Corporate Functions), eight nodes each</title>
+
+      <!-- Links: parent → groups -->
+      <path class="link" d="M 720 75 V 110 H 360 V 130" />
+      <path class="link" d="M 720 75 V 110 H 1080 V 130" />
+
+      <!-- Links: DIVISIONS group → 8 division cards (4 top, 4 bottom) -->
+      <!-- Top row x centers: 130, 290, 450, 610 -->
+      <path class="link" d="M 360 185 V 215 H 130 V 250" />
+      <path class="link" d="M 360 185 V 215 H 290 V 250" />
+      <path class="link" d="M 360 185 V 215 H 450 V 250" />
+      <path class="link" d="M 360 185 V 215 H 610 V 250" />
+      <!-- Bottom row x centers: 130, 290, 450, 610 -->
+      <path class="link" d="M 360 185 V 405 H 130 V 405" />
+      <path class="link" d="M 360 185 V 405 H 290 V 405" />
+      <path class="link" d="M 360 185 V 405 H 450 V 405" />
+      <path class="link" d="M 360 185 V 405 H 610 V 405" />
+
+      <!-- Links: CORPORATE FUNCTIONS group → 8 cf cards -->
+      <!-- Top row x centers: 830, 990, 1150, 1310 -->
+      <path class="link" d="M 1080 185 V 215 H 830 V 250" />
+      <path class="link" d="M 1080 185 V 215 H 990 V 250" />
+      <path class="link" d="M 1080 185 V 215 H 1150 V 250" />
+      <path class="link" d="M 1080 185 V 215 H 1310 V 250" />
+      <!-- Bottom row x centers: 830, 990, 1150, 1310 -->
+      <path class="link" d="M 1080 185 V 405 H 830 V 405" />
+      <path class="link" d="M 1080 185 V 405 H 990 V 405" />
+      <path class="link" d="M 1080 185 V 405 H 1150 V 405" />
+      <path class="link" d="M 1080 185 V 405 H 1310 V 405" />
+
+      <!-- Parent node -->
+      <g class="node nm-parent" data-href="poseidon-master-dashboard.html" tabindex="0">
+        <rect x="540" y="30" width="360" height="46" rx="10" stroke-width="2"/>
+        <text x="720" y="58" text-anchor="middle" class="label">CTI GROUP WORLDWIDE SERVICES INC</text>
+      </g>
+
+      <!-- Group: Divisions -->
+      <g class="node nm-group" data-href="#divisions" tabindex="0">
+        <rect x="240" y="130" width="240" height="56" rx="10" stroke-width="1.5"/>
+        <text x="360" y="158" text-anchor="middle" class="label">DIVISIONS</text>
+        <text x="360" y="175" text-anchor="middle" class="sublabel">Operating units</text>
+      </g>
+
+      <!-- Group: Corporate Functions -->
+      <g class="node nm-group" data-href="#corporate" tabindex="0">
+        <rect x="960" y="130" width="240" height="56" rx="10" stroke-width="1.5"/>
+        <text x="1080" y="158" text-anchor="middle" class="label">CORPORATE FUNCTIONS</text>
+        <text x="1080" y="175" text-anchor="middle" class="sublabel">Cross-division services</text>
+      </g>
+
+      <!-- 8 Divisions (top row) -->
+      <g class="node nm-div" data-href="poseidon-dashboard-v6.html" tabindex="0">
+        <rect x="50" y="250" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="130" y="278" text-anchor="middle" class="label">CTI Group</text>
+        <text x="130" y="295" text-anchor="middle" class="sublabel">Cruise + J-1 core</text>
+      </g>
+      <g class="node nm-div" data-href="poseidon-dashboard-v6.html#travel" tabindex="0">
+        <rect x="210" y="250" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="290" y="278" text-anchor="middle" class="label">CTI Marine Travel</text>
+        <text x="290" y="295" text-anchor="middle" class="sublabel">Air + crew travel</text>
+      </g>
+      <g class="node nm-div" data-href="#uno" tabindex="0">
+        <rect x="370" y="250" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="450" y="278" text-anchor="middle" class="label">UNO</text>
+        <text x="450" y="295" text-anchor="middle" class="sublabel">Uniforms Number One</text>
+      </g>
+      <g class="node nm-div" data-href="#baron" tabindex="0">
+        <rect x="530" y="250" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="610" y="278" text-anchor="middle" class="label">Baron Promotions</text>
+        <text x="610" y="295" text-anchor="middle" class="sublabel">Promotional materials</text>
+      </g>
+
+      <!-- 8 Divisions (bottom row) -->
+      <g class="node nm-div" data-href="#properties" tabindex="0">
+        <rect x="50" y="375" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="130" y="403" text-anchor="middle" class="label">CTI Properties</text>
+        <text x="130" y="420" text-anchor="middle" class="sublabel">Real-estate LLC</text>
+      </g>
+      <g class="node nm-div" data-href="#winmakers" tabindex="0">
+        <rect x="210" y="375" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="290" y="403" text-anchor="middle" class="label">Win Makers</text>
+        <text x="290" y="420" text-anchor="middle" class="sublabel">New venture</text>
+      </g>
+      <g class="node nm-div" data-href="j1-system-dashboard.html" tabindex="0">
+        <rect x="370" y="375" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="450" y="403" text-anchor="middle" class="label">GHR</text>
+        <text x="450" y="420" text-anchor="middle" class="sublabel">Global HR — J-1 + land</text>
+      </g>
+      <g class="node nm-reserved" data-href="#reserved" tabindex="0" aria-label="Reserved slot for future division">
+        <rect x="530" y="375" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="610" y="403" text-anchor="middle" class="label">Reserved</text>
+        <text x="610" y="420" text-anchor="middle" class="sublabel">2026 expansion</text>
+      </g>
+
+      <!-- 8 Corporate Functions (top row) -->
+      <g class="node nm-cf" data-href="cti-financial-dashboard.html" tabindex="0">
+        <rect x="750" y="250" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="830" y="278" text-anchor="middle" class="label">Finance</text>
+        <text x="830" y="295" text-anchor="middle" class="sublabel">Zoho Books · Plaid</text>
+      </g>
+      <g class="node nm-cf" data-href="poseidon-master-dashboard.html#operations" tabindex="0">
+        <rect x="910" y="250" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="990" y="278" text-anchor="middle" class="label">Operations</text>
+        <text x="990" y="295" text-anchor="middle" class="sublabel">Process · vendors</text>
+      </g>
+      <g class="node nm-cf" data-href="poseidon-master-dashboard.html#recruiting" tabindex="0">
+        <rect x="1070" y="250" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="1150" y="278" text-anchor="middle" class="label">Recruiting</text>
+        <text x="1150" y="295" text-anchor="middle" class="sublabel">Pipeline · sponsors</text>
+      </g>
+      <g class="node nm-cf" data-href="poseidon-master-dashboard.html#it" tabindex="0">
+        <rect x="1230" y="250" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="1310" y="278" text-anchor="middle" class="label">IT &amp; Tech</text>
+        <text x="1310" y="295" text-anchor="middle" class="sublabel">Dashboards · APIs</text>
+      </g>
+
+      <!-- 8 Corporate Functions (bottom row) -->
+      <g class="node nm-cf" data-href="poseidon-master-dashboard.html#contracts" tabindex="0">
+        <rect x="750" y="375" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="830" y="403" text-anchor="middle" class="label">Contracts</text>
+        <text x="830" y="420" text-anchor="middle" class="sublabel">Legal · cruise lines</text>
+      </g>
+      <g class="node nm-cf" data-href="cti-marketing-dashboard.html" tabindex="0">
+        <rect x="910" y="375" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="990" y="403" text-anchor="middle" class="label">Marketing</text>
+        <text x="990" y="420" text-anchor="middle" class="sublabel">Campaigns · CAC · podcast</text>
+      </g>
+      <g class="node nm-cf" data-href="poseidon-master-dashboard.html#hr" tabindex="0">
+        <rect x="1070" y="375" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="1150" y="403" text-anchor="middle" class="label">HR</text>
+        <text x="1150" y="420" text-anchor="middle" class="sublabel">People · compliance</text>
+      </g>
+      <g class="node nm-cf" data-href="poseidon-master-dashboard.html#exec" tabindex="0">
+        <rect x="1230" y="375" width="160" height="60" rx="8" stroke-width="1.5"/>
+        <text x="1310" y="403" text-anchor="middle" class="label">Executive</text>
+        <text x="1310" y="420" text-anchor="middle" class="sublabel">Orchestrator (CEO)</text>
+      </g>
+    </svg>
+
+    <div class="legend">
+      <div class="legend-item"><span class="sw" style="background:#14b8a6"></span> Parent — CTI Group</div>
+      <div class="legend-item"><span class="sw" style="background:#1e40af"></span> Division</div>
+      <div class="legend-item"><span class="sw" style="background:#14b8a6;opacity:0.4"></span> Corporate Function</div>
+      <div class="legend-item"><span class="sw" style="background:transparent;border:1px dashed currentColor"></span> Reserved</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Theme toggle
+  document.getElementById('theme-btn').addEventListener('click', function(){
+    var d = document.documentElement;
+    var isDark = d.classList.toggle('dark') === false ? false : d.classList.contains('dark');
+    try{ localStorage.setItem('poseidon-theme', d.classList.contains('dark') ? 'dark' : 'light'); }catch(e){}
+  });
+
+  // Node click → navigate (deep link). Same-page anchors stay client-side.
+  document.querySelectorAll('svg.tree .node').forEach(function(n){
+    n.addEventListener('click', function(){
+      var h = n.getAttribute('data-href');
+      if(!h) return;
+      if(h.startsWith('#')){
+        // anchor — emit a custom event so the host page can react if embedded
+        window.parent && window.parent.postMessage({type:'poseidon-mindmap-nav', target:h}, '*');
+        location.hash = h;
+      } else {
+        location.href = h;
+      }
+    });
+    n.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); n.dispatchEvent(new Event('click')); }
+    });
+  });
+</script>
+</body>
+</html>
