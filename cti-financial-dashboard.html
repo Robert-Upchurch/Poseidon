@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a1628" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+<meta name="description" content="CTI Financial Dashboard — consolidated cash, AR/AP, P&L, tax, biweekly close, J-1 housing finance">
+<title>CTI Financial Dashboard</title>
+<script>(function(){try{var t=localStorage.getItem('poseidon-theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){}})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','sans-serif'], mono:['JetBrains Mono','monospace'] } } } };
+</script>
+<style>
+  :root{--cti-teal:#14b8a6;--cti-teal-hover:#0d9488;--cti-teal-soft:#2dd4bf;--cti-navy:#0a1628;--cti-navy-panel:#0f1e2e;--cti-navy-card:#122336;}
+  html,body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;}
+  .dark body{background:var(--cti-navy);color:#fafafa;} html:not(.dark) body{background:#f8fafc;color:#0f172a;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  main [data-section]:not(.hidden){animation:fadeIn .25s ease-out;} main [data-section].hidden{display:none !important;}
+  .dark ::-webkit-scrollbar{width:6px;} .dark ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px;}
+  nav.sidebar{position:fixed;top:0;left:0;height:100vh;width:240px;overflow-y:auto;border-right:1px solid;padding:20px 12px;z-index:50;}
+  .dark nav.sidebar{background:var(--cti-navy);border-right-color:#1e293b;} html:not(.dark) nav.sidebar{background:linear-gradient(180deg,#fff,#f1f5f9);border-right-color:#e2e8f0;}
+  nav.sidebar .nav-link{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;font-size:14px;cursor:pointer;text-decoration:none;transition:background .15s,color .15s;}
+  .dark nav.sidebar .nav-link{color:#cbd5e1;} .dark nav.sidebar .nav-link:hover{background:rgba(20,184,166,.12);color:var(--cti-teal-soft);}
+  .dark nav.sidebar .nav-link.active{background:linear-gradient(135deg,rgba(20,184,166,.22),rgba(45,212,191,.12));color:var(--cti-teal-soft);border:1px solid rgba(20,184,166,.35);}
+  html:not(.dark) nav.sidebar .nav-link{color:#1e293b;} html:not(.dark) nav.sidebar .nav-link.active{background:#bae6fd;color:#0c4a6e;border:1px solid #7dd3fc;}
+  header.top{position:fixed;top:0;left:240px;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid;z-index:40;}
+  .dark header.top{background:var(--cti-navy);border-bottom-color:#1e293b;} html:not(.dark) header.top{background:#fff;border-bottom-color:#e2e8f0;}
+  main.main-content{margin-left:240px;padding:80px 24px 32px;max-width:1600px;}
+  #mobile-menu-btn{display:none;} #sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);z-index:45;opacity:0;pointer-events:none;transition:opacity .25s;}
+  #sidebar-overlay.open{opacity:1;pointer-events:auto;} body.drawer-open{overflow:hidden;}
+  @media(max-width:1279px){
+    nav.sidebar{transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);width:280px;}
+    nav.sidebar.open{transform:translateX(0);box-shadow:0 0 50px rgba(0,0,0,.55);}
+    #sidebar-overlay{display:block;} header.top{left:0;padding-left:14px;}
+    main.main-content{margin-left:0;padding:72px 14px 24px;}
+    #mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;}
+  }
+  .card{border-radius:16px;border:1px solid;padding:20px;}
+  .dark .card{background:var(--cti-navy-panel);border-color:#1e293b;} html:not(.dark) .card{background:#fff;border-color:#e2e8f0;}
+  .kpi-tile{border-radius:16px;border:1px solid;padding:20px;border-left:4px solid;}
+  .dark .kpi-tile{background:var(--cti-navy-panel);border-color:#1e293b;} html:not(.dark) .kpi-tile{background:#fff;border-color:#e2e8f0;}
+  table.fin{width:100%;border-collapse:collapse;font-size:13px;}
+  table.fin th{text-align:left;padding:8px 10px;font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:.04em;color:#64748b;border-bottom:1px solid;}
+  table.fin td{padding:10px;border-bottom:1px solid;}
+  .dark table.fin th,.dark table.fin td{border-bottom-color:#1e293b;} html:not(.dark) table.fin th,html:not(.dark) table.fin td{border-bottom-color:#e2e8f0;}
+  table.fin tr:hover td{background:rgba(20,184,166,.06);}
+  input,select{padding:8px 12px;border-radius:8px;border:1px solid;font-size:14px;}
+  .dark input,.dark select{background:#0f1e2e;border-color:#334155;color:#fafafa;} html:not(.dark) input,html:not(.dark) select{background:#fff;border-color:#cbd5e1;color:#0f172a;}
+  .btn-primary{background:var(--cti-teal);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;}
+  .btn-primary:hover{background:var(--cti-teal-hover);}
+  .btn-ghost{background:transparent;border:1px solid;padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;}
+  .dark .btn-ghost{border-color:#334155;color:#cbd5e1;} html:not(.dark) .btn-ghost{border-color:#cbd5e1;color:#1e293b;}
+  .pill{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600;}
+  .pill-warn{background:rgba(245,158,11,.15);color:#fbbf24;}
+  .pill-ok{background:rgba(16,185,129,.15);color:#34d399;}
+  .pill-info{background:rgba(20,184,166,.15);color:#2dd4bf;}
+</style>
+</head>
+<body>
+
+<nav class="sidebar" aria-label="Finance navigation">
+  <div class="flex items-center gap-3 px-3 mb-4">
+    <span class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--cti-teal);"><i data-lucide="dollar-sign" class="w-5 h-5 text-white"></i></span>
+    <div>
+      <div class="text-sm font-bold tracking-tight">CTI Finance</div>
+      <div class="text-[10px] uppercase tracking-wider text-zinc-500">Dashboard</div>
+    </div>
+  </div>
+  <a href="poseidon-master-dashboard.html" class="nav-link" tabindex="0"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Master</a>
+  <div class="h-2"></div>
+  <a href="#snapshot"      class="nav-link" data-nav="snapshot"      tabindex="0"><i data-lucide="gauge"         class="w-4 h-4"></i> Snapshot</a>
+  <a href="#cash"          class="nav-link" data-nav="cash"          tabindex="0"><i data-lucide="landmark"      class="w-4 h-4"></i> Banks &amp; Cash</a>
+  <a href="#invoicing"     class="nav-link" data-nav="invoicing"     tabindex="0"><i data-lucide="receipt"       class="w-4 h-4"></i> Invoicing</a>
+  <a href="#bills"         class="nav-link" data-nav="bills"         tabindex="0"><i data-lucide="file-output"   class="w-4 h-4"></i> Bills &amp; Expenses</a>
+  <a href="#j1-housing"    class="nav-link" data-nav="j1-housing"    tabindex="0"><i data-lucide="home"          class="w-4 h-4"></i> J-1 Housing Finance</a>
+  <a href="#recruiting"    class="nav-link" data-nav="recruiting"    tabindex="0"><i data-lucide="users"         class="w-4 h-4"></i> Recruiting Margin</a>
+  <a href="#marine-travel" class="nav-link" data-nav="marine-travel" tabindex="0"><i data-lucide="plane"         class="w-4 h-4"></i> Marine Travel</a>
+  <a href="#close"         class="nav-link" data-nav="close"         tabindex="0"><i data-lucide="file-check-2"  class="w-4 h-4"></i> Biweekly Close</a>
+  <a href="#tax"           class="nav-link" data-nav="tax"           tabindex="0"><i data-lucide="scale"         class="w-4 h-4"></i> Tax</a>
+  <a href="#settings"      class="nav-link" data-nav="settings"      tabindex="0"><i data-lucide="settings"      class="w-4 h-4"></i> Settings</a>
+</nav>
+<div id="sidebar-overlay"></div>
+
+<header class="top">
+  <div class="flex items-center gap-3">
+    <button id="mobile-menu-btn" class="btn-ghost" aria-label="Open menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
+    <span class="text-sm text-zinc-400"><span id="section-label">Snapshot</span></span>
+  </div>
+  <div class="flex items-center gap-3">
+    <span id="snapshot-ts" class="text-xs text-zinc-500 hidden sm:inline">—</span>
+    <button id="refresh-btn" class="btn-ghost" aria-label="Refresh"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+    <button id="theme-btn" class="btn-ghost" aria-label="Toggle theme"><i data-lucide="sun" class="w-4 h-4"></i></button>
+    <span class="inline-flex items-center gap-2 text-xs"><i data-lucide="anchor" class="w-4 h-4" style="color:var(--cti-teal);"></i><span class="font-semibold">CTI Group</span></span>
+  </div>
+</header>
+
+<main class="main-content">
+
+  <section data-section="snapshot" aria-labelledby="sn-h">
+    <h1 id="sn-h" class="text-2xl font-semibold mb-4">Financial Snapshot</h1>
+    <div id="snapshot-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="kpi-tile" style="border-left-color:#10b981;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">Cash total</p><p id="kpi-cash" class="text-2xl font-bold mt-1">—</p><p class="text-xs text-zinc-500 mt-1">Across all CTI accounts</p></div>
+      <div class="kpi-tile" style="border-left-color:#f43f5e;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">AR total</p><p id="kpi-ar" class="text-2xl font-bold mt-1">—</p><p class="text-xs text-zinc-500 mt-1"><span id="kpi-ar90" class="pill pill-warn">90+: —</span></p></div>
+      <div class="kpi-tile" style="border-left-color:#f59e0b;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">AP total</p><p id="kpi-ap" class="text-2xl font-bold mt-1">—</p><p class="text-xs text-zinc-500 mt-1">Outstanding bills</p></div>
+      <div class="kpi-tile" style="border-left-color:#0ea5e9;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">Cash runway</p><p id="kpi-runway" class="text-2xl font-bold mt-1">—</p><p class="text-xs text-zinc-500 mt-1">Estimate based on MTD burn</p></div>
+      <div class="kpi-tile" style="border-left-color:#10b981;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">MTD revenue</p><p id="kpi-mtd" class="text-2xl font-bold mt-1">—</p><p class="text-xs text-zinc-500 mt-1">Month-to-date, all branches</p></div>
+      <div class="kpi-tile" style="border-left-color:#10b981;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">YTD revenue</p><p id="kpi-ytd" class="text-2xl font-bold mt-1">—</p><p class="text-xs text-zinc-500 mt-1">Year-to-date, all branches</p></div>
+      <div class="kpi-tile" style="border-left-color:#f59e0b;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">Taxes accrued</p><p id="kpi-tax" class="text-2xl font-bold mt-1">—</p><p class="text-xs text-zinc-500 mt-1">Federal + FL, est.</p></div>
+      <div class="kpi-tile" style="border-left-color:#d946ef;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">Branches active</p><p id="kpi-branches" class="text-2xl font-bold mt-1">—</p><p class="text-xs text-zinc-500 mt-1">Head Office · Marine · Sea Based</p></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="card">
+        <h2 class="text-lg font-semibold mb-3">Branch revenue (MTD)</h2>
+        <div id="branch-list" class="text-sm text-zinc-400">Loading…</div>
+      </div>
+      <div class="card">
+        <h2 class="text-lg font-semibold mb-3">KPI payload (Master roll-up preview)</h2>
+        <p class="text-xs text-zinc-500 mb-2">This is the exact JSON your /api/kpi-summary?scope=finance would emit:</p>
+        <pre id="kpi-payload" class="text-xs font-mono p-3 rounded-lg overflow-x-auto" style="background:rgba(0,0,0,.25);max-height:280px;">loading…</pre>
+        <button id="copy-payload" class="btn-ghost mt-3"><i data-lucide="clipboard" class="w-3 h-3 inline"></i> Copy</button>
+      </div>
+    </div>
+  </section>
+
+  <section data-section="cash" class="hidden" aria-labelledby="ca-h">
+    <h1 id="ca-h" class="text-2xl font-semibold mb-4">Banks &amp; Cash</h1>
+    <div class="card mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold">Per-account balances</h2>
+        <span id="plaid-env-badge" class="pill pill-info">plaid: sandbox</span>
+      </div>
+      <table class="fin" id="banks-table">
+        <thead><tr><th>Institution</th><th>Account</th><th>Mask</th><th>Type</th><th class="text-right">Current</th><th class="text-right">Available</th></tr></thead>
+        <tbody><tr><td colspan="6" class="text-zinc-500">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2 class="text-lg font-semibold mb-3">Zoho Books reconcile</h2>
+      <table class="fin" id="zoho-banks-table">
+        <thead><tr><th>Account</th><th>Last 4</th><th class="text-right">Balance</th></tr></thead>
+        <tbody><tr><td colspan="3" class="text-zinc-500">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section data-section="invoicing" class="hidden">
+    <h1 class="text-2xl font-semibold mb-4">Invoicing</h1>
+    <div class="card">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-lg font-semibold">Recent invoices</h2>
+        <button class="btn-primary" disabled title="Wired to Worker /zoho/Invoices POST in a follow-up commit"><i data-lucide="plus" class="w-4 h-4 inline"></i> New invoice (stub)</button>
+      </div>
+      <table class="fin" id="invoices-table">
+        <thead><tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Status</th><th class="text-right">Amount</th></tr></thead>
+        <tbody><tr><td colspan="5" class="text-zinc-500">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="card mt-4">
+      <h2 class="text-lg font-semibold mb-3">Top overdue</h2>
+      <table class="fin" id="overdue-table">
+        <thead><tr><th>Invoice #</th><th>Customer</th><th>Days overdue</th><th class="text-right">Amount</th></tr></thead>
+        <tbody><tr><td colspan="4" class="text-zinc-500">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section data-section="bills" class="hidden">
+    <h1 class="text-2xl font-semibold mb-4">Bills &amp; Expenses</h1>
+    <div class="card"><p class="text-sm text-zinc-400">Zoho Books bills list + AP aging. Live route stubbed at <code>${workerUrl}/zoho/Bills</code> — see <a class="underline" style="color:var(--cti-teal);" href="docs/CLOUDFLARE-WORKER-CHANGELOG.md">Worker changelog</a>.</p></div>
+  </section>
+
+  <section data-section="j1-housing" class="hidden">
+    <h1 class="text-2xl font-semibold mb-4">J-1 Housing Finance</h1>
+    <div class="card">
+      <p class="text-sm text-zinc-400 mb-3"><strong>Aggregate-only roll-up.</strong> Per partition rule (ARCHITECTURE §6), no candidate-level data crosses into the Financial dashboard. Source: <code>/api/kpi-summary?scope=j1</code>.</p>
+      <div id="j1-housing-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="kpi-tile" style="border-left-color:#6366f1;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">Beds filled %</p><p id="j1-beds" class="text-2xl font-bold mt-1">—</p></div>
+        <div class="kpi-tile" style="border-left-color:#10b981;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">Cash collected YTD</p><p id="j1-cash" class="text-2xl font-bold mt-1">—</p></div>
+        <div class="kpi-tile" style="border-left-color:#f43f5e;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">Outstanding rent</p><p id="j1-outstanding" class="text-2xl font-bold mt-1">—</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section data-section="recruiting" class="hidden">
+    <h1 class="text-2xl font-semibold mb-4">Recruiting Margin</h1>
+    <div class="card">
+      <h2 class="text-lg font-semibold mb-3">Sponsor settlements</h2>
+      <table class="fin">
+        <thead><tr><th>Sponsor</th><th>Pipeline (placements)</th><th class="text-right">Fees invoiced YTD</th><th class="text-right">Collected</th><th class="text-right">Outstanding</th></tr></thead>
+        <tbody>
+          <tr><td>Alliance Abroad</td><td>—</td><td class="text-right">—</td><td class="text-right">—</td><td class="text-right">—</td></tr>
+          <tr><td>CIEE</td><td>—</td><td class="text-right">—</td><td class="text-right">—</td><td class="text-right">—</td></tr>
+          <tr><td>Greenheart</td><td>—</td><td class="text-right">—</td><td class="text-right">—</td><td class="text-right">—</td></tr>
+        </tbody>
+      </table>
+      <p class="text-xs text-zinc-500 mt-3">Wire to Zoho CRM sponsor module + Books invoices once Worker routes deploy.</p>
+    </div>
+  </section>
+
+  <section data-section="marine-travel" class="hidden">
+    <h1 class="text-2xl font-semibold mb-4">Marine Travel</h1>
+    <div class="card"><p class="text-sm text-zinc-400">Airfare purchases vs candidate recovery. Source: Marine Travel branch (CTI Marine Travel) Zoho Books data.</p></div>
+  </section>
+
+  <section data-section="close" class="hidden">
+    <h1 class="text-2xl font-semibold mb-4">Biweekly Close</h1>
+    <div class="card max-w-2xl">
+      <p class="text-sm text-zinc-400 mb-4">Generate a consolidated close snapshot: P&amp;L, balance sheet, AR/AP aging, tax accrual. Emails the PDF to <code>ceo@cti-usa.com</code>.</p>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div><label class="block text-xs text-zinc-500 mb-1">Period start</label><input type="date" id="close-start"></div>
+        <div><label class="block text-xs text-zinc-500 mb-1">Period end</label><input type="date" id="close-end"></div>
+      </div>
+      <button id="generate-close" class="btn-primary" disabled title="Wired to Worker biweekly cron in a follow-up commit"><i data-lucide="file-text" class="w-4 h-4 inline"></i> Generate PDF (stub)</button>
+      <h3 class="text-sm font-semibold mt-6 mb-2">History</h3>
+      <div id="close-history" class="text-sm text-zinc-500">No closes yet — list populated from <code>config/financial-closes/index.json</code>.</div>
+    </div>
+  </section>
+
+  <section data-section="tax" class="hidden" aria-labelledby="tax-h">
+    <h1 id="tax-h" class="text-2xl font-semibold mb-4">Tax</h1>
+    <div class="card mb-4">
+      <h2 class="text-lg font-semibold mb-3">OBBBA — P.L. 119-21 (signed July 4, 2025)</h2>
+      <ul class="text-sm text-zinc-300 space-y-2 list-disc list-inside">
+        <li><strong>$40K SALT cap</strong> (was $10K) — high-tax-state impact for non-FL income.</li>
+        <li><strong>Mortgage interest cap</strong> retained at $750K acquisition indebtedness.</li>
+        <li><strong>Section 174 R&amp;D restoration</strong> — full expensing of domestic R&amp;D restored retroactive to 2022; foreign R&amp;D still amortized 15 years.</li>
+        <li><strong>100% bonus depreciation</strong> permanent (no phase-down).</li>
+        <li><strong>QBI 20% deduction</strong> made permanent.</li>
+        <li><strong>Section 179 cap raised to $2.56M</strong> with $3.13M phase-out threshold.</li>
+        <li><strong>NOL strategy:</strong> 80% taxable-income limitation retained; carryforward indefinite.</li>
+      </ul>
+      <p class="text-xs text-zinc-500 mt-3">Source: lifted from <a class="underline" style="color:var(--cti-teal);" href="https://upchurch-financial-dashboard.pages.dev/#tax">Upchurch Financial Dashboard v4.7.36 §#tax</a>.</p>
+    </div>
+
+    <div class="card mb-4">
+      <h2 class="text-lg font-semibold mb-3">Florida — state context</h2>
+      <ul class="text-sm text-zinc-300 space-y-2 list-disc list-inside">
+        <li>No personal income tax.</li>
+        <li>Corporate income tax 5.5% (with $50K exemption).</li>
+        <li>Sales tax 6% state + 0.5–2% county discretionary surtax.</li>
+        <li>Right-to-work state — applies to CTI employment matters.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2 class="text-lg font-semibold mb-3">2026 filing calendar (CTI entities)</h2>
+      <table class="fin">
+        <thead><tr><th>Form</th><th>Due</th><th>Entity</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Form 1120 (CTI Group)</td><td>April 15, 2026</td><td>CTI Group Worldwide Services Inc.</td><td><span class="pill pill-info">upcoming</span></td></tr>
+          <tr><td>Florida F-1120</td><td>May 1, 2026</td><td>CTI Group Worldwide Services Inc.</td><td><span class="pill pill-info">upcoming</span></td></tr>
+          <tr><td>Form 941 — Q1</td><td>April 30, 2026</td><td>All payroll entities</td><td><span class="pill pill-info">upcoming</span></td></tr>
+          <tr><td>Form 941 — Q2</td><td>July 31, 2026</td><td>All payroll entities</td><td><span class="pill pill-info">upcoming</span></td></tr>
+          <tr><td>FL Annual Report</td><td>May 1, 2026</td><td>All FL entities</td><td><span class="pill pill-info">upcoming</span></td></tr>
+        </tbody>
+      </table>
+      <p class="text-xs text-zinc-500 mt-3">CPA: Sandra Watson, GRG CPA. Confirm with her before filing.</p>
+    </div>
+  </section>
+
+  <section data-section="settings" class="hidden" aria-labelledby="se-h">
+    <h1 id="se-h" class="text-2xl font-semibold mb-4">Settings</h1>
+    <div class="card max-w-xl space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-1" for="worker-url">Cloudflare Worker URL</label>
+        <input id="worker-url" type="url" placeholder="https://poseidon-proxy.your-sub.workers.dev" class="w-full">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1" for="dash-token">Dashboard Token</label>
+        <input id="dash-token" type="password" placeholder="(X-Dashboard-Token)" class="w-full">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Plaid environment</label>
+        <div class="flex gap-3 text-sm">
+          <label class="inline-flex items-center gap-2"><input type="radio" name="plaid-env" value="sandbox" checked> Sandbox</label>
+          <label class="inline-flex items-center gap-2"><input type="radio" name="plaid-env" value="development"> Development</label>
+          <label class="inline-flex items-center gap-2"><input type="radio" name="plaid-env" value="production"> Production</label>
+        </div>
+        <p class="text-xs text-zinc-500 mt-1">Default: Sandbox. Production billing kicks in only after Robert authorizes the env switch.</p>
+      </div>
+      <div class="flex gap-3">
+        <button id="settings-save" class="btn-primary"><i data-lucide="save" class="w-4 h-4 inline"></i> Save</button>
+        <button id="settings-clear-cache" class="btn-ghost"><i data-lucide="trash-2" class="w-3 h-3 inline"></i> Clear KPI cache</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-12 pt-6 border-t text-xs text-zinc-500 flex flex-wrap justify-between gap-4" style="border-color:rgba(100,116,139,.25);">
+    <div>CTI Financial Dashboard · v1.0.0-mvp · 2026-05-11</div>
+    <div>Snapshot: <span id="footer-ts">—</span></div>
+  </footer>
+</main>
+
+<script src="js/shared/theme-toggle.js"></script>
+<script src="js/shared/jarvis-context.js"></script>
+<script src="js/shared/format.js"></script>
+<script src="js/shared/chart-defaults.js"></script>
+<script src="js/shared/kpi-client.js"></script>
+<script src="js/finance/zoho-adapter.js"></script>
+<script src="js/finance/qbo-adapter.js"></script>
+<script src="js/finance/plaid-adapter.js"></script>
+<script src="js/finance/kpi-emitter.js"></script>
+<script>
+(function () {
+  function paintIcons(){ if (window.lucide && window.lucide.createIcons) window.lucide.createIcons(); }
+  paintIcons();
+
+  // Theme
+  var themeBtn = document.getElementById('theme-btn');
+  if (themeBtn && window.ThemeToggle) window.ThemeToggle.attach(themeBtn);
+
+  // Drawer
+  var menuBtn = document.getElementById('mobile-menu-btn'), drawer = document.querySelector('nav.sidebar'), overlay = document.getElementById('sidebar-overlay');
+  if (menuBtn) menuBtn.addEventListener('click', function(){ drawer.classList.add('open'); overlay.classList.add('open'); document.body.classList.add('drawer-open'); });
+  if (overlay) overlay.addEventListener('click', function(){ drawer.classList.remove('open'); overlay.classList.remove('open'); document.body.classList.remove('drawer-open'); });
+
+  // Router (simple hash → section)
+  function showSection(id){
+    document.querySelectorAll('main [data-section]').forEach(function(s){ s.classList.toggle('hidden', s.getAttribute('data-section') !== id); });
+    document.querySelectorAll('nav [data-nav]').forEach(function(l){
+      var match = l.getAttribute('data-nav') === id;
+      l.classList.toggle('active', match);
+      l.setAttribute('aria-current', match ? 'page' : 'false');
+      if (match) document.getElementById('section-label').textContent = l.textContent.trim();
+    });
+    if (window.JarvisContext) window.JarvisContext.set({ page:'finance', tab:id });
+  }
+  function fromHash(){ return (location.hash || '#snapshot').replace(/^#/,'') || 'snapshot'; }
+  showSection(fromHash());
+  window.addEventListener('hashchange', function(){ showSection(fromHash()); });
+  document.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('a[data-nav]');
+    if (!a) return;
+    e.preventDefault();
+    location.hash = '#' + a.getAttribute('data-nav');
+    drawer.classList.remove('open'); overlay.classList.remove('open'); document.body.classList.remove('drawer-open');
+  });
+
+  // Plaid env radio
+  function syncPlaidEnv(){
+    var env = window.PlaidAdapter ? window.PlaidAdapter.env() : 'sandbox';
+    document.querySelectorAll('input[name="plaid-env"]').forEach(function(r){ r.checked = (r.value === env); });
+    var badge = document.getElementById('plaid-env-badge');
+    if (badge) badge.textContent = 'plaid: ' + env;
+  }
+  document.querySelectorAll('input[name="plaid-env"]').forEach(function(r){
+    r.addEventListener('change', function(){ window.PlaidAdapter.setEnv(r.value); syncPlaidEnv(); refresh(); });
+  });
+
+  // Settings
+  if (window.KPIClient) {
+    var c = window.KPIClient.getConfig();
+    document.getElementById('worker-url').value = c.url;
+  }
+  document.getElementById('settings-save').addEventListener('click', function(){
+    var u = document.getElementById('worker-url').value;
+    var t = document.getElementById('dash-token').value;
+    window.KPIClient.configure(u, t || undefined);
+    refresh();
+  });
+  document.getElementById('settings-clear-cache').addEventListener('click', function(){ window.KPIClient.clearCache(); refresh(); });
+
+  // Render functions
+  function renderSnapshot() {
+    var z = window.ZohoAdapter;
+    document.getElementById('kpi-cash').textContent    = window.Format.fmtCompactUSD(z.cashTotal());
+    var ar = z.arTotals();
+    document.getElementById('kpi-ar').textContent      = window.Format.fmtCompactUSD(ar.total);
+    document.getElementById('kpi-ar90').textContent    = '90+: ' + window.Format.fmtCompactUSD(ar.aging90Plus);
+    document.getElementById('kpi-ap').textContent      = window.Format.fmtCompactUSD(z.apTotals().total);
+    var rev = z.revenueTotals();
+    document.getElementById('kpi-mtd').textContent     = window.Format.fmtCompactUSD(rev.mtd);
+    document.getElementById('kpi-ytd').textContent     = window.Format.fmtCompactUSD(rev.ytd);
+    document.getElementById('kpi-runway').textContent  = '—';
+    document.getElementById('kpi-tax').textContent     = '—';
+    document.getElementById('kpi-branches').textContent = (z.branchRevenue() || []).length || '3';
+
+    var b = z.branchRevenue();
+    var bl = document.getElementById('branch-list');
+    if (!b || !b.length) bl.textContent = 'No branch data in snapshot.';
+    else bl.innerHTML = b.map(function(r){
+      return '<div class="flex justify-between py-2 border-b" style="border-color:rgba(100,116,139,.2)"><span>' + (r.branch_name || r.name || 'Branch') + '</span><span class="font-mono">' + window.Format.fmtCompactUSD(r.revenue) + '</span></div>';
+    }).join('');
+
+    var ts = z.capturedAt();
+    document.getElementById('snapshot-ts').textContent = ts ? ('snapshot ' + window.Format.fmtAgo(ts)) : '—';
+    document.getElementById('footer-ts').textContent = ts || '—';
+  }
+
+  function renderBanks() {
+    if (!window.PlaidAdapter) return;
+    window.PlaidAdapter.getBalances().then(function (r) {
+      var tb = document.querySelector('#banks-table tbody');
+      if (!r.accounts || !r.accounts.length) { tb.innerHTML = '<tr><td colspan="6" class="text-zinc-500">No accounts (' + (r.error || 'sandbox empty') + ')</td></tr>'; return; }
+      tb.innerHTML = r.accounts.map(function (a) {
+        return '<tr><td>' + (a.institution || '—') + '</td><td>' + (a.name || '—') + '</td><td class="font-mono">****' + (a.mask || '') + '</td><td>' + (a.subtype || a.type || '—') + '</td><td class="text-right font-mono">' + window.Format.fmtUSD(a.balance_current) + '</td><td class="text-right font-mono">' + window.Format.fmtUSD(a.balance_available) + '</td></tr>';
+      }).join('');
+    });
+
+    var zb = window.ZohoAdapter.bankBalances();
+    var ztb = document.querySelector('#zoho-banks-table tbody');
+    if (!zb.length) ztb.innerHTML = '<tr><td colspan="3" class="text-zinc-500">Zoho snapshot has no banks listed.</td></tr>';
+    else ztb.innerHTML = zb.map(function (a) {
+      return '<tr><td>' + a.name + '</td><td class="font-mono">****' + (a.last4 || '') + '</td><td class="text-right font-mono">' + window.Format.fmtUSD(a.balance) + '</td></tr>';
+    }).join('');
+  }
+
+  function renderInvoices() {
+    var z = window.ZohoAdapter;
+    var inv = z.recentInvoices(10);
+    var tb = document.querySelector('#invoices-table tbody');
+    if (!inv.length) tb.innerHTML = '<tr><td colspan="5" class="text-zinc-500">No recent invoices in snapshot.</td></tr>';
+    else tb.innerHTML = inv.map(function (r) {
+      return '<tr><td class="font-mono">' + (r.invoice_number || r.id || '—') + '</td><td>' + (r.customer_name || '—') + '</td><td>' + (r.date || '—') + '</td><td><span class="pill pill-info">' + (r.status || '—') + '</span></td><td class="text-right font-mono">' + window.Format.fmtUSD(r.total) + '</td></tr>';
+    }).join('');
+
+    var ov = z.topOverdue(10);
+    var otb = document.querySelector('#overdue-table tbody');
+    if (!ov.length) otb.innerHTML = '<tr><td colspan="4" class="text-zinc-500">No overdue invoices.</td></tr>';
+    else otb.innerHTML = ov.map(function (r) {
+      return '<tr><td class="font-mono">' + (r.invoice_number || '—') + '</td><td>' + (r.customer_name || '—') + '</td><td>' + (r.days_overdue || '—') + '</td><td class="text-right font-mono">' + window.Format.fmtUSD(r.balance) + '</td></tr>';
+    }).join('');
+  }
+
+  function renderKPIPayload() {
+    var payload = window.FinanceKPIEmitter.build({ zoho: window.ZohoAdapter });
+    document.getElementById('kpi-payload').textContent = JSON.stringify(payload, null, 2);
+  }
+  document.getElementById('copy-payload').addEventListener('click', function(){
+    var t = document.getElementById('kpi-payload').textContent;
+    navigator.clipboard && navigator.clipboard.writeText(t);
+  });
+
+  function refresh() {
+    window.ZohoAdapter.load(true).then(function () {
+      renderSnapshot();
+      renderInvoices();
+      renderBanks();
+      renderKPIPayload();
+      paintIcons();
+    });
+  }
+
+  document.getElementById('refresh-btn').addEventListener('click', refresh);
+  syncPlaidEnv();
+  refresh();
+
+  if (window.JarvisContext) window.JarvisContext.set({ page:'finance', tab:'snapshot' });
+})();
+</script>
+</body>
+</html>

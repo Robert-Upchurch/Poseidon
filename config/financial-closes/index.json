@@ -1,0 +1,9 @@
+{
+  "_meta": {
+    "description": "Index of biweekly financial close snapshots. Populated by the Worker biweekly cron once deployed; for now, empty.",
+    "schema_version": "1.0",
+    "cadence": "biweekly Monday 07:00 ET",
+    "owner": "Agent B (Finance)"
+  },
+  "closes": []
+}
