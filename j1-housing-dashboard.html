@@ -1323,7 +1323,7 @@
             <input type="text" id="filter-zip" placeholder="33101" maxlength="10" inputmode="numeric" style="min-width:90px;max-width:120px;" onkeydown="if(event.key==='Enter') findHousing()">
         </div>
         <button class="btn-search" onclick="findHousing()" title="Geocode work address and zoom map" style="background:linear-gradient(135deg,#14b8a6,#0d9488);">&#x1F4CD; Find Housing</button>
-        <button class="btn-search" onclick="applyFilters()">&#x1F50D; Search</button>
+        <button class="btn-search" onclick="searchListingsBtn()">&#x1F50D; Search</button>
         <button class="j1-roster-toggle" onclick="toggleJ1Roster()" type="button" title="Show J-1 candidate housing roster from Zoho">👥 J-1 Roster</button>
         <button class="settings-toggle" onclick="toggleSettings()" type="button" title="API keys + preferences">⚙️ Settings</button>
     </div>
@@ -2041,6 +2041,37 @@ function getTime(lat, lng) {
     return Math.round(miles * 2.5); // ~24 mph average city driving
 }
 
+// Toast notification helper — bottom-center, auto-dismiss after 3.5s
+function _toast(msg, type) {
+    var t = document.getElementById('poseidon-toast');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = 'poseidon-toast';
+        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:2147483500;padding:11px 20px;border-radius:10px;font-family:Inter,-apple-system,sans-serif;font-size:0.9rem;font-weight:600;color:#fff;box-shadow:0 6px 24px rgba(0,0,0,0.4);transition:opacity 0.25s;opacity:0;max-width:90vw;text-align:center;pointer-events:none;';
+        document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    var bg = '#059669';
+    if (type === 'error') bg = '#dc2626';
+    else if (type === 'info')  bg = '#0891b2';
+    else if (type === 'warn')  bg = '#d97706';
+    t.style.background = bg;
+    t.style.opacity = '1';
+    clearTimeout(window._toastT);
+    window._toastT = setTimeout(function () { t.style.opacity = '0'; }, 3500);
+}
+window._toast = _toast;
+
+// Wrap applyFilters for Search button so user sees confirmation
+function searchListingsBtn() {
+    applyFilters();
+    try {
+        var n = (window.filteredListings || []).length;
+        _toast('Showing ' + n + ' listing' + (n !== 1 ? 's' : ''), 'info');
+    } catch(_) {}
+}
+window.searchListingsBtn = searchListingsBtn;
+
 // ===== TOP-BAR WORK-ADDRESS SEARCH (Robert 2026-05-09) =====
 // Reads "Work Address" + "ZIP Code" from the top filter bar, geocodes
 // via Nominatim, zooms the map to that location, drops a work marker,
@@ -2054,6 +2085,7 @@ async function findHousing() {
     const zip = (zipEl?.value || '').trim();
     if (!address && !zip) {
         if (addrEl) { addrEl.focus(); addrEl.style.borderColor = 'var(--danger)'; setTimeout(() => addrEl.style.borderColor = '', 1500); }
+        try { _toast('Enter a Work Address or ZIP code first, then tap Find Housing', 'warn'); } catch(_) {}
         return;
     }
     const query = [address, zip].filter(Boolean).join(', ');
@@ -2064,7 +2096,7 @@ async function findHousing() {
         const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
         const data = await r.json();
         if (!data || !data.length) {
-            alert('Could not find that address. Try adding city + state, or a more specific street.');
+            try { _toast('Could not find that address. Try a more specific street + city + state.', 'error'); } catch(_) { alert('Could not find that address.'); }
             return;
         }
         workCoords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
@@ -2098,9 +2130,14 @@ async function findHousing() {
         // flyTo last so the city-level zoom is the final state.
         try { map.flyTo([workCoords.lat, workCoords.lng], 11, { duration: 1.0 }); }
         catch(_) { map.setView([workCoords.lat, workCoords.lng], 11); }
+
+        try {
+            var n = (window.filteredListings || []).length;
+            _toast('\u2713 Found ' + n + ' listing' + (n !== 1 ? 's' : '') + ' near ' + query + ' \u2014 sorted by distance', 'success');
+        } catch(_) {}
     } catch (e) {
         console.error('[findHousing] failed:', e);
-        alert('Geocoding service is unreachable. Try again in a moment.');
+        try { _toast('Geocoding service is unreachable. Try again in a moment.', 'error'); } catch(_) { alert('Geocoding service is unreachable.'); }
     } finally {
         btns.forEach(b => { b.disabled = false; b.style.opacity = ''; });
     }
