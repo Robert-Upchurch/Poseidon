@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a1628" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+<meta name="description" content="Poseidon Master Dashboard — CTI Group Worldwide Services executive command center">
+<title>Poseidon Master Dashboard — CTI Group</title>
+<!-- Pre-paint: prevent flash of incorrect theme -->
+<script>(function(){try{var t=localStorage.getItem('poseidon-theme');if(t==='light')document.documentElement.classList.remove('dark');else document.documentElement.classList.add('dark');}catch(e){}})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter','sans-serif'], mono: ['JetBrains Mono','monospace'] },
+      colors: { accent: { DEFAULT: '#14b8a6', light: '#2dd4bf', dark: '#0d9488' } }
+    }
+  }
+};
+</script>
+<style>
+  :root{
+    --cti-teal:#14b8a6;--cti-teal-hover:#0d9488;--cti-teal-soft:#2dd4bf;
+    --cti-navy:#0a1628;--cti-navy-panel:#0f1e2e;--cti-navy-card:#122336;
+  }
+  html,body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+  body{transition:background-color .3s,color .3s;}
+  .dark body{background:var(--cti-navy);color:#fafafa;}
+  html:not(.dark) body{background:#f8fafc;color:#0f172a;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  main [data-section]:not(.hidden){animation:fadeIn .25s ease-out;}
+  main [data-section].hidden{display:none !important;}
+
+  /* Scrollbar */
+  .dark ::-webkit-scrollbar{width:6px;height:6px;}
+  .dark ::-webkit-scrollbar-track{background:transparent;}
+  .dark ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px;}
+  .dark ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2);}
+  html:not(.dark) ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px;}
+
+  /* Sidebar */
+  nav.sidebar{position:fixed;top:0;left:0;height:100vh;width:260px;overflow-y:auto;border-right:1px solid;padding:20px 12px;z-index:50;}
+  .dark nav.sidebar{background:var(--cti-navy);border-right-color:#1e293b;}
+  html:not(.dark) nav.sidebar{background:linear-gradient(180deg,#fff,#f1f5f9);border-right-color:#e2e8f0;}
+  nav.sidebar .nav-link{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;font-size:14px;cursor:pointer;text-decoration:none;transition:background .15s,color .15s;}
+  .dark nav.sidebar .nav-link{color:#cbd5e1;}
+  .dark nav.sidebar .nav-link:hover{background:rgba(20,184,166,.12);color:var(--cti-teal-soft);}
+  .dark nav.sidebar .nav-link.active{background:linear-gradient(135deg,rgba(20,184,166,.22),rgba(45,212,191,.12));color:var(--cti-teal-soft);border:1px solid rgba(20,184,166,.35);}
+  html:not(.dark) nav.sidebar .nav-link{color:#1e293b;}
+  html:not(.dark) nav.sidebar .nav-link:hover{background:#e0f2fe;color:#0c4a6e;}
+  html:not(.dark) nav.sidebar .nav-link.active{background:#bae6fd;color:#0c4a6e;border:1px solid #7dd3fc;}
+  nav.sidebar .nav-group{font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:14px 12px 6px;color:#64748b;}
+
+  /* Header */
+  header.top{position:fixed;top:0;left:260px;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid;z-index:40;}
+  .dark header.top{background:var(--cti-navy);border-bottom-color:#1e293b;}
+  html:not(.dark) header.top{background:#fff;border-bottom-color:#e2e8f0;}
+
+  main.main-content{margin-left:260px;padding:80px 24px 32px;max-width:1600px;}
+
+  /* Mobile drawer */
+  #mobile-menu-btn{display:none;}
+  #sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);z-index:45;opacity:0;pointer-events:none;transition:opacity .25s;}
+  #sidebar-overlay.open{opacity:1;pointer-events:auto;}
+  body.drawer-open{overflow:hidden;}
+  @media(max-width:1279px){
+    nav.sidebar{transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);width:280px;box-shadow:none;}
+    nav.sidebar.open{transform:translateX(0);box-shadow:0 0 50px rgba(0,0,0,.55);}
+    #sidebar-overlay{display:block;}
+    header.top{left:0;padding-left:14px;}
+    main.main-content{margin-left:0;padding:72px 14px 24px;}
+    #mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;}
+  }
+
+  /* KPI card readability blanket — match v6 */
+  .dark .kpi-tile{background:var(--cti-navy-panel);}
+  html:not(.dark) .kpi-tile{background:#fff;}
+
+  /* Org chart SVG */
+  svg.tree{width:100%;height:auto;display:block;max-height:520px;}
+  svg.tree text{font-family:'Inter',sans-serif;pointer-events:none;}
+  svg.tree .node{cursor:pointer;transition:filter .15s;}
+  svg.tree .node:hover{filter:brightness(1.15);}
+  svg.tree .label{font-size:13px;font-weight:600;}
+  svg.tree .sublabel{font-size:10.5px;font-weight:500;}
+  svg.tree .link{fill:none;stroke-width:1.5;}
+  .dark .nm-parent rect{fill:#14b8a6;stroke:#5eead4;}
+  .dark .nm-parent text{fill:#0a1628;}
+  .dark .nm-group rect{fill:#1e293b;stroke:#334155;}
+  .dark .nm-group text{fill:#e0e7ff;}
+  .dark .nm-div rect{fill:#122336;stroke:#1e40af;}
+  .dark .nm-div text{fill:#bfdbfe;}
+  .dark .nm-cf rect{fill:#0f1e2e;stroke:#14b8a6;}
+  .dark .nm-cf text{fill:#5eead4;}
+  .dark .nm-reserved rect{fill:#0a1628;stroke:#475569;stroke-dasharray:4 3;}
+  .dark .nm-reserved text{fill:#94a3b8;}
+  .dark svg.tree .link{stroke:#334155;}
+  html:not(.dark) .nm-parent rect{fill:#14b8a6;stroke:#0d9488;}
+  html:not(.dark) .nm-parent text{fill:#fff;}
+  html:not(.dark) .nm-group rect{fill:#e2e8f0;stroke:#94a3b8;}
+  html:not(.dark) .nm-group text{fill:#1e293b;}
+  html:not(.dark) .nm-div rect{fill:#dbeafe;stroke:#3b82f6;}
+  html:not(.dark) .nm-div text{fill:#0c1e3e;}
+  html:not(.dark) .nm-cf rect{fill:#ccfbf1;stroke:#0d9488;}
+  html:not(.dark) .nm-cf text{fill:#134e4a;}
+  html:not(.dark) .nm-reserved rect{fill:#f1f5f9;stroke:#94a3b8;stroke-dasharray:4 3;}
+  html:not(.dark) .nm-reserved text{fill:#64748b;}
+  html:not(.dark) svg.tree .link{stroke:#cbd5e1;}
+
+  /* Cards */
+  .card{border-radius:16px;border:1px solid;padding:20px;}
+  .dark .card{background:var(--cti-navy-panel);border-color:#1e293b;}
+  html:not(.dark) .card{background:#fff;border-color:#e2e8f0;}
+
+  /* Inputs */
+  input[type="text"],input[type="url"],input[type="password"]{padding:8px 12px;border-radius:8px;border:1px solid;font-size:14px;width:100%;}
+  .dark input[type="text"],.dark input[type="url"],.dark input[type="password"]{background:#0f1e2e;border-color:#334155;color:#fafafa;}
+  html:not(.dark) input[type="text"],html:not(.dark) input[type="url"],html:not(.dark) input[type="password"]{background:#fff;border-color:#cbd5e1;color:#0f172a;}
+
+  /* Buttons */
+  .btn-primary{background:var(--cti-teal);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;}
+  .btn-primary:hover{background:var(--cti-teal-hover);}
+  .btn-ghost{background:transparent;border:1px solid;padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;}
+  .dark .btn-ghost{border-color:#334155;color:#cbd5e1;}
+  .dark .btn-ghost:hover{background:rgba(20,184,166,.10);}
+  html:not(.dark) .btn-ghost{border-color:#cbd5e1;color:#1e293b;}
+  html:not(.dark) .btn-ghost:hover{background:#e0f2fe;}
+</style>
+</head>
+<body>
+
+<!-- ═════════ SIDEBAR ═════════ -->
+<nav class="sidebar" aria-label="Main navigation">
+  <div class="flex items-center gap-3 px-3 mb-4">
+    <span class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--cti-teal);"><i data-lucide="anchor" class="w-5 h-5 text-white"></i></span>
+    <div>
+      <div class="text-sm font-bold tracking-tight">Poseidon</div>
+      <div class="text-[10px] uppercase tracking-wider text-zinc-500">Master</div>
+    </div>
+  </div>
+
+  <a href="#overview"          class="nav-link" data-nav="overview"          tabindex="0"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview</a>
+  <a href="#briefing"          class="nav-link" data-nav="briefing"          tabindex="0"><i data-lucide="briefcase"        class="w-4 h-4"></i> Executive Briefing</a>
+
+  <div class="nav-group">Divisions</div>
+  <a href="#div-cti"      class="nav-link" data-nav="div-cti"      tabindex="0"><i data-lucide="ship"        class="w-4 h-4"></i> CTI Group</a>
+  <a href="#div-travel"   class="nav-link" data-nav="div-travel"   tabindex="0"><i data-lucide="plane"       class="w-4 h-4"></i> CTI Marine Travel</a>
+  <a href="#div-uno"      class="nav-link" data-nav="div-uno"      tabindex="0"><i data-lucide="shirt"       class="w-4 h-4"></i> UNO</a>
+  <a href="#div-baron"    class="nav-link" data-nav="div-baron"    tabindex="0"><i data-lucide="gift"        class="w-4 h-4"></i> Baron Promotions</a>
+  <a href="#div-prop"     class="nav-link" data-nav="div-prop"     tabindex="0"><i data-lucide="building-2"  class="w-4 h-4"></i> CTI Properties</a>
+  <a href="#div-winmakers" class="nav-link" data-nav="div-winmakers" tabindex="0"><i data-lucide="trophy"   class="w-4 h-4"></i> Win Makers</a>
+  <a href="#div-ghr"      class="nav-link" data-nav="div-ghr"      tabindex="0"><i data-lucide="globe"       class="w-4 h-4"></i> GHR</a>
+  <a href="#div-reserved" class="nav-link" data-nav="div-reserved" tabindex="0"><i data-lucide="circle-dashed" class="w-4 h-4"></i> Reserved</a>
+
+  <div class="nav-group">Corporate Functions</div>
+  <a href="cti-financial-dashboard.html" class="nav-link" tabindex="0"><i data-lucide="dollar-sign"   class="w-4 h-4"></i> Finance</a>
+  <a href="#cf-operations"  class="nav-link" data-nav="cf-operations"  tabindex="0"><i data-lucide="cog"           class="w-4 h-4"></i> Operations</a>
+  <a href="#cf-recruiting"  class="nav-link" data-nav="cf-recruiting"  tabindex="0"><i data-lucide="users"         class="w-4 h-4"></i> Recruiting</a>
+  <a href="#cf-it"          class="nav-link" data-nav="cf-it"          tabindex="0"><i data-lucide="cpu"           class="w-4 h-4"></i> IT &amp; Tech</a>
+  <a href="#cf-contracts"   class="nav-link" data-nav="cf-contracts"   tabindex="0"><i data-lucide="file-signature" class="w-4 h-4"></i> Contracts</a>
+  <a href="cti-marketing-dashboard.html"  class="nav-link" tabindex="0"><i data-lucide="megaphone"    class="w-4 h-4"></i> Marketing</a>
+  <a href="#cf-hr"          class="nav-link" data-nav="cf-hr"          tabindex="0"><i data-lucide="user-check"    class="w-4 h-4"></i> HR</a>
+
+  <div class="nav-group">Web Portals</div>
+  <a href="portals/cruise/index.html" class="nav-link" tabindex="0"><i data-lucide="ship"  class="w-4 h-4"></i> Cruise Portal</a>
+  <a href="portals/ghr/index.html"    class="nav-link" tabindex="0"><i data-lucide="globe" class="w-4 h-4"></i> GHR Portal</a>
+
+  <div class="nav-group">System</div>
+  <a href="j1-system-dashboard.html" class="nav-link" tabindex="0"><i data-lucide="external-link" class="w-4 h-4"></i> J1 System (full page)</a>
+  <a href="#reports"  class="nav-link" data-nav="reports"  tabindex="0"><i data-lucide="bar-chart-3"   class="w-4 h-4"></i> Reports &amp; Analytics</a>
+  <a href="#agents"   class="nav-link" data-nav="agents"   tabindex="0"><i data-lucide="bot"           class="w-4 h-4"></i> Agents</a>
+  <a href="#jarvis"   class="nav-link" data-nav="jarvis"   tabindex="0"><i data-lucide="mic"           class="w-4 h-4"></i> Jarvis</a>
+  <a href="#settings" class="nav-link" data-nav="settings" tabindex="0"><i data-lucide="settings"      class="w-4 h-4"></i> Settings</a>
+</nav>
+
+<div id="sidebar-overlay" aria-hidden="true"></div>
+
+<!-- ═════════ HEADER ═════════ -->
+<header class="top">
+  <div class="flex items-center gap-3">
+    <button id="mobile-menu-btn" class="btn-ghost" aria-label="Open menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
+    <span class="inline-flex items-center gap-2 text-sm text-zinc-400"><i data-lucide="layers" class="w-4 h-4"></i><span id="section-label">Overview</span></span>
+  </div>
+  <div class="flex items-center gap-3">
+    <button id="health-btn" class="btn-ghost" aria-label="System check" title="System check"><i data-lucide="activity" class="w-4 h-4"></i></button>
+    <button id="theme-btn"  class="btn-ghost" aria-label="Toggle theme"><i data-lucide="sun" class="w-4 h-4"></i></button>
+    <span class="hidden sm:inline-flex items-center gap-2 text-xs text-zinc-400"><i data-lucide="user" class="w-3 h-3"></i><span>Robert Upchurch</span></span>
+    <span class="inline-flex items-center gap-2 text-xs"><i data-lucide="anchor" class="w-4 h-4" style="color:var(--cti-teal);"></i><span class="font-semibold">CTI Group</span></span>
+  </div>
+</header>
+
+<!-- ═════════ MAIN ═════════ -->
+<main class="main-content">
+
+  <!-- Overview -->
+  <section data-section="overview" aria-labelledby="ov-h">
+    <div class="flex items-center justify-between mb-4">
+      <h1 id="ov-h" class="text-2xl font-semibold">Overview</h1>
+      <button id="refresh-overview" class="btn-ghost"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh</button>
+    </div>
+    <div id="overview-host">
+      <div data-banner class="hidden"></div>
+
+      <!-- Org chart -->
+      <div class="card mb-6">
+        <h2 class="text-lg font-semibold mb-3">CTI Group hierarchy</h2>
+        <svg class="tree" viewBox="0 0 1440 480" preserveAspectRatio="xMidYMid meet" role="img" aria-label="CTI Group hierarchy">
+          <title>CTI Group hierarchy</title>
+          <path class="link" d="M 720 75 V 110 H 360 V 130" />
+          <path class="link" d="M 720 75 V 110 H 1080 V 130" />
+          <path class="link" d="M 360 185 V 215 H 130 V 250" />
+          <path class="link" d="M 360 185 V 215 H 290 V 250" />
+          <path class="link" d="M 360 185 V 215 H 450 V 250" />
+          <path class="link" d="M 360 185 V 215 H 610 V 250" />
+          <path class="link" d="M 360 185 V 380 H 130 V 380" />
+          <path class="link" d="M 360 185 V 380 H 290 V 380" />
+          <path class="link" d="M 360 185 V 380 H 450 V 380" />
+          <path class="link" d="M 360 185 V 380 H 610 V 380" />
+          <path class="link" d="M 1080 185 V 215 H 830 V 250" />
+          <path class="link" d="M 1080 185 V 215 H 990 V 250" />
+          <path class="link" d="M 1080 185 V 215 H 1150 V 250" />
+          <path class="link" d="M 1080 185 V 215 H 1310 V 250" />
+          <path class="link" d="M 1080 185 V 380 H 830 V 380" />
+          <path class="link" d="M 1080 185 V 380 H 990 V 380" />
+          <path class="link" d="M 1080 185 V 380 H 1150 V 380" />
+          <path class="link" d="M 1080 185 V 380 H 1310 V 380" />
+
+          <g class="node nm-parent" tabindex="0">
+            <rect x="540" y="30" width="360" height="46" rx="10" stroke-width="2"/>
+            <text x="720" y="58" text-anchor="middle" class="label">CTI GROUP WORLDWIDE SERVICES INC</text>
+          </g>
+          <g class="node nm-group" tabindex="0">
+            <rect x="240" y="130" width="240" height="56" rx="10" stroke-width="1.5"/>
+            <text x="360" y="158" text-anchor="middle" class="label">DIVISIONS</text>
+            <text x="360" y="175" text-anchor="middle" class="sublabel">Operating units</text>
+          </g>
+          <g class="node nm-group" tabindex="0">
+            <rect x="960" y="130" width="240" height="56" rx="10" stroke-width="1.5"/>
+            <text x="1080" y="158" text-anchor="middle" class="label">CORPORATE FUNCTIONS</text>
+            <text x="1080" y="175" text-anchor="middle" class="sublabel">Cross-division services</text>
+          </g>
+
+          <g class="node nm-div"      data-href="#div-cti"      tabindex="0"><rect x="50"  y="250" width="160" height="60" rx="8" stroke-width="1.5"/><text x="130" y="278" text-anchor="middle" class="label">CTI Group</text><text x="130" y="295" text-anchor="middle" class="sublabel">Cruise + J-1 core</text></g>
+          <g class="node nm-div"      data-href="#div-travel"   tabindex="0"><rect x="210" y="250" width="160" height="60" rx="8" stroke-width="1.5"/><text x="290" y="278" text-anchor="middle" class="label">CTI Marine Travel</text><text x="290" y="295" text-anchor="middle" class="sublabel">Air + crew travel</text></g>
+          <g class="node nm-div"      data-href="#div-uno"      tabindex="0"><rect x="370" y="250" width="160" height="60" rx="8" stroke-width="1.5"/><text x="450" y="278" text-anchor="middle" class="label">UNO</text><text x="450" y="295" text-anchor="middle" class="sublabel">Uniforms Number One</text></g>
+          <g class="node nm-div"      data-href="#div-baron"    tabindex="0"><rect x="530" y="250" width="160" height="60" rx="8" stroke-width="1.5"/><text x="610" y="278" text-anchor="middle" class="label">Baron Promotions</text><text x="610" y="295" text-anchor="middle" class="sublabel">Promotional materials</text></g>
+          <g class="node nm-div"      data-href="#div-prop"     tabindex="0"><rect x="50"  y="350" width="160" height="60" rx="8" stroke-width="1.5"/><text x="130" y="378" text-anchor="middle" class="label">CTI Properties</text><text x="130" y="395" text-anchor="middle" class="sublabel">Real-estate LLC</text></g>
+          <g class="node nm-div"      data-href="#div-winmakers" tabindex="0"><rect x="210" y="350" width="160" height="60" rx="8" stroke-width="1.5"/><text x="290" y="378" text-anchor="middle" class="label">Win Makers</text><text x="290" y="395" text-anchor="middle" class="sublabel">New venture</text></g>
+          <g class="node nm-div"      data-href="#div-ghr"      tabindex="0"><rect x="370" y="350" width="160" height="60" rx="8" stroke-width="1.5"/><text x="450" y="378" text-anchor="middle" class="label">GHR</text><text x="450" y="395" text-anchor="middle" class="sublabel">Global HR — J-1 + land</text></g>
+          <g class="node nm-reserved" data-href="#div-reserved" tabindex="0"><rect x="530" y="350" width="160" height="60" rx="8" stroke-width="1.5"/><text x="610" y="378" text-anchor="middle" class="label">Reserved</text><text x="610" y="395" text-anchor="middle" class="sublabel">2026 expansion</text></g>
+
+          <g class="node nm-cf"       data-href="cti-financial-dashboard.html" tabindex="0"><rect x="750"  y="250" width="160" height="60" rx="8" stroke-width="1.5"/><text x="830"  y="278" text-anchor="middle" class="label">Finance</text><text x="830"  y="295" text-anchor="middle" class="sublabel">Zoho Books · Plaid</text></g>
+          <g class="node nm-cf"       data-href="#cf-operations" tabindex="0"><rect x="910"  y="250" width="160" height="60" rx="8" stroke-width="1.5"/><text x="990"  y="278" text-anchor="middle" class="label">Operations</text><text x="990"  y="295" text-anchor="middle" class="sublabel">Process · vendors</text></g>
+          <g class="node nm-cf"       data-href="#cf-recruiting" tabindex="0"><rect x="1070" y="250" width="160" height="60" rx="8" stroke-width="1.5"/><text x="1150" y="278" text-anchor="middle" class="label">Recruiting</text><text x="1150" y="295" text-anchor="middle" class="sublabel">Pipeline · sponsors</text></g>
+          <g class="node nm-cf"       data-href="#cf-it" tabindex="0"><rect x="1230" y="250" width="160" height="60" rx="8" stroke-width="1.5"/><text x="1310" y="278" text-anchor="middle" class="label">IT &amp; Tech</text><text x="1310" y="295" text-anchor="middle" class="sublabel">Dashboards · APIs</text></g>
+          <g class="node nm-cf"       data-href="#cf-contracts" tabindex="0"><rect x="750"  y="350" width="160" height="60" rx="8" stroke-width="1.5"/><text x="830"  y="378" text-anchor="middle" class="label">Contracts</text><text x="830"  y="395" text-anchor="middle" class="sublabel">Legal · cruise lines</text></g>
+          <g class="node nm-cf"       data-href="cti-marketing-dashboard.html" tabindex="0"><rect x="910"  y="350" width="160" height="60" rx="8" stroke-width="1.5"/><text x="990"  y="378" text-anchor="middle" class="label">Marketing</text><text x="990"  y="395" text-anchor="middle" class="sublabel">Campaigns · CAC</text></g>
+          <g class="node nm-cf"       data-href="#cf-hr" tabindex="0"><rect x="1070" y="350" width="160" height="60" rx="8" stroke-width="1.5"/><text x="1150" y="378" text-anchor="middle" class="label">HR</text><text x="1150" y="395" text-anchor="middle" class="sublabel">People · compliance</text></g>
+          <g class="node nm-cf"       data-href="#cf-executive" tabindex="0"><rect x="1230" y="350" width="160" height="60" rx="8" stroke-width="1.5"/><text x="1310" y="378" text-anchor="middle" class="label">Executive</text><text x="1310" y="395" text-anchor="middle" class="sublabel">Orchestrator (CEO)</text></g>
+        </svg>
+      </div>
+
+      <h2 class="text-lg font-semibold mb-3">Roll-up KPIs</h2>
+      <div id="kpi-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+    </div>
+  </section>
+
+  <!-- Executive Briefing -->
+  <section data-section="briefing" class="hidden" aria-labelledby="eb-h">
+    <h1 id="eb-h" class="text-2xl font-semibold mb-4">Executive Briefing</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="card"><h2 class="text-lg font-semibold mb-2"><i data-lucide="mail" class="w-4 h-4 inline"></i> Emails</h2><p class="text-sm text-zinc-400">MSAL token required. Configure in Settings → connect Microsoft 365.</p></div>
+      <div class="card"><h2 class="text-lg font-semibold mb-2"><i data-lucide="calendar" class="w-4 h-4 inline"></i> Calendar</h2><p class="text-sm text-zinc-400">Next 7 days of events will appear here once M365 is connected.</p></div>
+      <div class="card"><h2 class="text-lg font-semibold mb-2"><i data-lucide="check-square" class="w-4 h-4 inline"></i> Tasks</h2><p class="text-sm text-zinc-400">Microsoft To Do + Planner tasks.</p></div>
+      <div class="card"><h2 class="text-lg font-semibold mb-2"><i data-lucide="list-todo" class="w-4 h-4 inline"></i> To-dos (cross-system)</h2><p class="text-sm text-zinc-400">Aggregates from M365, Google Tasks, and the Tracker.</p></div>
+    </div>
+  </section>
+
+  <!-- Divisions placeholders (8 sections — one per division) -->
+  <section data-section="div-cti"       class="hidden"><h1 class="text-2xl font-semibold mb-4">CTI Group Worldwide Services</h1><div class="card"><p class="text-sm text-zinc-400">Cruise + J-1 core staffing. Live dashboard: <a class="underline" style="color:var(--cti-teal);" href="poseidon-dashboard-v6.html">poseidon-dashboard-v6.html</a></p></div></section>
+  <section data-section="div-travel"    class="hidden"><h1 class="text-2xl font-semibold mb-4">CTI Marine Travel</h1><div class="card"><p class="text-sm text-zinc-400">Air + crew travel. KPI source: <code>scope=cruise</code> partition.</p></div></section>
+  <section data-section="div-uno"       class="hidden"><h1 class="text-2xl font-semibold mb-4">UNO — Uniforms Number One</h1><div class="card"><p class="text-sm text-zinc-400">Uniforms division. Not yet wired to a live data source.</p></div></section>
+  <section data-section="div-baron"     class="hidden"><h1 class="text-2xl font-semibold mb-4">Baron Promotions</h1><div class="card"><p class="text-sm text-zinc-400">Promotional materials. Not yet wired to a live data source.</p></div></section>
+  <section data-section="div-prop"      class="hidden"><h1 class="text-2xl font-semibold mb-4">CTI Group Properties LLC</h1><div class="card"><p class="text-sm text-zinc-400">Real-estate LLC. No live bookkeeping connector yet — flagged in <a class="underline" style="color:var(--cti-teal);" href="docs/ASSUMPTIONS.md">ASSUMPTIONS.md</a> §Q15.</p></div></section>
+  <section data-section="div-winmakers" class="hidden"><h1 class="text-2xl font-semibold mb-4">Win Makers</h1><div class="card"><p class="text-sm text-zinc-400">New venture. No live bookkeeping connector yet — flagged in <a class="underline" style="color:var(--cti-teal);" href="docs/ASSUMPTIONS.md">ASSUMPTIONS.md</a> §Q15.</p></div></section>
+  <section data-section="div-ghr"       class="hidden"><h1 class="text-2xl font-semibold mb-4">GHR — Global Human Resources</h1><div class="card"><p class="text-sm text-zinc-400">J-1 + land hospitality. Operational data lives on <a class="underline" style="color:var(--cti-teal);" href="j1-system-dashboard.html">J1 System Dashboard</a> (partition rule — see ARCHITECTURE §6).</p></div></section>
+  <section data-section="div-reserved"  class="hidden"><h1 class="text-2xl font-semibold mb-4">Reserved Slot</h1><div class="card"><p class="text-sm text-zinc-400">Held for 2026 expansion. Name TBD.</p></div></section>
+
+  <!-- Corporate functions placeholders -->
+  <section data-section="cf-operations"  class="hidden"><h1 class="text-2xl font-semibold mb-4">Operations</h1><div class="card"><p class="text-sm text-zinc-400">Tracker integration, vendor registry, process docs. <a class="underline" style="color:var(--cti-teal);" href="tracker.html">Open Tracker</a></p></div></section>
+  <section data-section="cf-recruiting"  class="hidden"><h1 class="text-2xl font-semibold mb-4">Recruiting</h1><div class="card"><p class="text-sm text-zinc-400">Aggregates Cruise + J-1 placement totals. Detail dashboards: <a class="underline" style="color:var(--cti-teal);" href="poseidon-dashboard-v6.html">V6</a> · <a class="underline" style="color:var(--cti-teal);" href="j1-system-dashboard.html">J1 System</a></p></div></section>
+  <section data-section="cf-it"          class="hidden"><h1 class="text-2xl font-semibold mb-4">IT &amp; Technology</h1><div class="card"><p class="text-sm text-zinc-400">Dashboard health, Worker status, last deploy.</p></div></section>
+  <section data-section="cf-contracts"   class="hidden"><h1 class="text-2xl font-semibold mb-4">Contracts</h1><div class="card"><p class="text-sm text-zinc-400">Cruise line + sponsor contracts. <a class="underline" style="color:var(--cti-teal);" href="contracts/index.html">Open Contracts dashboard</a></p></div></section>
+  <section data-section="cf-hr"          class="hidden"><h1 class="text-2xl font-semibold mb-4">HR</h1><div class="card"><p class="text-sm text-zinc-400">People, compliance, FL right-to-work, employment matters.</p></div></section>
+  <section data-section="cf-executive"   class="hidden"><h1 class="text-2xl font-semibold mb-4">Executive — Orchestrator</h1><div class="card"><p class="text-sm text-zinc-400">CEO view: priorities, decisions log, focus areas.</p></div></section>
+
+  <section data-section="reports" class="hidden">
+    <h1 class="text-2xl font-semibold mb-4">Reports &amp; Analytics</h1>
+    <div class="card"><p class="text-sm text-zinc-400">Cross-division report generator. Pulls from <code>/api/kpi-summary</code> for every scope and exports PDF / CSV. Coming online once Worker is deployed.</p></div>
+  </section>
+
+  <section data-section="agents" class="hidden" aria-labelledby="ag-h">
+    <h1 id="ag-h" class="text-2xl font-semibold mb-4">Agents</h1>
+    <p class="text-sm text-zinc-400 mb-4">Specialized Jarvis agents registered in <code>data/jarvis-skills/index.json</code>. Status display only — manual trigger UI deferred to v2.</p>
+    <div id="agents-host"></div>
+  </section>
+
+  <section data-section="jarvis" class="hidden">
+    <h1 class="text-2xl font-semibold mb-4">Jarvis</h1>
+    <div class="card">
+      <p class="text-sm text-zinc-400 mb-3">Voice assistant control panel. Wake word: <strong>Jarvis</strong>.</p>
+      <button class="btn-primary" disabled title="Wired in a follow-up commit"><i data-lucide="mic" class="w-4 h-4 inline"></i> Open Jarvis Console</button>
+    </div>
+  </section>
+
+  <section data-section="settings" class="hidden" aria-labelledby="set-h">
+    <h1 id="set-h" class="text-2xl font-semibold mb-4">Settings</h1>
+    <div class="card max-w-xl space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Theme</label>
+        <button id="theme-cycle" class="btn-ghost"><i data-lucide="sun-moon" class="w-3 h-3 inline"></i> Toggle dark / light</button>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1" for="worker-url">Cloudflare Worker URL</label>
+        <input id="worker-url" type="url" placeholder="https://poseidon-proxy.your-sub.workers.dev">
+        <p class="text-xs text-zinc-500 mt-1">Stored in <code>localStorage.poseidon-worker-url</code>. See <a class="underline" style="color:var(--cti-teal);" href="docs/cloudflare-worker-setup.md">setup guide</a>.</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1" for="dash-token">Dashboard Token</label>
+        <input id="dash-token" type="password" placeholder="(rotates quarterly)">
+        <p class="text-xs text-zinc-500 mt-1">Sent as <code>X-Dashboard-Token</code> header. Stored in <code>localStorage.poseidon-dashboard-token</code>.</p>
+      </div>
+      <div class="flex gap-3">
+        <button id="settings-save" class="btn-primary"><i data-lucide="save" class="w-4 h-4 inline"></i> Save</button>
+        <button id="settings-clear-cache" class="btn-ghost"><i data-lucide="trash-2" class="w-3 h-3 inline"></i> Clear KPI cache</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-12 pt-6 border-t text-xs text-zinc-500 flex flex-wrap justify-between gap-4" style="border-color:rgba(100,116,139,.25);">
+    <div>Poseidon Master · v1.0.0-mvp · scaffold built 2026-05-11</div>
+    <div>Live: <a class="underline" style="color:var(--cti-teal);" href="https://robert-upchurch.github.io/Poseidon/poseidon-master-dashboard.html">robert-upchurch.github.io/Poseidon/poseidon-master-dashboard.html</a></div>
+  </footer>
+</main>
+
+<!-- ═════════ SHARED + MASTER MODULES ═════════ -->
+<script src="js/shared/theme-toggle.js"></script>
+<script src="js/shared/jarvis-context.js"></script>
+<script src="js/shared/format.js"></script>
+<script src="js/shared/chart-defaults.js"></script>
+<script src="js/shared/kpi-client.js"></script>
+<script src="js/master/router.js"></script>
+<script src="js/master/overview.js"></script>
+<script src="js/master/agents-panel.js"></script>
+<script>
+(function () {
+  // Lucide
+  function paintIcons() { if (window.lucide && window.lucide.createIcons) window.lucide.createIcons(); }
+  paintIcons();
+
+  // Theme toggle wiring
+  var themeBtn = document.getElementById('theme-btn');
+  if (themeBtn && window.ThemeToggle) window.ThemeToggle.attach(themeBtn);
+  var themeCycle = document.getElementById('theme-cycle');
+  if (themeCycle && window.ThemeToggle) window.ThemeToggle.attach(themeCycle);
+
+  // Mobile drawer
+  var menuBtn = document.getElementById('mobile-menu-btn');
+  var drawer  = document.querySelector('nav.sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  function openDrawer()  { drawer.classList.add('open');    overlay.classList.add('open');    document.body.classList.add('drawer-open'); }
+  function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('open'); document.body.classList.remove('drawer-open'); }
+  if (menuBtn)  menuBtn.addEventListener('click', openDrawer);
+  if (overlay)  overlay.addEventListener('click', closeDrawer);
+
+  // Section label sync
+  var sectionLabel = document.getElementById('section-label');
+  document.addEventListener('poseidon:nav', function (e) {
+    if (!sectionLabel) return;
+    var link = document.querySelector('[data-nav="' + e.detail.tab + '"]');
+    sectionLabel.textContent = (link ? link.textContent.trim() : e.detail.tab);
+  });
+
+  // Mind map deep-link clicks
+  document.querySelectorAll('svg.tree .node[data-href]').forEach(function (n) {
+    n.addEventListener('click', function () {
+      var href = n.getAttribute('data-href');
+      if (!href) return;
+      if (href.charAt(0) === '#') location.hash = href;
+      else location.href = href;
+    });
+    n.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); n.click(); }
+    });
+  });
+
+  // Settings
+  var workerInput = document.getElementById('worker-url');
+  var tokenInput  = document.getElementById('dash-token');
+  var saveBtn     = document.getElementById('settings-save');
+  var clearBtn    = document.getElementById('settings-clear-cache');
+  if (window.KPIClient) {
+    var c = window.KPIClient.getConfig();
+    if (workerInput) workerInput.value = c.url;
+    // do not pre-fill token field (security hygiene)
+  }
+  if (saveBtn) saveBtn.addEventListener('click', function () {
+    if (!window.KPIClient) return;
+    window.KPIClient.configure(workerInput ? workerInput.value : '', tokenInput && tokenInput.value ? tokenInput.value : undefined);
+    saveBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4 inline"></i> Saved';
+    paintIcons();
+    setTimeout(function () { saveBtn.innerHTML = '<i data-lucide="save" class="w-4 h-4 inline"></i> Save'; paintIcons(); }, 1500);
+  });
+  if (clearBtn) clearBtn.addEventListener('click', function () {
+    if (window.KPIClient) window.KPIClient.clearCache();
+    if (window.MasterOverview) window.MasterOverview.refresh(document.getElementById('overview-host'));
+  });
+
+  // Init router + panes
+  if (window.MasterRouter)       window.MasterRouter.init();
+  if (window.ChartDefaults)      window.ChartDefaults.apply();
+  if (window.MasterOverview)     window.MasterOverview.init(document.getElementById('overview-host'));
+  if (window.MasterAgentsPanel)  document.addEventListener('poseidon:nav', function (e) {
+    if (e.detail.tab === 'agents') window.MasterAgentsPanel.render(document.getElementById('agents-host'));
+  });
+
+  // Refresh button
+  var refreshBtn = document.getElementById('refresh-overview');
+  if (refreshBtn) refreshBtn.addEventListener('click', function () {
+    if (window.MasterOverview) window.MasterOverview.refresh(document.getElementById('overview-host'));
+  });
+
+  // Health button
+  var healthBtn = document.getElementById('health-btn');
+  if (healthBtn) healthBtn.addEventListener('click', function () {
+    var ok = !!(window.MasterRouter && window.KPIClient && window.MasterOverview && window.MasterAgentsPanel);
+    alert('System check\n\nModules loaded: ' + (ok ? 'all OK' : 'partial')
+        + '\nWorker URL: ' + (window.KPIClient ? (window.KPIClient.getConfig().url || '(unset)') : 'n/a')
+        + '\nTheme: ' + (window.ThemeToggle ? window.ThemeToggle.current() : '?'));
+  });
+
+  // Jarvis context
+  if (window.JarvisContext) window.JarvisContext.set({ page: 'master', tab: 'overview' });
+
+  // Re-paint icons after dynamic content
+  setTimeout(paintIcons, 50);
+})();
+</script>
+</body>
+</html>
