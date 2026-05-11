@@ -40,7 +40,18 @@
   }
 
   // -------- WORKER CONFIG --------
+  // 1. Inline override (window.GHR_PORTAL_WORKER_URL) wins if set.
+  // 2. Otherwise auto-fetch ../../config/worker.json on load.
   var workerUrl = (window.GHR_PORTAL_WORKER_URL || '').replace(/\/$/, '');
+  var workerReady = workerUrl
+    ? Promise.resolve(workerUrl)
+    : fetch('../../config/worker.json', { cache: 'no-cache' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (j && j.worker_url) workerUrl = j.worker_url.replace(/\/$/, '');
+          return workerUrl;
+        })
+        .catch(function () { return ''; });
   function endpoint(path) { return (workerUrl || '') + path; }
 
   // -------- FORM VALIDATION --------
@@ -180,10 +191,13 @@
   // -------- SUBMIT (with offline fallback) --------
   function submitApplication(form) {
     var data = collectFormData(form);
-    var path = form.getAttribute('data-submit-path') || '/portal/ghr/apply';
+    var path = form.getAttribute('data-submit-path') || '/api/portal-intake/ghr';
     var status = form.querySelector('[data-submit-status]');
     setStatus(status, 'info', 'Submitting application...');
+    workerReady.then(function () { doSubmitApplication(form, data, path, status); });
+  }
 
+  function doSubmitApplication(form, data, path, status) {
     if (!workerUrl) {
       stashOffline(data);
       setStatus(status, 'warn', 'Saved offline - your application will sync when the Worker is live.');
@@ -249,8 +263,14 @@
       for (var i = 0; i < inputs.length; i++) if (!validateField(inputs[i])) ok = false;
       if (!ok) return;
       var data = collectFormData(form);
-      var path = form.getAttribute('data-submit-path') || '/portal/ghr/contact';
+      var path = form.getAttribute('data-submit-path') || '/api/portal-intake/ghr';
       setStatus(status, 'info', 'Sending message...');
+      workerReady.then(function () { sendContact(form, data, path, status); });
+    });
+    wireValidation(form);
+  }
+
+  function sendContact(form, data, path, status) {
       if (!workerUrl) {
         setStatus(status, 'warn', 'Saved locally - message will deliver once the Worker is live.');
         disableForm(form);
@@ -273,8 +293,6 @@
         setStatus(status, 'warn', 'Saved locally - message will deliver once the Worker is live.');
         disableForm(form);
       });
-    });
-    wireValidation(form);
   }
 
   // -------- POSITIONS FILTER --------
@@ -326,11 +344,12 @@
       statusSlot.innerHTML = '<div class="notice notice-info">Enter the tracking link from your application confirmation email. Lost it? <a href="contact.html">Contact us</a>.</div>';
       return;
     }
+    workerReady.then(function () {
     if (!workerUrl) {
       statusSlot.innerHTML = '<div class="notice notice-info">Your tracking link is being prepared - check back shortly.</div>';
       return;
     }
-    fetch(endpoint('/portal/' + portal + '/status/' + encodeURIComponent(token))).then(function (resp) {
+    fetch(endpoint('/api/portal-status/' + encodeURIComponent(token))).then(function (resp) {
       if (resp.status === 404) {
         statusSlot.innerHTML = '<div class="notice notice-info">Your tracking link is being prepared - check back shortly.</div>';
         return null;
@@ -342,6 +361,7 @@
       renderTrackStatus(statusSlot, json);
     }).catch(function () {
       statusSlot.innerHTML = '<div class="notice notice-warn">We could not load your status right now. Please refresh in a few minutes.</div>';
+    });
     });
   }
 

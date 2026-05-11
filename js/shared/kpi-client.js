@@ -8,6 +8,8 @@
   var WORKER_KEY = 'poseidon-worker-url';
   var TOKEN_KEY  = 'poseidon-dashboard-token';
   var DEFAULT_TTL_MS = 15 * 60 * 1000;
+  var CONFIG_URL = 'config/worker.json';
+  var configSeeded = false;
 
   function cfg() {
     var url = '';
@@ -17,6 +19,24 @@
       tok = localStorage.getItem(TOKEN_KEY) || '';
     } catch (e) {}
     return { url: url.replace(/\/+$/, ''), token: tok };
+  }
+
+  /* Auto-seed the Worker URL from config/worker.json if localStorage is empty.
+     Runs once per page load. Never overwrites a value the user already set. */
+  function seedFromConfig() {
+    if (configSeeded) return Promise.resolve();
+    configSeeded = true;
+    return fetch(CONFIG_URL, { cache: 'no-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.worker_url) return;
+        try {
+          if (!localStorage.getItem(WORKER_KEY)) {
+            localStorage.setItem(WORKER_KEY, j.worker_url);
+          }
+        } catch (e) {}
+      })
+      .catch(function () { /* offline — caller renders skeleton */ });
   }
 
   function cacheKey(scope) { return 'poseidon-kpi:' + scope; }
@@ -41,20 +61,26 @@
 
   function summary(scope, opts) {
     opts = opts || {};
-    var c = cfg();
-    if (!c.url || !c.token) {
-      return Promise.resolve({ ok: false, reason: 'not-configured', payload: null });
-    }
-    if (!opts.force) {
-      var cached = readCache(scope);
-      if (cached) return Promise.resolve({ ok: true, fromCache: true, payload: cached });
-    }
-    var u = c.url + '/api/kpi-summary?scope=' + encodeURIComponent(scope);
-    if (opts.since) u += '&since=' + encodeURIComponent(opts.since);
-    if (opts.partition) u += '&partition=' + encodeURIComponent(opts.partition);
-    return fetchWithRetry(u, c.token).then(function (res) {
-      if (res.ok) writeCache(scope, res.payload);
-      return res;
+    return seedFromConfig().then(function () {
+      var c = cfg();
+      if (!c.url) {
+        return { ok: false, reason: 'no-worker-url', payload: null };
+      }
+      if (!c.token) {
+        return { ok: false, reason: 'no-token', payload: null,
+                 hint: 'Open Settings → paste your DASHBOARD_TOKEN' };
+      }
+      if (!opts.force) {
+        var cached = readCache(scope);
+        if (cached) return { ok: true, fromCache: true, payload: cached };
+      }
+      var u = c.url + '/api/kpi-summary?scope=' + encodeURIComponent(scope);
+      if (opts.since) u += '&since=' + encodeURIComponent(opts.since);
+      if (opts.partition) u += '&partition=' + encodeURIComponent(opts.partition);
+      return fetchWithRetry(u, c.token).then(function (res) {
+        if (res.ok) writeCache(scope, res.payload);
+        return res;
+      });
     });
   }
 
@@ -104,6 +130,10 @@
 
   function getConfig() { return cfg(); }
 
+  /* Public: trigger the auto-seed manually (e.g. on dashboard init so Settings
+     fields pre-fill before the user opens the Settings panel). */
+  function init() { return seedFromConfig().then(cfg); }
+
   function clearCache() {
     try {
       Object.keys(localStorage).forEach(function (k) {
@@ -116,6 +146,7 @@
     summary: summary,
     configure: configure,
     getConfig: getConfig,
+    init: init,
     clearCache: clearCache
   };
 })(typeof window !== 'undefined' ? window : globalThis);
