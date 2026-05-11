@@ -1784,7 +1784,7 @@ function _toast(msg, type) {
     if (!t) {
         t = document.createElement('div');
         t.id = 'poseidon-toast';
-        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:2147483500;padding:11px 20px;border-radius:10px;font-family:Inter,-apple-system,sans-serif;font-size:0.9rem;font-weight:600;color:#fff;box-shadow:0 6px 24px rgba(0,0,0,0.4);transition:opacity 0.25s;opacity:0;max-width:90vw;text-align:center;pointer-events:none;';
+        t.style.cssText = 'position:fixed;top:90px;left:50%;transform:translateX(-50%);z-index:2147483500;padding:12px 22px;border-radius:10px;font-family:Inter,-apple-system,sans-serif;font-size:0.92rem;font-weight:600;color:#fff;box-shadow:0 6px 28px rgba(0,0,0,0.45);transition:opacity 0.25s, top 0.25s;opacity:0;max-width:92vw;text-align:center;pointer-events:none;border:2px solid rgba(255,255,255,0.25);';
         document.body.appendChild(t);
     }
     t.textContent = msg;
