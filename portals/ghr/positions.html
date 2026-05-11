@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Open Cultural Exchange and land hospitality positions: hotel front desk, F&amp;B, housekeeping, lifeguard, theme park. Filter by country and sponsor." />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0a1628" media="(prefers-color-scheme: dark)" />
+  <title>Open Positions - GHR Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/portal.css" />
+  <script>(function(){try{var t=localStorage.getItem('ghr-theme')||'light';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();</script>
+</head>
+<body>
+
+<header class="navbar">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html"><span class="brand-dot">GHR</span><span>Global Human Resources</span></a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="positions.html" class="active">Positions</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="faq.html">FAQ</a>
+      <a href="contact.html">Contact</a>
+      <a href="track.html">Track</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="theme-toggle" data-theme-toggle aria-label="Toggle theme"></button>
+      <a class="btn btn-primary" href="apply.html" style="padding:10px 18px;font-size:14px;">Apply Now</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="section">
+    <div class="container">
+      <p class="section-eyebrow">Currently hiring</p>
+      <h1 class="section-title">Open Cultural Exchange &amp; hospitality positions</h1>
+      <p class="section-lede">Roles below are actively recruited across our US sponsor network and Southeast Asia hospitality partners.</p>
+
+      <div class="filter-bar">
+        <div>
+          <label for="filter-country" style="margin-bottom:4px;">Country preference</label>
+          <select id="filter-country" data-positions-filter="country">
+            <option value="all">All countries</option>
+            <option value="indonesia">Indonesia</option>
+            <option value="thailand">Thailand</option>
+            <option value="vietnam">Vietnam</option>
+            <option value="philippines">Philippines</option>
+            <option value="malaysia">Malaysia</option>
+            <option value="usa">United States (Cultural Exchange)</option>
+          </select>
+        </div>
+        <div>
+          <label for="filter-sponsor" style="margin-bottom:4px;">Sponsor</label>
+          <select id="filter-sponsor" data-positions-filter="sponsor">
+            <option value="all">Any sponsor</option>
+            <option value="alliance-abroad">Alliance Abroad</option>
+            <option value="ciee">CIEE</option>
+            <option value="greenheart">Greenheart</option>
+            <option value="direct">Direct hospitality (no sponsor)</option>
+          </select>
+        </div>
+        <div style="margin-left:auto;align-self:end;">
+          <span class="muted" data-positions-count>5 positions</span>
+        </div>
+      </div>
+
+      <div class="grid grid-2" data-positions-grid>
+
+        <article class="card position-card" data-position data-country="usa" data-sponsor="alliance-abroad">
+          <div class="title-row">
+            <h3>Hotel Front Desk Agent</h3>
+            <span class="tag">Cultural Exchange</span>
+          </div>
+          <p class="muted">Guest check-in, reservations, and concierge duties at US resort properties. Strong English required. Sponsor: Alliance Abroad.</p>
+          <div class="tag-row">
+            <span class="tag">USA</span>
+            <span class="tag">12-month placement</span>
+            <span class="tag">Alliance Abroad</span>
+          </div>
+          <a class="btn btn-primary" href="apply.html" style="align-self:flex-start;padding:10px 18px;font-size:14px;">Apply for this role</a>
+        </article>
+
+        <article class="card position-card" data-position data-country="usa" data-sponsor="ciee">
+          <div class="title-row">
+            <h3>Food &amp; Beverage Server</h3>
+            <span class="tag">Cultural Exchange</span>
+          </div>
+          <p class="muted">Front-of-house service at US hospitality venues. Tip-eligible. Sponsor: CIEE.</p>
+          <div class="tag-row">
+            <span class="tag">USA</span>
+            <span class="tag">Seasonal &amp; year-round</span>
+            <span class="tag">CIEE</span>
+          </div>
+          <a class="btn btn-primary" href="apply.html" style="align-self:flex-start;padding:10px 18px;font-size:14px;">Apply for this role</a>
+        </article>
+
+        <article class="card position-card" data-position data-country="usa" data-sponsor="greenheart">
+          <div class="title-row">
+            <h3>Housekeeping Associate</h3>
+            <span class="tag">Cultural Exchange</span>
+          </div>
+          <p class="muted">Guest room service at US hotels and resorts. Year-round placements. Sponsor: Greenheart.</p>
+          <div class="tag-row">
+            <span class="tag">USA</span>
+            <span class="tag">12-month placement</span>
+            <span class="tag">Greenheart</span>
+          </div>
+          <a class="btn btn-primary" href="apply.html" style="align-self:flex-start;padding:10px 18px;font-size:14px;">Apply for this role</a>
+        </article>
+
+        <article class="card position-card" data-position data-country="usa" data-sponsor="alliance-abroad">
+          <div class="title-row">
+            <h3>Lifeguard</h3>
+            <span class="tag">Cultural Exchange</span>
+          </div>
+          <p class="muted">Pool and beach lifeguard duty at US resort properties. Red Cross certification provided on arrival. Sponsor: Alliance Abroad.</p>
+          <div class="tag-row">
+            <span class="tag">USA</span>
+            <span class="tag">Summer season</span>
+            <span class="tag">Alliance Abroad</span>
+          </div>
+          <a class="btn btn-primary" href="apply.html" style="align-self:flex-start;padding:10px 18px;font-size:14px;">Apply for this role</a>
+        </article>
+
+        <article class="card position-card" data-position data-country="thailand" data-sponsor="direct">
+          <div class="title-row">
+            <h3>Theme Park Hospitality (Bangkok)</h3>
+            <span class="tag">Land hospitality</span>
+          </div>
+          <p class="muted">Front-of-house roles at a major Bangkok theme park. Direct hospitality placement (no Cultural Exchange sponsor required).</p>
+          <div class="tag-row">
+            <span class="tag">Thailand</span>
+            <span class="tag">6-12 month contract</span>
+            <span class="tag">Direct hire</span>
+          </div>
+          <a class="btn btn-primary" href="apply.html" style="align-self:flex-start;padding:10px 18px;font-size:14px;">Apply for this role</a>
+        </article>
+
+      </div>
+
+      <div class="compliance-banner">Pre-production draft - legal copy pending CTI counsel sign-off.</div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="brand" style="margin-bottom:14px;"><span class="brand-dot">GHR</span><span style="color:#ffffff;">Global Human Resources</span></div>
+        <p style="opacity:0.7;font-size:14px;max-width:340px;">A division of CTI Group Worldwide Services Inc. - Cultural Exchange and land hospitality placement.</p>
+      </div>
+      <div><h4>Portal</h4><a href="index.html">Home</a><a href="positions.html">Positions</a><a href="how-it-works.html">How it works</a></div>
+      <div><h4>Apply</h4><a href="apply.html">Start application</a><a href="track.html">Track status</a><a href="faq.html">FAQ</a></div>
+      <div><h4>Company</h4><a href="contact.html">Contact us</a><a href="#">Privacy (draft)</a><a href="#">Terms (draft)</a></div>
+    </div>
+    <div class="legal">&copy; 2026 CTI Group Worldwide Services Inc. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="assets/portal.js"></script>
+</body>
+</html>

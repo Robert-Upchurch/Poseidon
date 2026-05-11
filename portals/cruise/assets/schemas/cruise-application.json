@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CTI Cruise Candidate Application",
+  "description": "Public intake schema for the CTI Cruise Web Portal. Writes to Zoho CRM module Candidates (CustomModule13) with Candidate_Type = Cruise.",
+  "version": "1.0.0",
+  "target_module": "Candidates",
+  "target_module_id": "CustomModule13",
+  "default_field_values": {
+    "Candidate_Type": "Cruise",
+    "Lead_Source": "Cruise Web Portal"
+  },
+  "document_field_map": {
+    "seaman_book": "File_Upload_3__s",
+    "marlins": "File_Upload_2__s",
+    "stcw": "File_Upload_8__s",
+    "medical": "File_Upload_4__s",
+    "visa": "File_Upload_5__s",
+    "passport": "File_Upload_7__s"
+  },
+  "type": "object",
+  "required": [
+    "first_name",
+    "last_name",
+    "email",
+    "phone",
+    "country_of_citizenship",
+    "date_of_birth",
+    "preferred_role",
+    "years_experience"
+  ],
+  "properties": {
+    "first_name":              { "type": "string", "maxLength": 80 },
+    "last_name":               { "type": "string", "maxLength": 80 },
+    "email":                   { "type": "string", "format": "email" },
+    "phone":                   { "type": "string", "maxLength": 32 },
+    "country_of_citizenship":  { "type": "string" },
+    "date_of_birth":           { "type": "string", "format": "date" },
+    "current_city":            { "type": "string", "maxLength": 80 },
+    "preferred_role":          {
+      "type": "string",
+      "enum": [
+        "Cabin Steward",
+        "Deckhand",
+        "F&B Server",
+        "Bartender",
+        "Photographer",
+        "Casino Dealer",
+        "Entertainment",
+        "Galley",
+        "Other"
+      ]
+    },
+    "years_experience":        {
+      "type": "string",
+      "enum": ["0", "1-2", "3-5", "6-10", "10+"]
+    },
+    "english_level":           {
+      "type": "string",
+      "enum": ["Basic", "Conversational", "Fluent", "Native"]
+    },
+    "prior_cruise_lines":      { "type": "string", "maxLength": 240 },
+    "certifications":          { "type": "array", "items": { "type": "string" } },
+    "available_from":          { "type": "string", "format": "date" },
+    "consent_data_processing": { "type": "boolean" },
+    "documents": {
+      "type": "object",
+      "description": "File metadata only at v1; files queued in browser until Azure Files.ReadWrite scope is live.",
+      "properties": {
+        "seaman_book": { "type": "array", "items": { "type": "object" } },
+        "marlins":     { "type": "array", "items": { "type": "object" } },
+        "stcw":        { "type": "array", "items": { "type": "object" } },
+        "medical":     { "type": "array", "items": { "type": "object" } },
+        "visa":        { "type": "array", "items": { "type": "object" } },
+        "passport":    { "type": "array", "items": { "type": "object" } }
+      }
+    }
+  }
+}
