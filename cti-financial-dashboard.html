@@ -97,6 +97,8 @@ tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter
     <span id="snapshot-ts" class="text-xs text-zinc-500 hidden sm:inline">—</span>
     <button id="refresh-btn" class="btn-ghost" aria-label="Refresh"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
     <button id="theme-btn" class="btn-ghost" aria-label="Toggle theme"><i data-lucide="sun" class="w-4 h-4"></i></button>
+    <span class="hidden sm:inline-flex items-center gap-2 text-xs text-zinc-400"><i data-lucide="user" class="w-3 h-3"></i><span>Robert Upchurch</span></span>
+    <button id="settings-modal-btn" class="btn-ghost" aria-label="Open settings" title="Settings"><i data-lucide="settings" class="w-4 h-4"></i></button>
     <span class="inline-flex items-center gap-2 text-xs"><i data-lucide="anchor" class="w-4 h-4" style="color:var(--cti-teal);"></i><span class="font-semibold">CTI Group</span></span>
   </div>
 </header>
@@ -304,6 +306,7 @@ tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter
 <script src="js/shared/format.js"></script>
 <script src="js/shared/chart-defaults.js"></script>
 <script src="js/shared/kpi-client.js"></script>
+<script src="js/shared/settings-modal.js"></script>
 <script src="js/finance/zoho-adapter.js"></script>
 <script src="js/finance/qbo-adapter.js"></script>
 <script src="js/finance/plaid-adapter.js"></script>
@@ -316,6 +319,10 @@ tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter
   // Theme
   var themeBtn = document.getElementById('theme-btn');
   if (themeBtn && window.ThemeToggle) window.ThemeToggle.attach(themeBtn);
+
+  // Settings modal (header gear)
+  var settingsBtn = document.getElementById('settings-modal-btn');
+  if (settingsBtn && window.SettingsModal) window.SettingsModal.attach(settingsBtn);
 
   // Drawer
   var menuBtn = document.getElementById('mobile-menu-btn'), drawer = document.querySelector('nav.sidebar'), overlay = document.getElementById('sidebar-overlay');
