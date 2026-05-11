@@ -1120,8 +1120,13 @@
       try {
         localStorage.setItem(GATE_KEY, '1');
         localStorage.setItem(ROLE_KEY, _role);
-        if (input.value === '4321') { localStorage.setItem('poseidon_test_mode', '1'); }
-        else                        { localStorage.removeItem('poseidon_test_mode'); }
+        if (input.value === '4321') {
+          localStorage.setItem('poseidon_test_mode', '1');
+          try { sessionStorage.removeItem('poseidon_test_banner_dismissed'); var _b=document.getElementById('poseidon-test-banner'); if(_b) _b.classList.add('show'); } catch(_){}
+        } else {
+          localStorage.removeItem('poseidon_test_mode');
+          try { var _b=document.getElementById('poseidon-test-banner'); if(_b) _b.classList.remove('show'); } catch(_){}
+        }
       } catch (_) {}
       window.poseidonRole = _role;
       window.poseidonRolePages = ROLE_PAGES[_role] || null;
