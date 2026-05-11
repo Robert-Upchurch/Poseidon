@@ -1037,6 +1037,29 @@
         #j1-roster-table td { white-space: nowrap; font-size: 0.78rem; padding: 6px 8px; }
         #j1-roster-table td.col-wrap { white-space: normal; max-width: 240px; min-width: 180px; }
         #j1-roster-table th { font-size: 0.72rem; padding: 8px 8px; position: sticky; top: 0; background: var(--bg-card); z-index: 2; }
+
+        /* TEST MODE banner — appears for users who logged in with 4321 */
+        #poseidon-test-banner {
+            display: none;
+            position: sticky; top: 0; z-index: 2147483600;
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+            color: #1a1a1a; padding: 8px 14px;
+            font-family: Inter, -apple-system, sans-serif; font-size: 0.85rem; font-weight: 600;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border-bottom: 2px solid #b45309;
+            align-items: center; gap: 10px; justify-content: center;
+            flex-wrap: wrap;
+        }
+        #poseidon-test-banner.show { display: flex; }
+        #poseidon-test-banner .test-banner-x {
+            background: rgba(0,0,0,0.15); color: #1a1a1a;
+            border: 0; padding: 2px 10px; border-radius: 4px;
+            font-weight: 700; cursor: pointer; font-size: 0.8rem;
+        }
+        #poseidon-test-banner .test-banner-x:hover { background: rgba(0,0,0,0.25); }
+        /* When banner is visible, push the V6-style top-nav down 38px so it doesn't overlap */
+        body:has(#poseidon-test-banner.show) #poseidon-topbar { top: 38px !important; }
 </style>
     <!-- MSAL for staff M365 sign-in (same client_id + tenant as V6) -->
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.6.0/lib/msal-browser.min.js"></script>
@@ -1097,6 +1120,8 @@
       try {
         localStorage.setItem(GATE_KEY, '1');
         localStorage.setItem(ROLE_KEY, _role);
+        if (input.value === '4321') { localStorage.setItem('poseidon_test_mode', '1'); }
+        else                        { localStorage.removeItem('poseidon_test_mode'); }
       } catch (_) {}
       window.poseidonRole = _role;
       window.poseidonRolePages = ROLE_PAGES[_role] || null;
@@ -1111,6 +1136,29 @@
       setTimeout(function () { input.style.borderColor = 'rgba(148,163,184,0.25)'; err.textContent = ''; }, 2000);
     }
   });
+})();
+</script>
+
+<!-- TEST MODE banner — shown only when the user logged in with the team-test password (4321) -->
+<div id="poseidon-test-banner" aria-live="polite">
+  <span>⚠️ <b>TEST ENVIRONMENT</b> · You are signed in with the team test password. Data shown / entered here is for testing only — do <b>not</b> enter real candidate PII (passport numbers, SSNs, financial accounts).</span>
+  <button class="test-banner-x" onclick="document.getElementById('poseidon-test-banner').classList.remove('show'); try { sessionStorage.setItem('poseidon_test_banner_dismissed','1'); } catch(_){};">✕ Hide for this session</button>
+</div>
+<script>
+(function () {
+  function check() {
+    try {
+      var isTest = localStorage.getItem('poseidon_test_mode') === '1';
+      var dismissed = sessionStorage.getItem('poseidon_test_banner_dismissed') === '1';
+      var bar = document.getElementById('poseidon-test-banner');
+      if (!bar) return;
+      if (isTest && !dismissed && window.self === window.top) {
+        bar.classList.add('show');
+      }
+    } catch (_) {}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', check);
+  else check();
 })();
 </script>
 
