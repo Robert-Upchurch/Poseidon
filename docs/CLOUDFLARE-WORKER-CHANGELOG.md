@@ -112,3 +112,104 @@ Per `docs/ASSUMPTIONS.md` §Q17: ~28 accounts (7 entities × ~2 banks × ~2 acct
 - Net at full Production coverage: **~$14/mo–$17/mo**.
 
 Real number after Sandbox Item count is confirmed.
+
+---
+
+Six new routes for the two public candidate-intake portals. These are documented now so the Worker code is written before the portals reach production. None are live yet.
+
+### Route: `POST /portal/cruise/apply`
+
+- **Owner:** Agent D
+- **Purpose:** Accept Cruise candidate application from `cti-cruise-portal/apply.html`
+- **CORS origin:** `https://robert-upchurch.github.io` (and the future custom domain)
+- **Auth:** none (public endpoint). Requires reCAPTCHA Enterprise token in body (`_recaptcha`).
+- **Request body (JSON):** Object matching `cti-cruise-portal/assets/schemas/cruise-application.json`. Plus `_recaptcha`, `_captured_at`, `_portal: "cruise"`, `_target_module: "Candidates"`, and `_files` (array of file metadata).
+- **Side effects:**
+  1. Create a record in Zoho CRM module `Candidates` (CustomModule13) with `Candidate_Type = "Cruise"`, `Lead_Source = "Cruise Web Portal"`.
+  2. Generate a 24-hour HS256 JWT signed with `JWT_SIGNING_KEY`. Claims: `{ candidate_id, portal: "cruise", iat, exp }`.
+  3. Email the candidate a tracking link via Resend (`RESEND_API_KEY`): `https://<portal-domain>/track.html?token=<jwt>`.
+- **Response (200):** `{ token: "<jwt>", status_url: "https://<portal-domain>/track.html?token=<jwt>" }`
+- **Errors:** `400` schema validation; `429` rate-limit; `500 { error: "zoho_write_failed" }` on upstream.
+
+### Route: `GET /portal/cruise/status/<token>`
+
+- **Owner:** Agent D
+- **Purpose:** Status check for Cruise candidate via signed JWT
+- **Auth:** JWT in path verified against `JWT_SIGNING_KEY`. Reject if expired (>24h) or wrong portal claim.
+- **Behavior:**
+  1. Verify JWT.
+  2. Look up record in Zoho CRM `Candidates` module by `candidate_id`.
+  3. Return only safe fields - no PII echoed back to the candidate beyond what they already know.
+- **Response (200):** `{ stage: string, last_updated: ISO8601 }`
+- **Errors:** `401` invalid/expired token; `404` candidate not found.
+
+### Route: `POST /portal/cruise/contact`
+
+- **Owner:** Agent D
+- **Purpose:** Contact-form submissions from Cruise portal
+- **Auth:** reCAPTCHA token required.
+- **Request body:** `{ first_name, last_name, email, phone?, topic, message, _recaptcha, _captured_at }`
+- **Side effects:** Email `ceo@cti-usa.com` via Resend with subject `[Cruise Portal] <topic> from <name>`. Optionally also create a Zoho CRM `Leads` record with `Lead_Source = "Cruise Portal Contact"`.
+- **Response (200):** `{ ok: true }`
+
+### Route: `POST /portal/ghr/apply`
+
+- **Owner:** Agent D
+- **Purpose:** Accept GHR Cultural Exchange + land hospitality application from `ghr-portal/apply.html`
+- **CORS origin:** same allowlist as cruise.
+- **Auth:** reCAPTCHA token required.
+- **Request body (JSON):** Object matching `ghr-portal/assets/schemas/ghr-application.json`. Plus `_recaptcha`, `_captured_at`, `_portal: "ghr"`, `_target_module: "J1_Candidates"`, and `_files`.
+- **Side effects:**
+  1. Create a record in Zoho CRM module `J1_Candidates` (CustomModule12) with `Stage = "Pre-application"`, `Lead_Source = "GHR Web Portal"`. If `track == "Land Hospitality"`, also set `Candidate_Type = "Hospitality"`.
+  2. Generate JWT (`portal: "ghr"`).
+  3. Email candidate tracking link via Resend.
+- **Response (200):** `{ token, status_url }`
+- **Errors:** same envelope as cruise.
+
+### Route: `GET /portal/ghr/status/<token>`
+
+- **Owner:** Agent D
+- **Purpose:** Status check for GHR candidate via signed JWT
+- **Behavior:**
+  1. Verify JWT (must claim `portal: "ghr"`).
+  2. Look up record in `J1_Candidates` by `candidate_id`.
+  3. If candidate has been placed and housing summary is available, attach a **partition-safe** housing preview - aggregate only (region, beds_filled_pct, summary string). No exact address until placement deposit is confirmed.
+- **Response (200):** `{ stage, last_updated, housing_preview_safe: { region?, beds_filled_pct?, summary? } | null }`
+- **Errors:** `401`, `404`.
+
+### Route: `POST /portal/ghr/contact`
+
+- **Owner:** Agent D
+- **Purpose:** Contact-form submissions from GHR portal
+- Same shape as `/portal/cruise/contact`, different subject prefix `[GHR Portal]`.
+
+---
+
+### JWT signing approach
+
+- Algorithm: **HS256**
+- Secret: Worker secret `JWT_SIGNING_KEY` (32-byte random, base64). Single key shared by both portals; the `portal` claim disambiguates.
+- TTL: **24 hours** from issuance.
+- Claims: `{ candidate_id: string, portal: "cruise" | "ghr", iat: number, exp: number }`.
+- Library: Web Crypto API in the Worker (`crypto.subtle.sign` / `verify`) - no npm dependency.
+- Rotation: rotate the secret quarterly. Outstanding tokens become invalid - acceptable for a 24h-TTL link.
+
+### Secrets to add (not yet deployed)
+
+| Secret | Source | For |
+|---|---|---|
+| `JWT_SIGNING_KEY` | Generated (32 bytes random, base64) | Sign and verify portal status JWTs |
+| `RECAPTCHA_SECRET` | Google reCAPTCHA Enterprise | Portal intake spam protection |
+| `RESEND_API_KEY` | resend.com | Outbound email for tracking links and contact forms |
+
+### CORS
+
+Add these origins to `ALLOWED_ORIGIN` (comma-separated, if not already):
+- `https://robert-upchurch.github.io` (project pages for the new portal repos)
+- Future custom domain(s) per `ASSUMPTIONS.md` Q27
+
+### Status
+
+- **Routes documented:** yes (this file)
+- **Worker code edited:** no - Agent D builds the portals first, Agent B (Finance) or a follow-up commit wires the Worker
+- **Live URL:** no Worker deployed yet per `ASSUMPTIONS.md` Q4. Portal JS gracefully shows "Saved offline" on 404 / network error.

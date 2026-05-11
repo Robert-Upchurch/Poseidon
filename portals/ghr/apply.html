@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Apply for Cultural Exchange (J-1) or land hospitality placement with GHR. Four-step online intake." />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0a1628" media="(prefers-color-scheme: dark)" />
+  <title>Apply - GHR Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/portal.css" />
+  <script>(function(){try{var t=localStorage.getItem('ghr-theme')||'light';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();</script>
+</head>
+<body>
+
+<header class="navbar">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html"><span class="brand-dot">GHR</span><span>Global Human Resources</span></a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="positions.html">Positions</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="faq.html">FAQ</a>
+      <a href="contact.html">Contact</a>
+      <a href="track.html">Track</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="theme-toggle" data-theme-toggle aria-label="Toggle theme"></button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="section">
+    <div class="container" style="max-width:920px;">
+
+      <p class="section-eyebrow">Application</p>
+      <h1 class="section-title">Start your placement.</h1>
+      <p class="section-lede">Takes about 10 minutes. You can resume later if you close this tab.</p>
+
+      <div class="card" style="padding:36px;">
+
+        <form data-step-form
+              data-portal="ghr"
+              data-target-module="J1_Candidates"
+              data-target-module-id="CustomModule12"
+              data-submit-path="/portal/ghr/apply"
+              novalidate>
+
+          <div class="stepper">
+            <div class="step step-active"><span class="step-num">1</span>Personal</div>
+            <div class="step step-idle"><span class="step-num">2</span>Education &amp; English</div>
+            <div class="step step-idle"><span class="step-num">3</span>Documents</div>
+            <div class="step step-idle"><span class="step-num">4</span>Review</div>
+          </div>
+
+          <div data-submit-status class="hidden"></div>
+
+          <!-- STEP 1: PERSONAL + TRACK -->
+          <div class="step-pane active">
+            <h2 style="font-size:22px;margin:0 0 8px;letter-spacing:-0.01em;">Personal information</h2>
+            <p class="muted" style="margin:0 0 24px;font-size:14px;">Use the name shown on your passport.</p>
+
+            <div class="form-row two-col">
+              <div data-field>
+                <label for="f-first">First name<span class="req">*</span></label>
+                <input id="f-first" type="text" name="first_name" required />
+                <div class="field-error">Required.</div>
+              </div>
+              <div data-field>
+                <label for="f-last">Last name<span class="req">*</span></label>
+                <input id="f-last" type="text" name="last_name" required />
+                <div class="field-error">Required.</div>
+              </div>
+            </div>
+
+            <div class="form-row two-col">
+              <div data-field>
+                <label for="f-email">Email<span class="req">*</span></label>
+                <input id="f-email" type="email" name="email" required />
+                <div class="field-error">Enter a valid email.</div>
+              </div>
+              <div data-field>
+                <label for="f-phone">Phone (with country code)<span class="req">*</span></label>
+                <input id="f-phone" type="tel" name="phone" required placeholder="+62 555 555 5555" />
+                <div class="field-error">Enter a valid phone number.</div>
+              </div>
+            </div>
+
+            <div class="form-row two-col">
+              <div data-field>
+                <label for="f-origin">Country of origin<span class="req">*</span></label>
+                <input id="f-origin" type="text" name="country_of_origin" required />
+                <div class="field-error">Required.</div>
+              </div>
+              <div data-field>
+                <label for="f-dob">Date of birth<span class="req">*</span></label>
+                <input id="f-dob" type="date" name="date_of_birth" required />
+                <div class="field-error">Required.</div>
+              </div>
+            </div>
+
+            <div class="form-row two-col">
+              <div data-field>
+                <label for="f-city">Current city of residence</label>
+                <input id="f-city" type="text" name="current_city" />
+              </div>
+              <div data-field>
+                <label for="f-track">Which track interests you?<span class="req">*</span></label>
+                <select id="f-track" name="track" required>
+                  <option value="">- Select -</option>
+                  <option>Cultural Exchange</option>
+                  <option>Land Hospitality</option>
+                </select>
+                <div class="field-error">Required.</div>
+              </div>
+            </div>
+
+            <div class="step-nav">
+              <span></span>
+              <button type="button" class="btn btn-primary" data-step-next>Next: Education &amp; English</button>
+            </div>
+          </div>
+
+          <!-- STEP 2: EDUCATION + ENGLISH + PREFERENCES -->
+          <div class="step-pane">
+            <h2 style="font-size:22px;margin:0 0 8px;letter-spacing:-0.01em;">Education &amp; preferences</h2>
+            <p class="muted" style="margin:0 0 24px;font-size:14px;">Tell us about your background and where you want to go.</p>
+
+            <div class="form-row two-col">
+              <div data-field>
+                <label for="f-education">Highest education level<span class="req">*</span></label>
+                <select id="f-education" name="education_level" required>
+                  <option value="">- Select -</option>
+                  <option>High school</option>
+                  <option>Currently enrolled (university)</option>
+                  <option>Bachelor</option>
+                  <option>Master</option>
+                  <option>Other</option>
+                </select>
+                <div class="field-error">Required.</div>
+              </div>
+              <div data-field>
+                <label for="f-english">English level<span class="req">*</span></label>
+                <select id="f-english" name="english_level" required>
+                  <option value="">- Select -</option>
+                  <option>Basic</option>
+                  <option>Conversational</option>
+                  <option>Fluent</option>
+                  <option>Native</option>
+                </select>
+                <div class="field-error">Required.</div>
+              </div>
+            </div>
+
+            <div class="form-row two-col">
+              <div data-field>
+                <label for="f-role">Preferred role</label>
+                <select id="f-role" name="preferred_role">
+                  <option>Hotel Front Desk</option>
+                  <option>Food &amp; Beverage</option>
+                  <option>Housekeeping</option>
+                  <option>Lifeguard</option>
+                  <option>Theme Park Attendant</option>
+                  <option>Culinary</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div data-field>
+                <label for="f-sponsor">Sponsor preference</label>
+                <select id="f-sponsor" name="sponsor_preference">
+                  <option>No preference</option>
+                  <option>Alliance Abroad</option>
+                  <option>CIEE</option>
+                  <option>Greenheart</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div data-field>
+                <label>Country preference (select all that apply)</label>
+                <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:6px;">
+                  <label style="font-weight:normal;display:inline-flex;align-items:center;gap:6px;"><input type="checkbox" name="country_preferences" value="Indonesia" style="width:auto;" />Indonesia</label>
+                  <label style="font-weight:normal;display:inline-flex;align-items:center;gap:6px;"><input type="checkbox" name="country_preferences" value="Thailand" style="width:auto;" />Thailand</label>
+                  <label style="font-weight:normal;display:inline-flex;align-items:center;gap:6px;"><input type="checkbox" name="country_preferences" value="Vietnam" style="width:auto;" />Vietnam</label>
+                  <label style="font-weight:normal;display:inline-flex;align-items:center;gap:6px;"><input type="checkbox" name="country_preferences" value="Philippines" style="width:auto;" />Philippines</label>
+                  <label style="font-weight:normal;display:inline-flex;align-items:center;gap:6px;"><input type="checkbox" name="country_preferences" value="Malaysia" style="width:auto;" />Malaysia</label>
+                  <label style="font-weight:normal;display:inline-flex;align-items:center;gap:6px;"><input type="checkbox" name="country_preferences" value="USA" style="width:auto;" />USA (Cultural Exchange)</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div data-field>
+                <label for="f-experience">Hospitality experience (brief)</label>
+                <input id="f-experience" type="text" name="hospitality_experience" placeholder="e.g. 1 year hotel front desk, 6 months F&amp;B" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div data-field>
+                <label for="f-available">Available to start from</label>
+                <input id="f-available" type="date" name="available_from" />
+              </div>
+            </div>
+
+            <div class="step-nav">
+              <button type="button" class="btn btn-ghost" data-step-back>Back</button>
+              <button type="button" class="btn btn-primary" data-step-next>Next: Documents</button>
+            </div>
+          </div>
+
+          <!-- STEP 3: DOCUMENTS -->
+          <div class="step-pane">
+            <h2 style="font-size:22px;margin:0 0 8px;letter-spacing:-0.01em;">Documents</h2>
+            <p class="muted" style="margin:0 0 8px;font-size:14px;">Attach what you have. You can add more later through your tracking link.</p>
+            <div class="notice notice-warn">Files queued locally - final upload requires Azure scope upgrade pending.</div>
+
+            <div class="form-row two-col">
+              <div data-field>
+                <label for="f-resume">Resume / CV</label>
+                <input id="f-resume" type="file" name="resume" accept=".pdf,.doc,.docx" multiple />
+                <p class="help-text">PDF or Word.</p>
+              </div>
+              <div data-field>
+                <label for="f-academic">Proof of academic status</label>
+                <input id="f-academic" type="file" name="academic_proof" accept=".pdf,.jpg,.jpeg,.png" multiple />
+                <p class="help-text">Enrollment letter, diploma, or transcript.</p>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div data-field>
+                <label for="f-passport">Passport scan</label>
+                <input id="f-passport" type="file" name="passport" accept=".pdf,.jpg,.jpeg,.png" multiple />
+                <p class="help-text">Must show machine-readable zone (MRZ).</p>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div data-field>
+                <label>
+                  <input type="checkbox" name="consent_data_processing" value="yes" required style="width:auto;margin-right:8px;" />
+                  I consent to GHR processing my application data for the purpose of placement.<span class="req">*</span>
+                </label>
+                <div class="field-error">Consent is required to continue.</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div data-field>
+                <label>
+                  <input type="checkbox" name="consent_sponsor_disclosure" value="yes" required style="width:auto;margin-right:8px;" />
+                  I understand sponsor disclosures per 22 CFR 62.31 will be provided before any J-1 program commitment.<span class="req">*</span>
+                </label>
+                <div class="field-error">Required to continue.</div>
+              </div>
+            </div>
+
+            <div class="step-nav">
+              <button type="button" class="btn btn-ghost" data-step-back>Back</button>
+              <button type="button" class="btn btn-primary" data-step-next>Next: Review</button>
+            </div>
+          </div>
+
+          <!-- STEP 4: REVIEW -->
+          <div class="step-pane">
+            <h2 style="font-size:22px;margin:0 0 8px;letter-spacing:-0.01em;">Review &amp; submit</h2>
+            <p class="muted" style="margin:0 0 24px;font-size:14px;">Verify your information. Submit when ready.</p>
+
+            <div data-review-slot></div>
+
+            <div class="step-nav">
+              <button type="button" class="btn btn-ghost" data-step-back>Back</button>
+              <button type="submit" class="btn btn-primary">Submit application</button>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="compliance-banner">Pre-production draft - legal copy pending CTI counsel sign-off.</div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="brand" style="margin-bottom:14px;"><span class="brand-dot">GHR</span><span style="color:#ffffff;">Global Human Resources</span></div>
+        <p style="opacity:0.7;font-size:14px;max-width:340px;">A division of CTI Group Worldwide Services Inc. - Cultural Exchange and land hospitality placement.</p>
+      </div>
+      <div><h4>Portal</h4><a href="index.html">Home</a><a href="positions.html">Positions</a><a href="how-it-works.html">How it works</a></div>
+      <div><h4>Apply</h4><a href="apply.html">Start application</a><a href="track.html">Track status</a><a href="faq.html">FAQ</a></div>
+      <div><h4>Company</h4><a href="contact.html">Contact us</a><a href="#">Privacy (draft)</a><a href="#">Terms (draft)</a></div>
+    </div>
+    <div class="legal">&copy; 2026 CTI Group Worldwide Services Inc. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="assets/portal.js"></script>
+</body>
+</html>

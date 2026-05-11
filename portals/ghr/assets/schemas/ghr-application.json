@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GHR Candidate Application (Cultural Exchange + Land Hospitality)",
+  "description": "Public intake schema for the GHR Portal. Writes to Zoho CRM module J1_Candidates (CustomModule12) with Stage = Pre-application. Land hospitality applicants set Candidate_Type = Hospitality in the same module.",
+  "version": "1.0.0",
+  "target_module": "J1_Candidates",
+  "target_module_id": "CustomModule12",
+  "default_field_values": {
+    "Stage": "Pre-application",
+    "Lead_Source": "GHR Web Portal"
+  },
+  "candidate_type_field": "Candidate_Type",
+  "candidate_type_values": {
+    "cultural_exchange": "J-1",
+    "land_hospitality": "Hospitality"
+  },
+  "type": "object",
+  "required": [
+    "first_name",
+    "last_name",
+    "email",
+    "phone",
+    "country_of_origin",
+    "date_of_birth",
+    "track",
+    "education_level",
+    "english_level"
+  ],
+  "properties": {
+    "first_name":               { "type": "string", "maxLength": 80 },
+    "last_name":                { "type": "string", "maxLength": 80 },
+    "email":                    { "type": "string", "format": "email" },
+    "phone":                    { "type": "string", "maxLength": 32 },
+    "country_of_origin":        { "type": "string" },
+    "date_of_birth":            { "type": "string", "format": "date" },
+    "current_city":             { "type": "string", "maxLength": 80 },
+    "track":                    {
+      "type": "string",
+      "enum": ["Cultural Exchange", "Land Hospitality"]
+    },
+    "preferred_role":           {
+      "type": "string",
+      "enum": [
+        "Hotel Front Desk",
+        "Food & Beverage",
+        "Housekeeping",
+        "Lifeguard",
+        "Theme Park Attendant",
+        "Culinary",
+        "Other"
+      ]
+    },
+    "education_level":          {
+      "type": "string",
+      "enum": ["High school", "Currently enrolled (university)", "Bachelor", "Master", "Other"]
+    },
+    "english_level":            {
+      "type": "string",
+      "enum": ["Basic", "Conversational", "Fluent", "Native"]
+    },
+    "sponsor_preference":       {
+      "type": "string",
+      "enum": ["No preference", "Alliance Abroad", "CIEE", "Greenheart", "Other"]
+    },
+    "country_preferences":      {
+      "type": "array",
+      "items": { "type": "string", "enum": ["Indonesia", "Thailand", "Vietnam", "Philippines", "Malaysia", "Other"] }
+    },
+    "hospitality_experience":   { "type": "string", "maxLength": 240 },
+    "available_from":           { "type": "string", "format": "date" },
+    "consent_data_processing":  { "type": "boolean" },
+    "consent_sponsor_disclosure": { "type": "boolean" },
+    "documents": {
+      "type": "object",
+      "description": "File metadata only at v1; files queued in browser until Azure Files.ReadWrite scope is live.",
+      "properties": {
+        "resume":   { "type": "array", "items": { "type": "object" } },
+        "academic_proof": { "type": "array", "items": { "type": "object" } },
+        "passport": { "type": "array", "items": { "type": "object" } }
+      }
+    }
+  }
+}
