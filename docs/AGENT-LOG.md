@@ -6,6 +6,20 @@ Format: `YYYY-MM-DD HH:MM  <agent>  <branch>  <one-line status>`
 
 ---
 
+2026-05-13 evening  Implementor  feat/m365-sso  Phase 1 SSO complete and verified live — Worker version 7de72499. Lockout incident mid-session, recovered cleanly via rollback + code fix.
+  · Worker deployment: 7de72499-cfdd-4ab0-952e-30a641b791f6 (current live). Rollback target: cf2dc3c2-5a98-458d-9f88-cab4a5662b54 (pre-Phase-1c safe state).
+  · Phase 1a (commit 923e83a): Pulled live poseidon-proxy source into repo at poseidon-worker/ via Cloudflare REST API. `wrangler init --from-dash` scaffolded a Hello World template instead of pulling source; bypassed by hitting GET /accounts/.../workers/scripts/poseidon-proxy directly. 22.87 KiB bundle confirmed identical to live.
+  · Phase 1b (commit 3c1d619): Built JWT validator (RS256 + JWKS cached in module scope), allowlist (case-insensitive, fail-closed), and checkSSO middleware. Three layers: bypass token → JWT verify → legacy DASHBOARD_TOKEN fallback. Contract matches existing checkAuth (null on success, Response on failure) — wires in with a one-line swap. No deploy yet.
+  · Phase 1c initial deploy (commit 4ead3a7, Worker version c9b3cc47): Wired `await checkSSO()` into /api/* routes. Added POSEIDON_EMAIL_ALLOWLIST=ceo@cti-usa.com and POSEIDON_LEGACY_TOKEN_ENABLED=true vars. Initial verification hit a lockout — Layer A (bypass) returned 401 with the correct token. Reported Layer B failure turned out to be a wrong-token test (rotated DASHBOARD_TOKEN value out of date in user memory); legacy code path was actually fine.
+  · Root cause: PowerShell line-oriented pipe semantics. `$token | wrangler secret put POSEIDON_AUTH_BYPASS_TOKEN` appended trailing CRLF; wrangler forwarded stdin verbatim; secret stored as 66 bytes vs the 64-byte comparison. timingSafeEqual's length check rejected it on the first comparison. Cloudflare's secret API is write-only so the bad state was invisible until it failed in production.
+  · Rollback executed at 22:32: `wrangler rollback cf2dc3c2-5a98-458d-9f88-cab4a5662b54` succeeded. Existing DASHBOARD_TOKEN-based dashboards stayed functional throughout — Layer B fallback design proved itself.
+  · Fix 2 (commit e63ada9): Added `.trim()` to env reads in middleware.js for both POSEIDON_AUTH_BYPASS_TOKEN and DASHBOARD_TOKEN. Token values never legitimately contain whitespace, so trim is loss-less and durable against any future stdin-newline mistake.
+  · Re-deployed as Worker version 7de72499-cfdd-4ab0-952e-30a641b791f6. Three-test matrix all passed: NoAuth → 401 with SSO hint, Bypass (e3f3...a0b0) → 200, Legacy (53eb...bf6c) → 200. Both kill-switches verified.
+  · Fix 1 hygiene step: Re-set POSEIDON_AUTH_BYPASS_TOKEN via Cloudflare REST API (PUT /accounts/.../secrets with explicit JSON body) — bypasses PowerShell pipe entirely. Note: REST PUT initially failed with CF error 10215 ("latest version not deployed") while still rolled back; succeeded after Fix 2's deploy made 7de72499 the latest. Post-Fix-1 T-Bypass regression test: HTTP 200, no regression.
+  · Branch state: feat/m365-sso, 4 commits ahead of main (ece1033). Public routes (/health, /api/portal-intake/*, /api/portal-status/:token) unchanged — applicant flows uninterrupted throughout.
+  · Memory saved: feedback_wrangler_stdin_newline.md (the pipe pitfall + three fixes), project_poseidon_sso_phase1_complete.md (state for tomorrow), MEMORY.md index.
+  · Phase 2 (auth scaffold: auth/login.html, auth/callback.html, auth/logout.html, auth/config.js, auth/guard.js, auth/msal-loader.js) deferred to next session. ~2 hr work, no deploys.
+
 2026-05-13 morning  Implementor  main  ARCHITECTURAL CORRECTION — IT team (Putu Astra) delivered official J-1 Registration Flow PDF overnight. CRM-first intake is the intentional, designed architecture (not a parallel system).
   · Source PDF moved into repo at docs/CTI_New_J1_Registration_Flow.pdf (from C:\Users\ceo\Downloads).
   · Architecture per IT: Website Form → CRM (New Submission → Consultation Call → optional Sales Call branch → Stage 1 → Stage 2) → Move to Zoho Recruit (Stage 3 visa through placement).
