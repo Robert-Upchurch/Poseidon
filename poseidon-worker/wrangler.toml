@@ -14,6 +14,12 @@ enabled = true
 ALLOWED_ORIGIN = "https://robert-upchurch.github.io"
 SNAPSHOT_URL = "https://raw.githubusercontent.com/Robert-Upchurch/Poseidon/main/config/zoho-books-snapshot.json"
 ZOHO_DC = "us"
+# SSO allowlist — comma-separated, case-insensitive. Add users by editing
+# here and `wrangler deploy`. Plain text on purpose: emails aren't secrets,
+# git diffs show who changed access.
+POSEIDON_EMAIL_ALLOWLIST = "ceo@cti-usa.com"
+# Layer B legacy fallback. "true" through Phase 4; flip to "false" in Phase 5.
+POSEIDON_LEGACY_TOKEN_ENABLED = "true"
 
 # Secrets are NOT declared here. Set/list via wrangler:
 #   wrangler secret put DASHBOARD_TOKEN

@@ -1,3 +1,5 @@
+import { checkSSO } from "./auth/middleware.js";
+
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
@@ -82,7 +84,7 @@ var index_default = {
         return cors(req, env, await handlePortalStatus(env, statusMatch[1]));
       }
       if (pathname.startsWith("/api/")) {
-        const authRes = checkAuth(req, env);
+        const authRes = await checkSSO(req, env);
         if (authRes) return cors(req, env, authRes);
       }
       if (req.method === "GET" && pathname === "/api/kpi-summary") {
