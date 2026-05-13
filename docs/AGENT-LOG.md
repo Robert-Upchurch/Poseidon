@@ -6,6 +6,22 @@ Format: `YYYY-MM-DD HH:MM  <agent>  <branch>  <one-line status>`
 
 ---
 
+2026-05-13 morning  Implementor  main  ARCHITECTURAL CORRECTION — IT team (Putu Astra) delivered official J-1 Registration Flow PDF overnight. CRM-first intake is the intentional, designed architecture (not a parallel system).
+  · Source PDF moved into repo at docs/CTI_New_J1_Registration_Flow.pdf (from C:\Users\ceo\Downloads).
+  · Architecture per IT: Website Form → CRM (New Submission → Consultation Call → optional Sales Call branch → Stage 1 → Stage 2) → Move to Zoho Recruit (Stage 3 visa through placement).
+  · Yesterday's Section 1 "Parallel System Concern" RETRACTED. Worker wiring (commit 27c479e — writes to CRM J1_Candidates) is architecturally correct and aligned with IT's design. NO Worker change. NO Worker code touched today.
+  · Recruit J1_Participants (1,040 records) = graduated/placed candidates, NOT the intake.
+  · CRM verification via Zoho MCP: test record `ClaudeTest2 PostNameFix` (id 6594710000004689002) confirmed in CRM J1_Candidates (CustomModule12, plural label "J1 Candidates", created 2026-05-12 11:25 ET). Probe `getModuleByApiName J1_Participants` returned empty — no separate CRM J1_Participants module exists; the PDF's UI label "J1 Participants" is almost certainly a Teamspace rename of the same module (Q9 confirms).
+  · docs/ZOHO-ARCHITECTURE-AUDIT-2026-05-12.md updated with Section 3 — IT Team Clarification (2026-05-13). Section 3 supersedes Section 1's parallel-system finding and Section 2's redirect-to-Recruit recommendation.
+  · docs/ZOHO-OPEN-QUESTIONS.md updated: Q5 (Recruit J1_Candidates lockout) and Q6a/Q6b (Applications module role) marked ANSWERED by PDF. Q7 (CustomModule3) and Q8 (Land_Based) still open. Added Q9 (CRM UI label vs API name), Q10 (cruise CRM→Recruit progression?), Q11 (Sales Call branch Worker scope?), Q12 (Land_Based under new arch — reframe of Q8), Q13 (CustomModule3 reframe of Q7). Briefing order revised.
+  · No Recruit touches. Documentation correction + verification only.
+
+2026-05-12 evening  Implementor  main  ROLE CORRECTION — Putu Astra is Zoho administrator (primary IT lead), Chendra is IT support. Eduardo Ferraz is J-1 Operations only.
+  · All Zoho admin/permissions/integration/architecture questions in the audit doc and open-questions doc have been re-routed from "Eduardo + IT" or generic "IT team" to "Putu Astra + Chendra".
+  · Eduardo retains only operational questions: which module ops uses day-to-day (Q1), Land_Based intended purpose (Q2/Q8), Applications module operational role (Q6a).
+  · Putu Astra owns: CRM Candidates lockout investigation (Q3), CRM J1_Candidates record-count + Flow inventory (Q4), Recruit J1_Candidates OAuth permission firewall (Q5), Applications module schema-level role (Q6b), deleted CustomModule3 history (Q7).
+  · No code changes. Doc-only correction.
+
 2026-05-12 13:25  Implementor  main  Section 2 deep-scan appended to audit doc, after Eduardo confirmed J-1 and Cruise are separate Recruit modules.
   · Refreshed Recruit access token from cached refresh (C:\Temp\recruit_refresh.txt) — no new OAuth code needed.
   · DECISIVE FINDING: Recruit `J1_Candidates` module EXISTS (HTTP 403 NO_PERMISSION, distinct from HTTP 400 for nonexistent modules — confirmed by probing 13 nonexistent name variants). Eduardo was correct — J-1 intake module is real, just profile-blocked from our OAuth user. Same lockdown pattern as CRM Candidates.

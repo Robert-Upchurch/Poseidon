@@ -4,7 +4,12 @@
 deployments to determine the canonical home for cruise (seafarer) and
 J-1 cultural exchange candidate records.
 
-**Audience:** Eduardo, IT team, CTI leadership.
+**Audience:**
+- **Eduardo Ferraz** (J-1 Operations) — operational questions only
+- **Putu Astra** (Zoho Administrator, primary IT lead) — all Zoho
+  admin / permissions / integration / architecture questions
+- **Chendra** (IT support) — backup on technical investigations
+- CTI leadership
 
 **Status:** Discovery complete. No writes performed. No Worker
 configuration changes. Recommended wiring changes are flagged as
@@ -171,7 +176,7 @@ Recruit has its own J-1 module: `J1_Participants` (custom, 109 fields,
 
 This is the operational J-1 system that recruiters use.
 
-### Question for Eduardo / J-1 Ops
+### Question for Eduardo Ferraz (J-1 Operations — workflow truth)
 
 **Is CRM `J1_Candidates` the canonical store for J-1 applicants, or is
 Recruit `J1_Participants` the canonical store?**
@@ -241,7 +246,7 @@ Required changes (when approved):
 
 ---
 
-## CRM `Candidates` Locked-Module Question for IT
+## CRM `Candidates` Locked-Module Question for Putu Astra (Zoho Admin)
 
 **Symptom:** The CRM `Candidates` custom module (CustomModule13)
 returns `NO_PERMISSION` for both record reads AND module-metadata
@@ -253,7 +258,7 @@ suggests either:
 - The module is orphaned (created and forgotten by a prior IT effort)
 - The module has been intentionally archived but not deleted
 
-**Questions for IT:**
+**Questions for Putu Astra (with Chendra as IT support backup):**
 
 1. Who created the module and when?
 2. Who currently has profile permission on it?
@@ -263,8 +268,8 @@ suggests either:
 
 We cannot answer these questions through the current OAuth path
 (`settings/modules/Candidates` returns `NO_PERMISSION` even with
-`ZohoCRM.settings.modules.READ` scope). An IT admin with full org
-access needs to investigate directly in Zoho CRM Setup.
+`ZohoCRM.settings.modules.READ` scope). Putu Astra needs to
+investigate directly in Zoho CRM Setup with full org admin access.
 
 ---
 
@@ -396,9 +401,9 @@ There is a **gap at CustomModule3** (probed directly, returned HTTP
 certainly indicates a custom module that was created and then deleted
 at some point in the org's history.
 
-**Open question for IT:** Was CustomModule3 a precursor to one of the
-current modules, or unrelated? May indicate prior architectural
-experiments.
+**Open question for Putu Astra (Zoho Admin):** Was CustomModule3 a
+precursor to one of the current modules, or unrelated? May indicate
+prior architectural experiments.
 
 ### 4. NEW finding: `Applications` module has 6,000+ records
 
@@ -499,13 +504,16 @@ Recruit/                                                         records
 
 Adding to the list in `docs/ZOHO-OPEN-QUESTIONS.md`:
 
-- **Q5 (Eduardo + IT):** Why is the OAuth user blocked from Recruit
+- **Q5 (Putu Astra):** Why is the OAuth user blocked from Recruit
   `J1_Candidates`? Is this an intentional firewall, or should the
   Worker's service-account user be granted access?
-- **Q6 (Eduardo):** What is the purpose of Recruit `Applications`
-  (6,000+ records)? Is it where new portal applications should land,
-  or is it strictly downstream join data?
-- **Q7 (IT):** What was the deleted CustomModule3 in Recruit?
+- **Q6a (Eduardo):** What is the *operational* purpose of Recruit
+  `Applications` (6,000+ records) — is it where recruiters first see
+  new portal applications, or strictly downstream join data?
+- **Q6b (Putu Astra):** At the *schema/Flow* level, is `Applications`
+  fed by manual entry, portal submissions, automation, or join from
+  Candidate + Job_Opening linking?
+- **Q7 (Putu Astra):** What was the deleted CustomModule3 in Recruit?
   Anything related to current architecture?
 - **Q8 (Eduardo):** `Land_Based` module has 56 fields and a
   `Processing_Status` primary — clearly provisioned. Why zero records?
@@ -522,5 +530,153 @@ Adding to the list in `docs/ZOHO-OPEN-QUESTIONS.md`:
 
 ---
 
-*End of Section 2. Awaiting Eduardo + IT responses before any
-implementation work.*
+*End of Section 2. Awaiting Eduardo (operational) + Putu Astra +
+Chendra (admin/technical) responses before any implementation work.*
+
+---
+
+# Section 3 — IT Team Clarification (2026-05-13)
+
+**Trigger:** Putu Astra (IT) delivered the official J-1 Programs
+Registration Flow PDF overnight. The document defines the intentional /
+canonical architecture that Sections 1 and 2 were reasoning around
+without authoritative documentation.
+
+**Source:** [`docs/CTI_New_J1_Registration_Flow.pdf`](./CTI_New_J1_Registration_Flow.pdf)
+— 11-slide official deliverable from CTI Group Worldwide Services Inc.
+
+## Headline: Section 1's Parallel-System Concern Was a False Alarm
+
+Yesterday's Section 1 ("Parallel System Concern: GHR Portal → CRM
+`J1_Candidates`") flagged the GHR portal writing to CRM `J1_Candidates`
+while Recruit `J1_Participants` held 1,040 records as a possible
+duplicate/competing-system bug. **The IT PDF clarifies that this is the
+intentional, designed architecture:**
+
+- **CRM is the new, intentional intake** (replacing a previous flow
+  where the website form wrote directly to Recruit).
+- **Recruit is the post-Stage-3 destination.** Records are copied to
+  Recruit only *after* the host company approves at the end of Stage 2.
+- The 1,040 records in Recruit `J1_Participants` are participants who
+  have already graduated from the CRM-side pipeline — they are not a
+  parallel intake.
+
+The Worker wiring established in commit `27c479e` (writes new GHR
+intakes to CRM `J1_Candidates`) is **architecturally correct and
+aligned with IT's design.** Yesterday's recommendation to repoint the
+GHR Worker from CRM to Recruit is **withdrawn**. No Worker change is
+needed.
+
+## CRM-First J-1 Registration Flow (per IT PDF)
+
+```
+Website Form
+   ↓
+CRM:  New Submission       ← CTI Office verifies basic info
+   ↓
+CRM:  Consultation Call    ← Corporate Recruiter assesses English / programs
+   ↓ (branch when approved but unpaid)
+CRM:  Sales Call           ← Sales Team converts participant to commit
+   ↓
+CRM:  Stage 1              ← CTI Office + J1 Processing Admin: docs + payment + sponsor entry
+   ↓
+CRM:  Stage 2              ← J1 Processing: sponsor / host-company interviews
+   ↓ (host company approves)
+Move to Zoho Recruit       ← Stage 3 (visa) through placement
+```
+
+Stage ownership (from PDF table):
+
+| Stage | Owner |
+|---|---|
+| 1. Website Form | Participant |
+| 2. New Submission | CTI Office |
+| 3. Consultation Call | Corporate Recruiter |
+| 3a. Sales Call (branch) | Sales Team |
+| 4. Stage 1 | CTI Office + J1 Processing Admin |
+| 5. Stage 2 | J1 Processing |
+| 6. Move to Zoho Recruit | System / J1 Processing |
+
+The "WHY" stated in the PDF for the Recruit → CRM intake change:
+**"Better automation and data flow."**
+
+## Today's Test Record Verification (2026-05-13)
+
+Direct CRM query via Zoho MCP confirms the test record from yesterday
+landed in the module the IT flow expects new submissions to land in:
+
+| Field | Value |
+|---|---|
+| Module API name | `J1_Candidates` |
+| Module label (plural / singular) | `J1 Candidates` / `J1 Candidate` |
+| Internal module name | CustomModule12 |
+| Record id | `6594710000004689002` |
+| Name | `ClaudeTest2 PostNameFix` |
+| Email | `claude-verify+ghr2@cti-usa.com` |
+| Created | 2026-05-12 11:25 ET |
+
+Probe for a separate CRM `J1_Participants` module returned empty
+(`getModuleByApiName J1_Participants → {"data":[]}`), confirming there
+is only one J-1 module in CRM and the Worker's API target is correct.
+
+## CRM Tooling Documented in the PDF (informational, no Worker scope)
+
+- **Custom Views** (IT pre-configured): New Submission, Consultation
+  Call, Stage 1, Stage 2, Inactive Participants. These correspond to
+  values of the `J1_Application_Status` field shown in the PDF
+  screenshot.
+- **Notes** — used for any issue / follow-up, with `@J1 Processing`
+  team-tagging for escalation.
+- **Attachments** — must be linked from Zoho WorkDrive via Link / URL
+  option (no direct uploads). Naming convention
+  `DocumentType_ParticipantName`.
+
+These are CRM-internal ops tooling. The Worker does not participate.
+
+## Section 2 Questions: What Just Got Answered
+
+- **Q5 (Putu Astra) — Recruit `J1_Candidates` lockout: ANSWERED.** The
+  CRM-first architecture means Recruit `J1_Candidates` is no longer
+  the active J-1 intake target. The `NO_PERMISSION` lockdown is
+  consistent with deprecation / historical archival. No grant of OAuth
+  permission to that Recruit module is needed for the Worker. (If
+  historical Recruit `J1_Candidates` records need to be migrated into
+  the new CRM-first flow, that's a one-time data migration question —
+  out of scope for the Worker.)
+- **Q6a / Q6b (Eduardo / Putu Astra) — Recruit `Applications` module
+  role: ANSWERED.** Under the CRM-first architecture, Recruit handles
+  only Stage 3+ (visa through placement). The Applications module's
+  6,000+ records correspond to the standard Recruit candidate → job
+  join table used for placement tracking, not portal intake. No Worker
+  writes to Applications are needed; intake stays in CRM
+  `J1_Candidates`.
+
+## Section 2 Questions That Stay Open
+
+- **Q7 (Putu Astra)** — Deleted Recruit `CustomModule3` history.
+- **Q8 (Eduardo / Putu Astra)** — Recruit `Land_Based` (56 fields, 0
+  records). Under the CRM-first architecture, Land_Based is even more
+  anomalous — if Recruit only handles Stage 3+, what intake or
+  post-Stage-3 role does Land_Based play?
+
+## New Open Questions Surfaced by the PDF
+
+See `docs/ZOHO-OPEN-QUESTIONS.md` for the canonical list. In brief:
+
+- **Q9 (Putu Astra)** — CRM module label `J1 Participants` (PDF UI
+  screenshot) vs API name `J1_Candidates` — same module with a
+  Teamspace rename, or two different modules?
+- **Q10 (Putu Astra / Eduardo)** — Does the same CRM → Recruit
+  progression apply to cruise, or is cruise wired differently?
+- **Q11 (Putu Astra)** — "Sales Call" branch — Worker scope or
+  purely a CRM-internal workflow transition?
+- **Q12 (Eduardo / Putu Astra)** — Recruit `Land_Based` under the new
+  architecture (reframe of Q8 with PDF context).
+- **Q13 (Putu Astra)** — Recruit `CustomModule3` deletion history
+  (reframe of Q7 with PDF context).
+
+---
+
+*End of Section 3. This section supersedes the parallel-system
+conclusion in Section 1 and the redirect-to-Recruit recommendation in
+Section 2. The Worker's current wiring is correct.*
