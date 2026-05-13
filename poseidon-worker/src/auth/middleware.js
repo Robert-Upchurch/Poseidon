@@ -18,8 +18,8 @@ function timingSafeEqual(a, b) {
 export async function checkSSO(req, env) {
   const dashboardToken = req.headers.get('X-Dashboard-Token') || '';
 
-  if (env.POSEIDON_AUTH_BYPASS_TOKEN && dashboardToken &&
-      timingSafeEqual(dashboardToken, env.POSEIDON_AUTH_BYPASS_TOKEN)) {
+  const bypass = (env.POSEIDON_AUTH_BYPASS_TOKEN || '').trim();
+  if (bypass && dashboardToken && timingSafeEqual(dashboardToken, bypass)) {
     console.warn('auth: bypass-token used', { path: new URL(req.url).pathname });
     return null;
   }
@@ -43,7 +43,7 @@ export async function checkSSO(req, env) {
   }
 
   if (String(env.POSEIDON_LEGACY_TOKEN_ENABLED).toLowerCase() === 'true') {
-    const expected = env.DASHBOARD_TOKEN || '';
+    const expected = (env.DASHBOARD_TOKEN || '').trim();
     if (expected && dashboardToken && timingSafeEqual(dashboardToken, expected)) {
       console.log('auth: legacy-token-ok');
       return null;
