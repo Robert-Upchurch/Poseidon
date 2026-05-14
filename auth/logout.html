@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signing out… — Poseidon</title>
+<script>
+  (function () {
+    const saved = localStorage.getItem('poseidon-theme');
+    const dark = saved === null ? true : saved === 'dark';
+    document.documentElement.classList.toggle('dark', dark);
+  })();
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: { colors: { brand: { teal: '#14b8a6', navy: '#0a1628' } } } },
+  };
+</script>
+</head>
+<body class="bg-white dark:bg-brand-navy text-slate-900 dark:text-slate-100 min-h-screen flex items-center justify-center px-4">
+  <div class="text-center">
+    <div class="text-brand-teal font-bold text-2xl mb-2">Poseidon</div>
+    <div id="msg" class="text-sm text-slate-600 dark:text-slate-400">Signing out…</div>
+  </div>
+
+<script type="module">
+  import { getMsalInstance } from './msal-loader.js';
+  import { POST_LOGOUT_REDIRECT_URI } from './config.js';
+
+  // Belt-and-braces: drop any legacy X-Dashboard-Token values dashboards may have stashed.
+  for (const k of ['poseidon-dashboard-token', 'dashboard-token', 'poseidon.dashboardToken', 'DASHBOARD_TOKEN']) {
+    try { localStorage.removeItem(k); } catch (_) { /* ignore */ }
+  }
+
+  try {
+    const msal = await getMsalInstance();
+    const account = msal.getActiveAccount() || msal.getAllAccounts()[0] || null;
+    await msal.logoutRedirect({
+      account,
+      postLogoutRedirectUri: POST_LOGOUT_REDIRECT_URI,
+    });
+  } catch (err) {
+    console.error('logout: logoutRedirect failed', err);
+    document.getElementById('msg').textContent = 'Logout failed: ' + String(err.message || err);
+  }
+</script>
+</body>
+</html>

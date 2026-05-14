@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in — Poseidon</title>
+<script>
+  (function () {
+    const saved = localStorage.getItem('poseidon-theme');
+    const dark = saved === null ? true : saved === 'dark';
+    document.documentElement.classList.toggle('dark', dark);
+  })();
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: { brand: { teal: '#14b8a6', navy: '#0a1628' } },
+      },
+    },
+  };
+</script>
+</head>
+<body class="bg-white dark:bg-brand-navy text-slate-900 dark:text-slate-100 min-h-screen flex items-center justify-center px-4">
+  <div class="absolute top-4 right-4">
+    <button id="themeToggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle theme">
+      <span class="dark:hidden">🌙</span>
+      <span class="hidden dark:inline">☀️</span>
+    </button>
+  </div>
+
+  <div class="w-full max-w-md p-8 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl">
+    <div class="text-brand-teal font-bold text-3xl mb-1">Poseidon</div>
+    <p class="text-sm text-slate-600 dark:text-slate-400 mb-8">CTI Group operations dashboard</p>
+
+    <button id="signinBtn" class="w-full px-4 py-3 bg-brand-teal hover:bg-teal-600 text-white font-medium rounded-lg transition flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+      <svg width="20" height="20" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M1 1h10v10H1z" fill="#F25022"/>
+        <path d="M12 1h10v10H12z" fill="#7FBA00"/>
+        <path d="M1 12h10v10H1z" fill="#00A4EF"/>
+        <path d="M12 12h10v10H12z" fill="#FFB900"/>
+      </svg>
+      <span>Sign in with Microsoft</span>
+    </button>
+
+    <p id="status" class="mt-5 text-sm text-slate-500 dark:text-slate-400 hidden"></p>
+    <div id="errorBox" class="mt-5 p-3 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 hidden">
+      <div class="text-red-700 dark:text-red-300 text-sm font-medium mb-1">Sign-in failed</div>
+      <div id="errorMsg" class="text-xs text-red-600 dark:text-red-400 font-mono break-all"></div>
+    </div>
+
+    <p class="mt-6 text-xs text-slate-500 dark:text-slate-500">CTI Group tenant only. Access is restricted to allowlisted accounts.</p>
+  </div>
+
+<script type="module">
+  import { getMsalInstance } from './msal-loader.js';
+  import { LOGIN_SCOPES, REDIRECT_URI } from './config.js';
+
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('poseidon-theme', isDark ? 'dark' : 'light');
+  });
+
+  const statusEl = document.getElementById('status');
+  const errorBox = document.getElementById('errorBox');
+  const errorMsg = document.getElementById('errorMsg');
+  const btn = document.getElementById('signinBtn');
+
+  function showStatus(msg) { statusEl.textContent = msg; statusEl.classList.remove('hidden'); }
+  function showError(msg) { errorMsg.textContent = msg; errorBox.classList.remove('hidden'); }
+
+  const params = new URLSearchParams(location.search);
+  const returnUrl = params.get('return');
+  if (returnUrl) sessionStorage.setItem('poseidon.auth.return', returnUrl);
+
+  try {
+    const msal = await getMsalInstance();
+    const accounts = msal.getAllAccounts();
+
+    if (accounts.length > 0) {
+      msal.setActiveAccount(accounts[0]);
+      const dest = sessionStorage.getItem('poseidon.auth.return') || '/Poseidon/index.html';
+      sessionStorage.removeItem('poseidon.auth.return');
+      showStatus(`Signed in as ${accounts[0].username}. Redirecting…`);
+      location.replace(dest);
+    } else {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        showStatus('Redirecting to Microsoft…');
+        try {
+          await msal.loginRedirect({
+            scopes: LOGIN_SCOPES,
+            redirectUri: REDIRECT_URI,
+          });
+        } catch (err) {
+          btn.disabled = false;
+          statusEl.classList.add('hidden');
+          showError(String(err.errorCode || '') + ' — ' + String(err.errorMessage || err.message || err));
+        }
+      });
+    }
+  } catch (err) {
+    showError('MSAL init failed: ' + String(err.message || err));
+  }
+</script>
+</body>
+</html>
