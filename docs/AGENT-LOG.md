@@ -6,6 +6,15 @@ Format: `YYYY-MM-DD HH:MM  <agent>  <branch>  <one-line status>`
 
 ---
 
+2026-05-14 afternoon  Implementor  feat/m365-sso  Phase 2 SSO scaffold complete — 6 auth/* files added (commit af162b0). No deploys, no dashboards modified, Worker untouched.
+  · Files: auth/config.js, msal-loader.js, login.html, callback.html, logout.html, guard.js. 440 insertions total. Branch now 5 ahead of main, 1 ahead of origin (unpushed).
+  · Azure side: existing app aff2df6d-cd54-48f3-bd24-3584fd9ea3de reused (no new registration). Robert added SPA platform + redirect URI https://robert-upchurch.github.io/Poseidon/auth/callback.html + post-logout redirect to login.html before code was written. Manifest verified accessTokenAcceptedVersion=2 (matches Worker's v2.0 EXPECTED_ISS).
+  · Design locked: MSAL v3.6.0 from CDN, redirect flow (callback.html intentional), localStorage cache (survives tab close), monkey-patched window.fetch on WORKER_BASE so Phase 4 retrofit is a one-line <script> tag per dashboard. Return URL passed via sessionStorage `poseidon.auth.return`, not the OAuth state parameter — avoids open-redirect surface through Entra.
+  · guard.js exposes window.poseidonAuth { email, name, getToken, getClaims, signOut } and dispatches `poseidon:auth-ready` event for dashboards that want to gate first /api/* fetch on auth-ready. Silent refresh scheduled 5 min before id_token exp (matches Worker CLOCK_SKEW_SECONDS=300).
+  · MSAL v3 quirk noted in msal-loader.js: pca.initialize() must be awaited before any other API call (v2 didn't require it; #1 silent-failure cause on v3). Singleton handles this once.
+  · Worker live deployment unchanged at 7de72499. JWT path (Layer A from Phase 1) still UNTESTED with a real id_token — Phase 1 verification used bypass + legacy paths only. Phase 3 first task is the first live sign-in and JWT round-trip through checkSSO().
+  · Phase 3 plan (next session, ~1 hr): wire guard.js into one low-risk dashboard (recommend j1-housing-finder-index.html — smallest blast radius), push branch to GH Pages OR temporarily add localhost SPA redirect URI to Azure app, perform first live sign-in as ceo@cti-usa.com, verify Worker logs show `auth: sso-ok` event.
+
 2026-05-13 evening  Implementor  feat/m365-sso  Phase 1 SSO complete and verified live — Worker version 7de72499. Lockout incident mid-session, recovered cleanly via rollback + code fix.
   · Worker deployment: 7de72499-cfdd-4ab0-952e-30a641b791f6 (current live). Rollback target: cf2dc3c2-5a98-458d-9f88-cab4a5662b54 (pre-Phase-1c safe state).
   · Phase 1a (commit 923e83a): Pulled live poseidon-proxy source into repo at poseidon-worker/ via Cloudflare REST API. `wrangler init --from-dash` scaffolded a Hello World template instead of pulling source; bypassed by hitting GET /accounts/.../workers/scripts/poseidon-proxy directly. 22.87 KiB bundle confirmed identical to live.
