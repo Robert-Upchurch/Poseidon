@@ -19,4 +19,4 @@ export const REDIRECT_URI = `${origin}/Poseidon/auth/callback.html`;
 export const POST_LOGOUT_REDIRECT_URI = `${origin}/Poseidon/auth/login.html`;
 
 export const MSAL_VERSION = '3.6.0';
-export const MSAL_CDN = `https://alcdn.msauth.net/browser/${MSAL_VERSION}/js/msal-browser.min.js`;
+export const MSAL_CDN = `https://cdn.jsdelivr.net/npm/@azure/msal-browser@${MSAL_VERSION}/lib/msal-browser.min.js`;
