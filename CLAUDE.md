@@ -1,6 +1,8 @@
 # CLAUDE.md — Poseidon Dashboard repo
 
-This file is the entry point for Claude Code when working in the Poseidon repository. For the project-wide strategy, roadmap, and non-code context, see `C:\Users\ceo\OneDrive - CTI Group Worldwide Services Inc\POSEIDON\CLAUDE.md` and the docs in `C:\Users\ceo\OneDrive - CTI Group Worldwide Services Inc\POSEIDON\Poseidon-Dashboard\`.
+This file is the entry point for Claude Code when working in the Poseidon repository. For the project-wide strategy, roadmap, and non-code context, see `C:\Users\ceo\OneDrive\POSEIDON\CLAUDE.md` and the docs in `C:\Users\ceo\OneDrive\POSEIDON\Poseidon-Dashboard\`.
+
+> **Canonical root:** `C:\Users\ceo\OneDrive\POSEIDON` — repo, docs, START-HERE, and all CLAUDE.md files live here. `C:\Users\ceo\OneDrive - CTI Group Worldwide Services Inc\POSEIDON` and `I:\POSEIDON` are backup mirrors only; never edit them. (Set 2026-05-15; matches global `~/.claude/CLAUDE.md`.)
 
 ## Project at a glance
 
@@ -75,7 +77,7 @@ To resume in Claude Code: `claude --resume <session-id>`. To start fresh: `claud
 
 ## Landing file
 
-Robert's master landing page is `C:\Users\ceo\OneDrive - CTI Group Worldwide Services Inc\POSEIDON\START-HERE.md`. Point him there when he seems lost.
+Robert's master landing page is `C:\Users\ceo\OneDrive\POSEIDON\START-HERE.md`. Point him there when he seems lost.
 
 ## Pending work (see OneDrive\POSEIDON\Poseidon-Dashboard\ROADMAP.md)
 
@@ -89,7 +91,7 @@ Robert's master landing page is `C:\Users\ceo\OneDrive - CTI Group Worldwide Ser
 
 Static site — no build step. To preview:
 ```powershell
-cd "C:\Projects\Poseidon"
+cd "C:\Users\ceo\OneDrive\POSEIDON\Poseidon"
 python -m http.server 8000   # http://localhost:8000/poseidon-dashboard-v6.html
 ```
 
