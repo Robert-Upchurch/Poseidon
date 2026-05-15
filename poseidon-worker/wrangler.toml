@@ -1,0 +1,40 @@
+name = "poseidon-proxy"
+main = "src/index.js"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Account this Worker deploys to. Robert's Cloudflare account.
+account_id = "9fa78012b2e4d5ddfb5e890429424529"
+
+[observability]
+enabled = true
+
+# Plain-text vars mirror the live Worker. Edit here, redeploy.
+[vars]
+ALLOWED_ORIGIN = "https://robert-upchurch.github.io"
+SNAPSHOT_URL = "https://raw.githubusercontent.com/Robert-Upchurch/Poseidon/main/config/zoho-books-snapshot.json"
+ZOHO_DC = "us"
+# SSO allowlist — comma-separated, case-insensitive. Add users by editing
+# here and `wrangler deploy`. Plain text on purpose: emails aren't secrets,
+# git diffs show who changed access.
+POSEIDON_EMAIL_ALLOWLIST = "ceo@cti-usa.com"
+# Layer B legacy fallback. "true" through Phase 4; flip to "false" in Phase 5.
+POSEIDON_LEGACY_TOKEN_ENABLED = "true"
+
+# Secrets are NOT declared here. Set/list via wrangler:
+#   wrangler secret put DASHBOARD_TOKEN
+#   wrangler secret list
+# Current secrets on the live Worker:
+#   DASHBOARD_TOKEN          — legacy X-Dashboard-Token shared secret (Layer B fallback)
+#   JWT_SIGNING_KEY          — applicant tracking-token signing (portals)
+#   ZOHO_CRM_CLIENT_ID
+#   ZOHO_CRM_CLIENT_SECRET
+#   ZOHO_CRM_REFRESH_TOKEN
+# Phase 1c will add:
+#   POSEIDON_AUTH_BYPASS_TOKEN  — Layer A kill-switch (random 32-byte hex)
+#   POSEIDON_EMAIL_ALLOWLIST    — comma-separated allowed emails
+#   POSEIDON_LEGACY_TOKEN_ENABLED — "true" through Phase 4, "false" in Phase 5
+
+[[kv_namespaces]]
+binding = "POSEIDON_KV"
+id = "f78d0f52b7e5467780fff6bb27ed7139"

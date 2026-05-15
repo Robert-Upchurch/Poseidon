@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signing in… — Poseidon</title>
+<script>
+  (function () {
+    const saved = localStorage.getItem('poseidon-theme');
+    const dark = saved === null ? true : saved === 'dark';
+    document.documentElement.classList.toggle('dark', dark);
+  })();
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: { colors: { brand: { teal: '#14b8a6', navy: '#0a1628' } } } },
+  };
+</script>
+</head>
+<body class="bg-white dark:bg-brand-navy text-slate-900 dark:text-slate-100 min-h-screen flex items-center justify-center px-4">
+  <div class="text-center max-w-md w-full">
+    <div class="text-brand-teal font-bold text-2xl mb-2">Poseidon</div>
+    <div id="msg" class="text-sm text-slate-600 dark:text-slate-400">Completing sign-in…</div>
+
+    <div id="errorBox" class="hidden mt-5 p-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 text-left">
+      <div class="text-red-700 dark:text-red-300 font-medium text-sm mb-1">Sign-in failed</div>
+      <div id="errorMsg" class="text-xs text-red-600 dark:text-red-400 font-mono break-all"></div>
+      <a href="./login.html" class="inline-block mt-3 text-sm text-brand-teal hover:underline">← Back to sign-in</a>
+    </div>
+  </div>
+
+<script type="module">
+  import { getMsalInstance } from './msal-loader.js';
+
+  const msg = document.getElementById('msg');
+  const errorBox = document.getElementById('errorBox');
+  const errorMsg = document.getElementById('errorMsg');
+
+  function showError(detail) {
+    msg.classList.add('hidden');
+    errorMsg.textContent = detail;
+    errorBox.classList.remove('hidden');
+  }
+
+  try {
+    const msal = await getMsalInstance();
+    const result = await msal.handleRedirectPromise();
+
+    if (result && result.account) {
+      msal.setActiveAccount(result.account);
+      const dest = sessionStorage.getItem('poseidon.auth.return') || '/Poseidon/index.html';
+      sessionStorage.removeItem('poseidon.auth.return');
+      msg.textContent = `Welcome, ${result.account.username}. Redirecting…`;
+      location.replace(dest);
+    } else {
+      // Page hit directly with no in-flight redirect. If there's a cached account,
+      // login.html will detect it and bounce to the return URL.
+      msg.textContent = 'No sign-in in progress. Redirecting…';
+      setTimeout(() => location.replace('./login.html'), 400);
+    }
+  } catch (err) {
+    console.error('callback: handleRedirectPromise failed', err);
+    showError(String(err.errorCode || '') + ' — ' + String(err.errorMessage || err.message || err));
+  }
+</script>
+</body>
+</html>
