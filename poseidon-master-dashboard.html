@@ -128,13 +128,7 @@ tailwind.config = {
   html:not(.dark) input[type="text"],html:not(.dark) input[type="url"],html:not(.dark) input[type="password"]{background:#fff;border-color:#cbd5e1;color:#0f172a;}
 
   /* Buttons */
-  .btn-primary{background:var(--cti-teal);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;}
-  .btn-primary:hover{background:var(--cti-teal-hover);}
-  .btn-ghost{background:transparent;border:1px solid;padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;}
-  .dark .btn-ghost{border-color:#334155;color:#cbd5e1;}
-  .dark .btn-ghost:hover{background:rgba(20,184,166,.10);}
-  html:not(.dark) .btn-ghost{border-color:#cbd5e1;color:#1e293b;}
-  html:not(.dark) .btn-ghost:hover{background:#e0f2fe;}
+  /* .btn-primary/.btn-ghost removed — now canonical via assets/poseidon-buttons.css; icon-only buttons use shared .icon-btn (button-conversion pass) */
 </style>
 </head>
 <body>
@@ -188,14 +182,14 @@ tailwind.config = {
 <!-- ═════════ HEADER ═════════ -->
 <header class="top">
   <div class="flex items-center gap-3">
-    <button id="mobile-menu-btn" class="btn-ghost" aria-label="Open menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
+    <button id="mobile-menu-btn" class="icon-btn" aria-label="Open menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
     <span class="inline-flex items-center gap-2 text-sm text-zinc-400"><i data-lucide="layers" class="w-4 h-4"></i><span id="section-label">Overview</span></span>
   </div>
   <div class="flex items-center gap-3">
-    <button id="health-btn" class="btn-ghost" aria-label="System check" title="System check"><i data-lucide="activity" class="w-4 h-4"></i></button>
-    <button id="theme-btn"  class="btn-ghost" aria-label="Toggle theme"><i data-lucide="sun" class="w-4 h-4"></i></button>
+    <button id="health-btn" class="icon-btn" aria-label="System check" title="System check"><i data-lucide="activity" class="w-4 h-4"></i></button>
+    <button id="theme-btn"  class="icon-btn" aria-label="Toggle theme"><i data-lucide="sun" class="w-4 h-4"></i></button>
     <span class="hidden sm:inline-flex items-center gap-2 text-xs text-zinc-400"><i data-lucide="user" class="w-3 h-3"></i><span>Robert Upchurch</span></span>
-    <button id="settings-modal-btn" class="btn-ghost" aria-label="Open settings" title="Settings"><i data-lucide="settings" class="w-4 h-4"></i></button>
+    <button id="settings-modal-btn" class="icon-btn" aria-label="Open settings" title="Settings"><i data-lucide="settings" class="w-4 h-4"></i></button>
     <span class="inline-flex items-center gap-2 text-xs"><i data-lucide="anchor" class="w-4 h-4" style="color:var(--cti-teal);"></i><span class="font-semibold">CTI Group</span></span>
   </div>
 </header>
@@ -207,7 +201,7 @@ tailwind.config = {
   <section data-section="overview" aria-labelledby="ov-h">
     <div class="flex items-center justify-between mb-4">
       <h1 id="ov-h" class="text-2xl font-semibold">Overview</h1>
-      <button id="refresh-overview" class="btn-ghost"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh</button>
+      <button id="refresh-overview" class="btn btn-ghost btn-sm"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh</button>
     </div>
     <div id="overview-host">
       <div data-banner class="hidden"></div>
@@ -320,7 +314,7 @@ tailwind.config = {
     <h1 class="text-2xl font-semibold mb-4">Jarvis</h1>
     <div class="card">
       <p class="text-sm text-zinc-400 mb-3">Voice assistant control panel. Wake word: <strong>Jarvis</strong>.</p>
-      <button class="btn-primary" disabled title="Wired in a follow-up commit"><i data-lucide="mic" class="w-4 h-4 inline"></i> Open Jarvis Console</button>
+      <button class="btn btn-primary" disabled title="Wired in a follow-up commit"><i data-lucide="mic" class="w-4 h-4 inline"></i> Open Jarvis Console</button>
     </div>
   </section>
 
@@ -329,7 +323,7 @@ tailwind.config = {
     <div class="card max-w-xl space-y-4">
       <div>
         <label class="block text-sm font-medium mb-1">Theme</label>
-        <button id="theme-cycle" class="btn-ghost"><i data-lucide="sun-moon" class="w-3 h-3 inline"></i> Toggle dark / light</button>
+        <button id="theme-cycle" class="btn btn-ghost btn-sm"><i data-lucide="sun-moon" class="w-3 h-3 inline"></i> Toggle dark / light</button>
       </div>
       <div>
         <label class="block text-sm font-medium mb-1" for="worker-url">Cloudflare Worker URL</label>
@@ -342,8 +336,8 @@ tailwind.config = {
         <p class="text-xs text-zinc-500 mt-1">Sent as <code>X-Dashboard-Token</code> header. Stored in <code>localStorage.poseidon-dashboard-token</code>.</p>
       </div>
       <div class="flex gap-3">
-        <button id="settings-save" class="btn-primary"><i data-lucide="save" class="w-4 h-4 inline"></i> Save</button>
-        <button id="settings-clear-cache" class="btn-ghost"><i data-lucide="trash-2" class="w-3 h-3 inline"></i> Clear KPI cache</button>
+        <button id="settings-save" class="btn btn-primary"><i data-lucide="save" class="w-4 h-4 inline"></i> Save</button>
+        <button id="settings-clear-cache" class="btn btn-ghost btn-sm"><i data-lucide="trash-2" class="w-3 h-3 inline"></i> Clear KPI cache</button>
       </div>
     </div>
   </section>

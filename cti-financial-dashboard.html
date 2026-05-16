@@ -55,10 +55,7 @@ tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter
   table.fin tr:hover td{background:rgba(20,184,166,.06);}
   input,select{padding:8px 12px;border-radius:8px;border:1px solid;font-size:14px;}
   .dark input,.dark select{background:#0f1e2e;border-color:#334155;color:#fafafa;} html:not(.dark) input,html:not(.dark) select{background:#fff;border-color:#cbd5e1;color:#0f172a;}
-  .btn-primary{background:var(--cti-teal);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;}
-  .btn-primary:hover{background:var(--cti-teal-hover);}
-  .btn-ghost{background:transparent;border:1px solid;padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;}
-  .dark .btn-ghost{border-color:#334155;color:#cbd5e1;} html:not(.dark) .btn-ghost{border-color:#cbd5e1;color:#1e293b;}
+  /* .btn-primary/.btn-ghost removed — now canonical via assets/poseidon-buttons.css; icon-only buttons use shared .icon-btn (button-conversion pass) */
   .pill{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600;}
   .pill-warn{background:rgba(245,158,11,.15);color:#fbbf24;}
   .pill-ok{background:rgba(16,185,129,.15);color:#34d399;}
@@ -92,15 +89,15 @@ tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter
 
 <header class="top">
   <div class="flex items-center gap-3">
-    <button id="mobile-menu-btn" class="btn-ghost" aria-label="Open menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
+    <button id="mobile-menu-btn" class="icon-btn" aria-label="Open menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
     <span class="text-sm text-zinc-400"><span id="section-label">Snapshot</span></span>
   </div>
   <div class="flex items-center gap-3">
     <span id="snapshot-ts" class="text-xs text-zinc-500 hidden sm:inline">—</span>
-    <button id="refresh-btn" class="btn-ghost" aria-label="Refresh"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
-    <button id="theme-btn" class="btn-ghost" aria-label="Toggle theme"><i data-lucide="sun" class="w-4 h-4"></i></button>
+    <button id="refresh-btn" class="icon-btn" aria-label="Refresh"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+    <button id="theme-btn" class="icon-btn" aria-label="Toggle theme"><i data-lucide="sun" class="w-4 h-4"></i></button>
     <span class="hidden sm:inline-flex items-center gap-2 text-xs text-zinc-400"><i data-lucide="user" class="w-3 h-3"></i><span>Robert Upchurch</span></span>
-    <button id="settings-modal-btn" class="btn-ghost" aria-label="Open settings" title="Settings"><i data-lucide="settings" class="w-4 h-4"></i></button>
+    <button id="settings-modal-btn" class="icon-btn" aria-label="Open settings" title="Settings"><i data-lucide="settings" class="w-4 h-4"></i></button>
     <span class="inline-flex items-center gap-2 text-xs"><i data-lucide="anchor" class="w-4 h-4" style="color:var(--cti-teal);"></i><span class="font-semibold">CTI Group</span></span>
   </div>
 </header>
@@ -129,7 +126,7 @@ tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter
         <h2 class="text-lg font-semibold mb-3">KPI payload (Master roll-up preview)</h2>
         <p class="text-xs text-zinc-500 mb-2">This is the exact JSON your /api/kpi-summary?scope=finance would emit:</p>
         <pre id="kpi-payload" class="text-xs font-mono p-3 rounded-lg overflow-x-auto" style="background:rgba(0,0,0,.25);max-height:280px;">loading…</pre>
-        <button id="copy-payload" class="btn-ghost mt-3"><i data-lucide="clipboard" class="w-3 h-3 inline"></i> Copy</button>
+        <button id="copy-payload" class="btn btn-ghost btn-sm mt-3"><i data-lucide="clipboard" class="w-3 h-3 inline"></i> Copy</button>
       </div>
     </div>
   </section>
@@ -160,7 +157,7 @@ tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter
     <div class="card">
       <div class="flex justify-between items-center mb-3">
         <h2 class="text-lg font-semibold">Recent invoices</h2>
-        <button class="btn-primary" disabled title="Wired to Worker /zoho/Invoices POST in a follow-up commit"><i data-lucide="plus" class="w-4 h-4 inline"></i> New invoice (stub)</button>
+        <button class="btn btn-primary" disabled title="Wired to Worker /zoho/Invoices POST in a follow-up commit"><i data-lucide="plus" class="w-4 h-4 inline"></i> New invoice (stub)</button>
       </div>
       <table class="fin" id="invoices-table">
         <thead><tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Status</th><th class="text-right">Amount</th></tr></thead>
@@ -222,7 +219,7 @@ tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter
         <div><label class="block text-xs text-zinc-500 mb-1">Period start</label><input type="date" id="close-start"></div>
         <div><label class="block text-xs text-zinc-500 mb-1">Period end</label><input type="date" id="close-end"></div>
       </div>
-      <button id="generate-close" class="btn-primary" disabled title="Wired to Worker biweekly cron in a follow-up commit"><i data-lucide="file-text" class="w-4 h-4 inline"></i> Generate PDF (stub)</button>
+      <button id="generate-close" class="btn btn-primary" disabled title="Wired to Worker biweekly cron in a follow-up commit"><i data-lucide="file-text" class="w-4 h-4 inline"></i> Generate PDF (stub)</button>
       <h3 class="text-sm font-semibold mt-6 mb-2">History</h3>
       <div id="close-history" class="text-sm text-zinc-500">No closes yet — list populated from <code>config/financial-closes/index.json</code>.</div>
     </div>
@@ -291,8 +288,8 @@ tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter
         <p class="text-xs text-zinc-500 mt-1">Default: Sandbox. Production billing kicks in only after Robert authorizes the env switch.</p>
       </div>
       <div class="flex gap-3">
-        <button id="settings-save" class="btn-primary"><i data-lucide="save" class="w-4 h-4 inline"></i> Save</button>
-        <button id="settings-clear-cache" class="btn-ghost"><i data-lucide="trash-2" class="w-3 h-3 inline"></i> Clear KPI cache</button>
+        <button id="settings-save" class="btn btn-primary"><i data-lucide="save" class="w-4 h-4 inline"></i> Save</button>
+        <button id="settings-clear-cache" class="btn btn-ghost btn-sm"><i data-lucide="trash-2" class="w-3 h-3 inline"></i> Clear KPI cache</button>
       </div>
     </div>
   </section>

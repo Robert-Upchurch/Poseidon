@@ -7,3 +7,6 @@ fix_*.py
 *.tmp
 .DS_Store
 Thumbs.db
+
+# Button-conversion screenshot sandbox (local-only tooling + PNGs)
+button-conversion/
