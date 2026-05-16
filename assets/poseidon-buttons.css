@@ -1,0 +1,182 @@
+/* ==========================================================================
+   Poseidon Canonical Button System
+   --------------------------------------------------------------------------
+   Single source of truth for buttons across every Poseidon dashboard.
+   Theme: teal #14b8a6 accent. Drop-in classes — no build step.
+
+   Usage:
+     <button class="btn btn-primary">Save</button>
+     <button class="btn btn-ghost btn-sm">Cancel</button>
+     <a class="btn btn-danger btn-lg" href="...">Delete</a>
+
+   Variants : .btn-primary  .btn-secondary  .btn-ghost  .btn-danger
+   Sizes    : .btn-sm (32px)  .btn-md (40px, default)  .btn-lg (48px)
+   ========================================================================== */
+
+:root {
+  --pb-teal:        #14b8a6; /* teal-500  — base accent            */
+  --pb-teal-hover:  #0d9488; /* teal-600  — hover                  */
+  --pb-teal-active: #0f766e; /* teal-700  — active / pressed       */
+  --pb-teal-ring:   #2dd4bf; /* teal-400  — focus ring (at 50%)    */
+  --pb-zinc-800:    #27272a; /* secondary fill                     */
+  --pb-zinc-700:    #3f3f46; /* secondary hover                    */
+  --pb-red-600:     #dc2626; /* danger fill                        */
+  --pb-red-700:     #b91c1c; /* danger hover                       */
+  --pb-radius:      8px;
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+.btn {
+  /* layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  /* default size = md */
+  height: 40px;
+  padding: 0 16px;
+  /* type */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  /* shape */
+  border: 1px solid transparent;
+  border-radius: var(--pb-radius);
+  /* behavior */
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .15s ease, border-color .15s ease,
+              color .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+
+.btn:focus-visible {
+  outline: none;
+  /* teal-400 at 50% opacity */
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5);
+}
+
+.btn:disabled,
+.btn[disabled],
+.btn.is-disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   Variants
+   -------------------------------------------------------------------------- */
+
+/* Primary — teal fill */
+.btn-primary {
+  background-color: var(--pb-teal);
+  border-color: var(--pb-teal);
+  color: #ffffff;
+}
+.btn-primary:hover {
+  background-color: var(--pb-teal-hover);
+  border-color: var(--pb-teal-hover);
+}
+.btn-primary:active {
+  background-color: var(--pb-teal-active);
+  border-color: var(--pb-teal-active);
+}
+
+/* Secondary — zinc-800 fill */
+.btn-secondary {
+  background-color: var(--pb-zinc-800);
+  border-color: var(--pb-zinc-800);
+  color: #f4f4f5;
+}
+.btn-secondary:hover {
+  background-color: var(--pb-zinc-700);
+  border-color: var(--pb-zinc-700);
+}
+.btn-secondary:active {
+  background-color: #18181b;
+  border-color: #18181b;
+}
+
+/* Ghost — transparent + teal border */
+.btn-ghost {
+  background-color: transparent;
+  border-color: var(--pb-teal);
+  color: var(--pb-teal);
+}
+.btn-ghost:hover {
+  background-color: var(--pb-teal);
+  color: #ffffff;
+}
+.btn-ghost:active {
+  background-color: var(--pb-teal-active);
+  border-color: var(--pb-teal-active);
+  color: #ffffff;
+}
+
+/* Danger — red-600 */
+.btn-danger {
+  background-color: var(--pb-red-600);
+  border-color: var(--pb-red-600);
+  color: #ffffff;
+}
+.btn-danger:hover {
+  background-color: var(--pb-red-700);
+  border-color: var(--pb-red-700);
+}
+.btn-danger:active {
+  background-color: #991b1b;
+  border-color: #991b1b;
+}
+
+/* --------------------------------------------------------------------------
+   Sizes
+   -------------------------------------------------------------------------- */
+.btn-sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+.btn-md {
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.btn-lg {
+  height: 48px;
+  padding: 0 24px;
+  font-size: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   Mobile — 44px minimum touch target on md/lg (Apple HIG)
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px), (pointer: coarse) {
+  .btn-md,
+  .btn-lg {
+    min-height: 44px;
+  }
+  /* iOS zooms any focused input under 16px — force 16px on inputs paired
+     with buttons (same .btn-group / form row) to prevent the zoom jump. */
+  .btn-group input,
+  .btn-group select,
+  .btn-group textarea,
+  form .btn ~ input,
+  form input.btn-input {
+    font-size: 16px;
+  }
+}
+
+/* Optional layout helper for button + input rows */
+.btn-group {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 8px;
+}
