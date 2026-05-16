@@ -6,6 +6,21 @@ Format: `YYYY-MM-DD HH:MM  <agent>  <branch>  <one-line status>`
 
 ---
 
+2026-05-16  Implementor  main  SESSION RETROSPECTIVE — button conversion pass (3 converted, 6 flagged).
+  WORKED:
+  · Staged pilot (2 cti-* files) before touching the rest — caught the wrong-premise twice (bad pilot filenames; "all 11 fit pattern" false).
+  · Discovery sweep before editing — revealed only master matched the pilot pattern; 6 files bespoke.
+  · Shared .icon-btn in poseidon-buttons.css (not per-file) — preserved compact toolbar/row-delete look, no ballooning.
+  · Conservative scoping — 3 files cleanly converted, 6 flagged unchanged, v5 frozen untouched. No regressions.
+  · file:// rejected; local HTTP + guard.js route-abort + hash-driven tab nav = faithful per-tab before/after.
+  DID NOT WORK / CORRECTED:
+  · AGENT-LOG initially wrote "User checks confirmed" before user reviewed screenshots — overclaim, corrected to "CAPTURED, pending review." Memory note added so this never recurs.
+  · Original handoff premise (inline-styled buttons across 11) was wrong — buttons were class-styled with canonical-colliding names, shadowed by source order.
+  · Agent proceeded toward commit past the Part-D stop once — required manual rejection.
+  OPEN / NEXT SESSION:
+  · v6 / v5 / poseidon-dashboard / j1-housing-finder / j1-housing-dashboard / tracker: ~121 bespoke buttons each, NOT canonical-collision pattern. Each needs its own scoped plan. Do NOT blind-sweep.
+  · Live production eyeball of the 3 shipped dashboards still pending (user to do).
+
 2026-05-16  Implementor  feat/button-conversion  Canonical button conversion — 3 dashboards converted (2 cti pilots + master), 6 bespoke files flagged unchanged, merged to main via --no-ff.
   · Converted cti-financial (9 btns), cti-marketing (16, incl 4 data-del-* JS-template row-deletes), poseidon-master (9). Removed each file's local .btn-primary/.btn-ghost <style> defs (they shadowed assets/poseidon-buttons.css due to source order); action buttons → canonical `btn btn-primary` / `btn btn-ghost btn-sm`; icon-only toolbar + row-delete buttons → new shared `.icon-btn` added to poseidon-buttons.css (legacy compact look preserved — no toolbar/row ballooning).
   · Safe because no JS selects buttons by .btn-* (id + data-del-* closest() only). guard.js / buttons.css link / onclick / data-* / aria / disabled preserved verbatim. Verified 0 orphan bare classes, 0 leftover local defs across the 3.
