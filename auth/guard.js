@@ -85,6 +85,16 @@ function installFetchInterceptor() {
       || (input && input.headers)
       || {};
     const headers = new Headers(baseHeaders);
+    // Requests that already authenticate with X-Dashboard-Token use the
+    // Worker's token-bypass path and need no SSO bearer. Adding one turns
+    // them into CORS-preflighted requests whose preflight lists
+    // `authorization`, but the deployed Worker's Access-Control-Allow-
+    // Headers is only "Content-Type, X-Dashboard-Token" — so the preflight
+    // fails and the browser reports "Failed to fetch". Pass them through
+    // unmodified (fixes Settings "Test connection" and the KPI tiles).
+    if (headers.has('X-Dashboard-Token')) {
+      return originalFetch(input, init);
+    }
     if (!headers.has('Authorization')) {
       headers.set('Authorization', `Bearer ${currentIdToken}`);
     }
