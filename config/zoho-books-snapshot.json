@@ -28,7 +28,12 @@
     "draft_count":        6,
     "cash_on_hand":     204646.34,
     "credit_card_debt": -18646.09,
-    "net_cash_position":186000.25
+    "net_cash_position":186000.25,
+    "mtd_revenue":       76511.97,
+    "ytd_revenue":      453224.06,
+    "revenue_scope":    "zoho_books_org_877439787_all_locations",
+    "revenue_as_of":    "2026-05-19",
+    "revenue_basis":    "invoiced_all_statuses"
   },
   "bank_accounts": [
     {"name":"REGIONS BANK LIFEGREEN BUSINESS CHECKING", "bank":"Regions",  "type":"bank",        "code":"xxxx1665", "balance": 72631.46},
