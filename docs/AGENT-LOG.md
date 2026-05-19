@@ -6,6 +6,10 @@ Format: `YYYY-MM-DD HH:MM  <agent>  <branch>  <one-line status>`
 
 ---
 
+2026-05-19  Implementor  main  Hill 1 (CORS fix) confirmed COMPLETE — PR #60 squash-merged to main as commit 0cf9346 ("fix(auth): don't attach SSO bearer to X-Dashboard-Token requests"); pre-merge branch commit a33ef94 on fix/cors-guard-authorization. Verified live in production 2026-05-18 — V6 dashboard pulls live data end-to-end. Do not re-verify in future sessions.
+  · Fix is dashboard-side only: auth/guard.js fetch interceptor passes any request already carrying X-Dashboard-Token straight through without adding the SSO bearer (+10/−0). No Cloudflare Worker change, no Worker redeploy.
+  · Detail trail lives in the standalone poseidon-worker repo's poseidon-CORS-RESUME.md (untracked there; deliberately left as-is this session). That note credits a33ef94 and predates the squash-merge — 0cf9346 is the authoritative merged commit on origin/main.
+
 2026-05-16  Implementor  main  SESSION RETROSPECTIVE — button conversion pass (3 converted, 6 flagged).
   WORKED:
   · Staged pilot (2 cti-* files) before touching the rest — caught the wrong-premise twice (bad pilot filenames; "all 11 fit pattern" false).
