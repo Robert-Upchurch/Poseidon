@@ -99,9 +99,23 @@
 
 <main class="main-content">
 
+  <div id="data-source-banner" class="hidden mb-4 rounded-xl border p-4" style="background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.35);">
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex items-start gap-2 text-sm">
+        <i data-lucide="alert-triangle" class="w-4 h-4 mt-0.5" style="color:#fbbf24;"></i>
+        <div>
+          <div class="font-semibold" style="color:#fcd34d;">Data sources pending credential setup</div>
+          <div class="text-zinc-400 text-xs mt-1">Tiles populate as Zoho CRM, Zoho Campaigns, and GA4 are wired.</div>
+        </div>
+      </div>
+      <button id="banner-dismiss" class="icon-btn" aria-label="Dismiss banner" title="Dismiss"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+  </div>
+
   <section data-section="overview" aria-labelledby="ov-h">
     <h1 id="ov-h" class="text-2xl font-semibold mb-4">Marketing Overview</h1>
     <div id="overview-tiles" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"></div>
+    <p id="overview-status" class="text-xs text-zinc-500 mb-6"></p>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div class="card"><h2 class="text-lg font-semibold mb-3">30-day lead trend</h2><canvas id="leadTrendChart" height="180"></canvas><p class="text-xs text-zinc-500 mt-2">Populated when leads are imported on the Lead Attribution tab.</p></div>
       <div class="card"><h2 class="text-lg font-semibold mb-3">Funnel</h2><canvas id="funnelChart" height="180"></canvas><p class="text-xs text-zinc-500 mt-2">Awareness → Lead → Qualified → Placed. Filled from campaign + lead data.</p></div>
@@ -285,14 +299,85 @@
   }
 
   // ─── Overview ───
-  function renderOverview() {
-    var payload = window.MarketingKPIEmitter.build({});
+  // 8 KPIs in fixed order, sourced from Worker /api/kpi-summary?scope=marketing.
+  // Frame-only build — credentials pending; tiles render "—" until creds are wired.
+  var SOURCE_LABEL = { zoho_crm: 'Zoho CRM', zoho_campaigns: 'Zoho Campaigns', ga4: 'GA4' };
+  var SOURCE_COLOR = { zoho_crm: '#14b8a6', zoho_campaigns: '#f59e0b', ga4: '#6366f1' };
+  // Spec drives skeleton render (offline / pre-fetch). Worker payload overrides
+  // label/source/value per-tile when it returns, so live data wins.
+  var KPI_SPEC = [
+    { id: 'new_leads_mtd',        label: 'New Leads MTD',              source: 'zoho_crm' },
+    { id: 'lead_conversion_rate', label: 'Lead Conversion Rate (90d)', source: 'zoho_crm' },
+    { id: 'pipeline_value_open',  label: 'Open Pipeline Value',        source: 'zoho_crm' },
+    { id: 'top_lead_source_mtd',  label: 'Top Lead Source MTD',        source: 'zoho_crm' },
+    { id: 'email_open_rate',      label: 'Email Open Rate (30d)',      source: 'zoho_campaigns' },
+    { id: 'email_click_rate',     label: 'Email Click Rate (30d)',     source: 'zoho_campaigns' },
+    { id: 'email_sends_mtd',      label: 'Email Sends MTD',            source: 'zoho_campaigns' },
+    { id: 'website_sessions_mtd', label: 'Website Sessions MTD',       source: 'ga4' }
+  ];
+
+  function fmtKPIValue(k) {
+    if (k == null || k.value === null || k.value === undefined) return '—';
+    var d = k.display || (k.unit === 'USD' ? 'currency' : k.unit === 'pct' ? 'percentage' : 'integer');
+    if (d === 'integer')    return new Intl.NumberFormat('en-US').format(k.value);
+    if (d === 'percentage') return Number(k.value).toFixed(1) + '%';
+    if (d === 'currency')   return '$' + new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(k.value);
+    if (d === 'string')     return String(k.value);
+    return String(k.value);
+  }
+
+  function renderTiles(kpis) {
+    var byId = {};
+    (kpis || []).forEach(function (k) { byId[k.id] = k; });
     var host = document.getElementById('overview-tiles');
-    host.innerHTML = payload.kpis.map(function (k) {
-      var v = k.value == null ? '—' : (k.unit === 'USD' ? window.Format.fmtCompactUSD(k.value) : (k.unit === 'count' ? window.Format.fmtInt(k.value) : k.value));
-      return '<div class="kpi-tile" style="border-left-color:#14b8a6;"><p class="text-xs font-mono uppercase tracking-wider text-zinc-500">' + k.label + '</p><p class="text-2xl font-bold mt-1">' + v + '</p></div>';
+    host.innerHTML = KPI_SPEC.map(function (spec) {
+      var k = byId[spec.id];
+      var label    = (k && k.label)  || spec.label;
+      var source   = (k && k.source) || spec.source;
+      var color    = SOURCE_COLOR[source] || '#14b8a6';
+      var srcLabel = SOURCE_LABEL[source] || '';
+      return '<div class="kpi-tile" style="border-left-color:' + color + ';">' +
+               '<p class="text-xs font-mono uppercase tracking-wider text-zinc-500">' + esc(label) + '</p>' +
+               '<p class="text-2xl font-bold mt-1">' + esc(fmtKPIValue(k)) + '</p>' +
+               '<p class="text-[10px] text-zinc-500 mt-3 text-right uppercase tracking-wider">' + esc(srcLabel) + '</p>' +
+             '</div>';
     }).join('');
     paintIcons();
+  }
+
+  function renderStatus(reason, payload) {
+    var s = document.getElementById('overview-status');
+    if (!s) return;
+    if (payload && payload.captured_at) {
+      s.textContent = 'Source: ' + (payload.source_state && payload.source_state.primary || 'unknown') +
+        ' · captured ' + new Date(payload.captured_at).toLocaleString();
+    } else if (reason === 'no-worker-url') {
+      s.textContent = 'Worker URL not configured. Open Settings to set it.';
+    } else if (reason === 'no-token') {
+      s.textContent = 'Dashboard token not set. Open Settings → paste your X-Dashboard-Token.';
+    } else if (reason === 'fetch-error') {
+      s.textContent = 'Worker request failed — tiles fall back to "—".';
+    } else {
+      s.textContent = '';
+    }
+  }
+
+  function renderOverview() {
+    // Render skeleton immediately so tiles always show in the spec'd order.
+    renderTiles([]);
+    if (!window.KPIClient) { renderStatus('no-worker-url'); return; }
+    window.KPIClient.summary('marketing').then(function (res) {
+      if (res && res.ok && res.payload) {
+        renderTiles(res.payload.kpis);
+        renderStatus(null, res.payload);
+      } else {
+        renderTiles([]);
+        renderStatus((res && res.reason) || 'fetch-error');
+      }
+    }).catch(function () {
+      renderTiles([]);
+      renderStatus('fetch-error');
+    });
   }
 
   // ─── Campaigns ───
@@ -439,7 +524,15 @@
 
   // ─── Preview ───
   function renderPreview() {
-    document.getElementById('preview-payload').textContent = JSON.stringify(window.MarketingKPIEmitter.build({}), null, 2);
+    var pre = document.getElementById('preview-payload');
+    pre.textContent = 'loading…';
+    if (!window.KPIClient) { pre.textContent = '(KPIClient not loaded)'; return; }
+    window.KPIClient.summary('marketing', { force: true }).then(function (res) {
+      if (res && res.ok && res.payload) pre.textContent = JSON.stringify(res.payload, null, 2);
+      else pre.textContent = JSON.stringify(res || { ok: false }, null, 2);
+    }).catch(function (err) {
+      pre.textContent = String(err && err.message || err);
+    });
   }
   document.getElementById('copy-preview').addEventListener('click', function () {
     var t = document.getElementById('preview-payload').textContent;
@@ -470,6 +563,16 @@
   });
 
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
+
+  // ─── Data-source banner (amber, dismissible, sticky via localStorage) ───
+  var BANNER_KEY = 'poseidon-marketing-banner-dismissed';
+  var banner = document.getElementById('data-source-banner');
+  try { if (!localStorage.getItem(BANNER_KEY)) banner.classList.remove('hidden'); } catch (e) { banner.classList.remove('hidden'); }
+  var bannerDismiss = document.getElementById('banner-dismiss');
+  if (bannerDismiss) bannerDismiss.addEventListener('click', function () {
+    banner.classList.add('hidden');
+    try { localStorage.setItem(BANNER_KEY, '1'); } catch (e) {}
+  });
 
   // Init
   showSection(fromHash());

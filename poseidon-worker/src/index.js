@@ -233,24 +233,77 @@ async function scopeFinance(env) {
 }
 __name(scopeFinance, "scopeFinance");
 async function scopeMarketing(env) {
-  const e = emptyEnvelope("marketing");
-  e.links.deep = "cti-marketing-dashboard.html";
-  e.kpis = [
-    { id: "active_campaigns", label: "Active campaigns", value: null, unit: "count", as_of: null, drilldown: "cti-marketing-dashboard.html#campaigns" },
-    { id: "mtd_ad_spend_usd", label: "MTD ad spend", value: null, unit: "USD", as_of: null, drilldown: "cti-marketing-dashboard.html#channels" },
-    { id: "mtd_leads", label: "MTD leads", value: null, unit: "count", as_of: null, drilldown: "cti-marketing-dashboard.html#attribution" },
-    { id: "blended_cac_usd", label: "Blended CAC", value: null, unit: "USD", as_of: null, drilldown: "cti-marketing-dashboard.html#roi" },
-    { id: "top_channel", label: "Top channel", value: null, unit: "count", as_of: null, drilldown: "cti-marketing-dashboard.html#channels" }
+  const envelope = emptyEnvelope("marketing");
+  envelope.links.deep = "cti-marketing-dashboard.html";
+  const [crm, campaigns, ga4] = await Promise.all([
+    fetchZohoCRMMarketing(env),
+    fetchZohoCampaigns(env),
+    fetchGA4Marketing(env)
+  ]);
+  envelope.kpis = [
+    { id: "new_leads_mtd",        label: "New Leads MTD",              value: crm.new_leads_mtd,           unit: "count", display: "integer",    source: "zoho_crm",       as_of: null, drilldown: "cti-marketing-dashboard.html#attribution" },
+    { id: "lead_conversion_rate", label: "Lead Conversion Rate (90d)", value: crm.lead_conversion_rate,    unit: "pct",   display: "percentage", source: "zoho_crm",       as_of: null, drilldown: "cti-marketing-dashboard.html#attribution" },
+    { id: "pipeline_value_open",  label: "Open Pipeline Value",        value: crm.pipeline_value_open,     unit: "USD",   display: "currency",   source: "zoho_crm",       as_of: null, drilldown: "cti-marketing-dashboard.html#roi" },
+    { id: "top_lead_source_mtd",  label: "Top Lead Source MTD",        value: crm.top_lead_source_mtd,     unit: "count", display: "string",     source: "zoho_crm",       as_of: null, drilldown: "cti-marketing-dashboard.html#attribution" },
+    { id: "email_open_rate",      label: "Email Open Rate (30d)",      value: campaigns.email_open_rate,   unit: "pct",   display: "percentage", source: "zoho_campaigns", as_of: null, drilldown: "cti-marketing-dashboard.html#channels" },
+    { id: "email_click_rate",     label: "Email Click Rate (30d)",     value: campaigns.email_click_rate,  unit: "pct",   display: "percentage", source: "zoho_campaigns", as_of: null, drilldown: "cti-marketing-dashboard.html#channels" },
+    { id: "email_sends_mtd",      label: "Email Sends MTD",            value: campaigns.email_sends_mtd,   unit: "count", display: "integer",    source: "zoho_campaigns", as_of: null, drilldown: "cti-marketing-dashboard.html#channels" },
+    { id: "website_sessions_mtd", label: "Website Sessions MTD",       value: ga4.website_sessions_mtd,    unit: "count", display: "integer",    source: "ga4",            as_of: null, drilldown: "cti-marketing-dashboard.html#channels" }
   ];
-  e.alerts.push({
-    id: "marketing-server-side-data-pending",
+  envelope.source_state.primary = "stale";
+  envelope.alerts.push({
+    id: "marketing-credentials-pending",
     severity: "info",
-    message: "Marketing KPIs read from per-user localStorage in v1. Aggregate server-side data lands in v2.",
-    link: "cti-marketing-dashboard.html#campaigns"
+    message: "Marketing data sources pending credential setup — tiles populate as Zoho CRM, Zoho Campaigns, and GA4 are wired.",
+    link: "cti-marketing-dashboard.html"
   });
-  return json(e);
+  return json(envelope);
 }
 __name(scopeMarketing, "scopeMarketing");
+
+// Placeholder Zoho CRM marketing fetch. Returns null per metric until OAuth is wired
+// (env.ZOHO_CRM_CLIENT_ID / ZOHO_CRM_CLIENT_SECRET / ZOHO_CRM_REFRESH_TOKEN are
+// already used by handlePortalIntake — same credential set will drive these reads).
+async function fetchZohoCRMMarketing(env) {
+  if (!env.ZOHO_CRM_CLIENT_ID || !env.ZOHO_CRM_CLIENT_SECRET || !env.ZOHO_CRM_REFRESH_TOKEN) {
+    console.log("fetchZohoCRMMarketing: credentials not configured");
+  } else {
+    console.log("fetchZohoCRMMarketing: credentials not configured (live queries pending wire-up)");
+  }
+  return {
+    new_leads_mtd: null,
+    lead_conversion_rate: null,
+    pipeline_value_open: null,
+    top_lead_source_mtd: null
+  };
+}
+__name(fetchZohoCRMMarketing, "fetchZohoCRMMarketing");
+
+// Placeholder Zoho Campaigns fetch. Returns null per metric until ZOHO_CAMPAIGNS_*
+// OAuth credentials are added as Worker secrets.
+async function fetchZohoCampaigns(env) {
+  if (!env.ZOHO_CAMPAIGNS_CLIENT_ID || !env.ZOHO_CAMPAIGNS_CLIENT_SECRET || !env.ZOHO_CAMPAIGNS_REFRESH_TOKEN) {
+    console.log("fetchZohoCampaigns: credentials not configured");
+  }
+  return {
+    email_open_rate: null,
+    email_click_rate: null,
+    email_sends_mtd: null
+  };
+}
+__name(fetchZohoCampaigns, "fetchZohoCampaigns");
+
+// Placeholder GA4 Data API fetch. Returns null until GA4_SERVICE_ACCOUNT_JSON +
+// GA4_PROPERTY_ID secrets are wired.
+async function fetchGA4Marketing(env) {
+  if (!env.GA4_SERVICE_ACCOUNT_JSON || !env.GA4_PROPERTY_ID) {
+    console.log("fetchGA4Marketing: credentials not configured");
+  }
+  return {
+    website_sessions_mtd: null
+  };
+}
+__name(fetchGA4Marketing, "fetchGA4Marketing");
 async function scopePortals(env) {
   const e = emptyEnvelope("portals");
   e.links.deep = "portals/cruise/index.html";
@@ -295,8 +348,8 @@ async function scopeMaster(env) {
     { id: "cruise_active_candidates", label: "Cruise candidates", value: null, unit: "count", as_of: null, drilldown: "poseidon-dashboard-v6.html" },
     { id: "j1_active_candidates", label: "J-1 candidates", value: null, unit: "count", as_of: null, drilldown: "j1-system-dashboard.html" },
     { id: "j1_housing_beds_filled_pct", label: "J-1 housing fill", value: null, unit: "pct", as_of: null, drilldown: "j1-housing-finder-index.html" },
-    tile("active_campaigns", "Active campaigns", "count", mkt),
-    tile("mtd_ad_spend_usd", "MTD ad spend", "USD", mkt),
+    tile("new_leads_mtd", "New leads MTD", "count", mkt),
+    tile("pipeline_value_open", "Marketing pipeline", "USD", mkt),
     { id: "tasks_open", label: "Open tasks", value: null, unit: "count", as_of: null, drilldown: "tracker.html" },
     { id: "health_pct", label: "System health", value: 100, unit: "pct", as_of: (/* @__PURE__ */ new Date()).toISOString(), drilldown: "#it" }
   ];
