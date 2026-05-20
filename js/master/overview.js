@@ -11,8 +11,8 @@
     { id: 'cruise_active_candidates',label: 'Cruise candidates',   unit: 'count', accent: 'sky' },
     { id: 'j1_active_candidates',    label: 'J-1 candidates',      unit: 'count', accent: 'indigo' },
     { id: 'j1_housing_beds_filled_pct', label: 'J-1 housing fill', unit: 'pct',   accent: 'indigo' },
-    { id: 'active_campaigns',        label: 'Active campaigns',    unit: 'count', accent: 'fuchsia' },
-    { id: 'mtd_ad_spend_usd',        label: 'MTD ad spend',        unit: 'USD',   accent: 'fuchsia' },
+    { id: 'new_leads_mtd',           label: 'New leads MTD',       unit: 'count', accent: 'fuchsia' },
+    { id: 'pipeline_value_open',     label: 'Marketing pipeline',  unit: 'USD',   accent: 'fuchsia' },
     { id: 'tasks_open',              label: 'Open tasks',          unit: 'count', accent: 'amber' },
     { id: 'health_pct',              label: 'System health',       unit: 'pct',   accent: 'sky' }
   ];
